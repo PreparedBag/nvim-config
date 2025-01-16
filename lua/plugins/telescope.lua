@@ -37,6 +37,9 @@ return {
                 end
             end
 
+            -- Load media files extension
+            local builtin = require('telescope.builtin')
+
             -- Telescope setup
             telescope.setup({
                 defaults = {
@@ -67,9 +70,6 @@ return {
             })
 
             telescope.load_extension("ui-select")
-
-            -- Load media files extension
-            local builtin = require('telescope.builtin')
 
             local opts = { noremap = true, silent = true }
 

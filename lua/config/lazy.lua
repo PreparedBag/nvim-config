@@ -36,7 +36,10 @@ require("lazy").setup({
     },
 
     -- Lazy.nvim options
-    checker = { enabled = true },
+    checker = { 
+        enabled = true, 
+        notify = false,
+    },
 })
 
 vim.cmd.colorscheme "aurora"
