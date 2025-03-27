@@ -13,10 +13,13 @@ return {
             -- Location Navigation
             { "<leader>k",   desc = "Next Location",                 mode = "n" },
             { "<leader>j",   desc = "Previous Location",             mode = "n" },
+            { "gd",  desc = "Go To Definition",                      mode = "n" },
+            { "gD",  desc = "Go To Declaration",                     mode = "n" },
 
             -- Find (Telescope)
             { "<leader>f",   group = "Find" },
             { "<leader>ff",  desc = "Find Files (Fuzzy Finder)",     mode = "n" },
+            { "<leader>fa",  desc = "Find Files (Include Hidden)",   mode = "n" },
             { "<leader>fp",  desc = "Find Phrase (Live Grep)",       mode = "n" },
             { "<leader>fs",  desc = "File Scroll",                   mode = "n" },
             { "<leader>fh",  desc = "Find Help Tags",                mode = "n" },

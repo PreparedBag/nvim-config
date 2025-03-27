@@ -32,12 +32,12 @@ require("lazy").setup({
         { import = "plugins.comment" },
         { import = "plugins.oil" },
 
-        -- { import = "plugins.lsp-config" },
+        { import = "plugins.lsp-config" },
     },
 
     -- Lazy.nvim options
-    checker = { 
-        enabled = true, 
+    checker = {
+        enabled = true,
         notify = false,
     },
 })

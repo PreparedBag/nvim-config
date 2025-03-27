@@ -74,6 +74,7 @@ return {
             local opts = { noremap = true, silent = true }
 
             vim.keymap.set("n", "<leader>ff", builtin.find_files, opts)
+            vim.keymap.set("n", "<leader>fa", function() builtin.find_files({ hidden = true }) end, opts)
             vim.keymap.set("n", "<leader>fp", builtin.live_grep, opts)
             vim.keymap.set("n", "<leader>fh", builtin.help_tags, opts)
             vim.keymap.set("n", "<leader>fs", ":Telescope find_files<CR><ESC>", opts)
