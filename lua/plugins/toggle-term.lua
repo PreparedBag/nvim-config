@@ -25,6 +25,6 @@ return {
             persist_size = true,
         })
         local opts = { noremap = true, silent = true }
-        vim.api.nvim_set_keymap("n", "<leader>t", ":ToggleTerm<CR>", opts)
+        vim.api.nvim_set_keymap("n", "<leader>,", ":ToggleTerm<CR>", opts)
     end
 }

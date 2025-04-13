@@ -25,6 +25,22 @@ end
 -- Create a command to run the function easily
 vim.api.nvim_create_user_command('InsertLogo', insert_logo, {})
 
+local function insert_header()
+    -- Insert the logo and the font import at the top of the document
+    local header_html = [[
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap');
+</style>
+<br><br><br>
+    ]]
+    -- Split the content into lines and insert at the top
+    vim.api.nvim_put(vim.split(header_html, '\n'), 'c', true, true)
+end
+
+-- Create a command to run the function easily
+vim.api.nvim_create_user_command('InsertHeader', insert_header, {})
+
 -- Function to insert the logo header and a page break
 local function insert_logo_and_page_break()
     local logo_html = [[
@@ -195,6 +211,38 @@ function insert_two_image_links()
         end, "Select Image 2")
     end, "Select Image 1")
 end
+
+-- Function to insert a warning blockquote
+function insert_warning()
+    local blockquote = [[
+<blockquote class="warning">⚠️ ***WARNING***: 
+
+</blockquote>
+    ]]
+    vim.api.nvim_put(vim.split(blockquote, '\n'), 'c', true, true)
+end
+
+-- Function to insert an error blockquote
+function insert_error()
+    local blockquote = [[
+<blockquote class="error">❌ ***Error:***
+
+</blockquote>
+    ]]
+    vim.api.nvim_put(vim.split(blockquote, '\n'), 'c', true, true)
+end
+
+function insert_table()
+  local lines = {
+    "| Column1 | Column2 | Column3 |",
+    "|---------|---------|---------|",
+    "| ValueA  | ValueB  | ValueC  |"
+  }
+  vim.api.nvim_put(lines, "l", true, true)
+end
+
+-- Single image key mapping
+vim.api.nvim_set_keymap('n', '<leader>it', ':lua insert_table()<CR>', { noremap = true, silent = true })
 
 -- Single image key mapping
 vim.api.nvim_set_keymap('n', '<leader>ii1', ':lua insert_image_link()<CR>', { noremap = true, silent = true })

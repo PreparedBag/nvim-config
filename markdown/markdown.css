@@ -6,10 +6,16 @@
     display: none;
 }
 
+p {
+   line-height: 1.5; 
+}
+
 :root {
     --background-color: #fff;
     --secondary-background-color: #6d6e71;
-    --light-background-color: rgba(12, 35, 63, 0.1);
+    /* --light-background-color: rgba(12, 35, 63, 0.2); */
+    --light-background-color: #d6d4f2;
+    
 
     --highlight-color: #0c233f;
     --secondary-highlight-color: #ffbb07;
@@ -29,8 +35,13 @@ html, body, main {
     min-height: 100vh;
     margin: 0;
     font-weight: 400;
-    font-family: 'Rubik', 'Ubuntu', sans-serif;
+    font-family: 'Rubik', 'Ubuntu', 'Arial', sans-serif;
     color: #333;
+}
+
+.hljs {
+    padding: 2em !important;
+    background: var(--light-background-color) !important;
 }
 
 @media print {
@@ -39,14 +50,19 @@ html, body, main {
     }
 
     html, body, main {
-        font-size: 80%;
+        font-size: 90%;
         background: #fff;
     }
 
-    /*.mermaid {*/
-    /*    /*transform: scale(0.8);*/*/
-    /*    font-size: 80%;*/
-    /*}*/
+    .mermaid {
+       transform: scale(0.8);
+       font-size: 80%;
+    }
+
+    img {
+        width: 70%;
+        height: auto;
+    }
 
     #page-ctn {
         padding: 0px 20px;
@@ -105,13 +121,30 @@ a {
     fill: #D48080 !important;
 }
 
+.done0, .done1, .done2, .done3, .done4, .done5, .done6 {
+    fill: #8DB58D !important;
+}
+
+.exclude-range {
+    fill: var(--light-background-color) !important;
+}
+
 .task {
     stroke: #222 !important;
 }
 
 .section:nth-child(odd) {
-    fill: #C1D1DD !important;
-    /*fill: var(--light-background-color) !important;*/
+    /* fill: #C1D1DD !important; */
+    fill: var(--light-background-color) !important;
+}
+
+.section {
+    font-weight: 500;
+    opacity: 0 !important;
+}
+
+.sectionTitle > tspan {
+    font-weight: 500 !important;
 }
 
 .section:nth-child(even) {
@@ -119,25 +152,41 @@ a {
 }
 
 blockquote {
-    background-color: var(--light-background-color);
-    padding: 7px;
-    border-radius: 5px;
+    background-color: var(--secondary-highlight-color);
+    color: var(--highlight-color);
+    padding: 12px;
+    border-radius: 7px;
+    margin: 3em 9em;
     page-break-inside: avoid;
+}
+
+.info {
+    background-color: var(--light-background-color);
+    color: #fff;
+}
+
+.warn {
+    background-color: var(--secondary-highlight-color);
+    color: var(--highlight-color);
+}
+
+.error {
+    background-color: #ac0000;
+    color: #fff;
 }
 
 pre {
     background-color: var(--light-background-color);
     padding: 10px;            
-    border-radius: 5px;      
+    border-radius: 7px;      
     overflow-x: auto;      
-    font-family: 'Courier New',
-        font-size: 14px;          
+    font-family: 'Courier New', font-size: 14px;          
+    margin: 2em 3em;
 }
 
 code {
-    border-radius: 5px;     
-    font-family: 'Courier New',
-        font-size: 14px;          
+    border-radius: 7px;     
+    font-family: 'Courier New', font-size: 14px;          
 }
 
 blockquote p {
@@ -147,18 +196,16 @@ blockquote p {
 h1, h2, h3, h4, h5, h6 {
     color: var(--highlight-color);
     text-transform: uppercase;
-    font-weight: 400;
-    margin-top: 40px;
-    margin-bottom: 20px;
+    font-weight: 500;
 }
 
 img {
-    border-radius: 12px;
+    border-radius: 7px;
     max-width: 100%;
 }
 
 .center-image {
-    color: #0c233f;
+    color: var(--highlight-color);
     text-transform: uppercase;
     text-align: center;
     margin: 10px auto;
@@ -176,30 +223,45 @@ img {
 }
 
 h1 {
-    font-size: 2em;
+    font-size: 1.4em;
     text-align: center;
+    background: var(--highlight-color);
+    color: var(--secondary-highlight-color);
+    padding: 1em;
+    border-radius: 7px;
 }
 
 h2 {
-    font-size: 1.6em;
+    font-size: 1.3em;
+    padding: 0.5em 0em;
+    margin-top: 2.5em;
+    border-bottom: 2px solid var(--highlight-color);
 }
 
 h3 {
-    font-size: 1.3em;
+    font-size: 1.2em;
+    margin-top: 2em;
 }
 
 h4 {
-    font-size: 1.2em;
+    font-size: 1.1em;
+    border-left: 2px solid var(--highlight-color); 
+    padding-left: 0.5em;
+    margin-top: 2em;
 }
 
 h5 {
     font-size: 1.1em;
+    border-left: 6px double var(--highlight-color); 
+    padding-left: 0.5em;
+    margin-top: 2em;
 }
 
 h6 {
     font-size: 1em;
 }
 
-li > p {
-    margin: 5px;
+li {
+    margin: 1em;
+    line-height: 1.5;
 }

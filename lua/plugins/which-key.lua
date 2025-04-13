@@ -51,6 +51,7 @@ return {
             -- Insert
             { "<leader>i",   group = "Insert",                       mode = "n" },
             { "<leader>ii",  group = "Image",                        mode = "n" },
+            { "<leader>it",  group = "Insert Table Template",        mode = "n" },
             { "<leader>ii1", desc = "Insert 1 Image",                mode = "n" },
             { "<leader>ii2", desc = "Insert 2 Images",               mode = "n" },
 
@@ -80,7 +81,7 @@ return {
             { "<leader>d",   desc = "Delete without Yank",           mode = { "n", "v" } },
 
             -- Terminal
-            { "<leader>t",   desc = "Toggle Terminal",               mode = "n" },
+            { "<leader>,",   desc = "Toggle Terminal",               mode = "n" },
 
             -- Undotree Toggle
             { "<leader>u",   desc = "Toggle Undotree",               mode = "n" },

@@ -10,10 +10,11 @@ return {
                     themeVariables = {
                         darkMode = "false",
                         background = "#ffffff",
-                        fontFamily = "Rubik, sans-serif",
-                        fontSize = "14px",
+                        fontFamily = "Rubik, Ubuntu, sans-serif",
+                        -- fontSize = "14px",
 
-                        primaryColor = "#C1D1DD",
+                        -- primaryColor = "#C1D1DD",
+                        primaryColor = "#d6d4f2",
                         primaryTextColor = "#222222",
                         primaryBorderColor = "#222222",
 
@@ -63,5 +64,5 @@ return {
             vim.keymap.set("n", "<leader>mp", ":MarkdownPreviewToggle<CR>", opts)
         end
     },
-    -- { 'dhruvasagar/vim-table-mode' },
+    { 'dhruvasagar/vim-table-mode' },
 }
