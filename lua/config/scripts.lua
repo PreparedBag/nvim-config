@@ -16,7 +16,7 @@ local function insert_logo()
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
 </style>
-<img src="/home/sean/.config/nvim/markdown/dd-horizontal.png" alt="Done Design Logo" style="width:67%; height:auto;">
+<img src="/home/sean/.config/nvim/markdown/dd-horizontal.png" alt="Done Design Logo" style="width:77%; height:auto; display: block; margin: auto; padding: 20px;"/>
     ]]
     -- Split the content into lines and insert at the top
     vim.api.nvim_put(vim.split(logo_html, '\n'), 'c', true, true)
