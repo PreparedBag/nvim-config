@@ -23,22 +23,21 @@ require("lazy").setup({
         { import = "plugins.harpoon" },
         { import = "plugins.lualine" },
         { import = "plugins.markdown" },
+        { import = "plugins.lsp-config" },
         { import = "plugins.noice" },
         { import = "plugins.telescope" },
-        { import = "plugins.toggle-term" },
+        -- { import = "plugins.toggle-term" },
         { import = "plugins.treesitter" },
         { import = "plugins.undotree" },
         { import = "plugins.which-key" },
         { import = "plugins.comment" },
         { import = "plugins.oil" },
-
-        { import = "plugins.lsp-config" },
     },
 
     -- Lazy.nvim options
     checker = {
-        enabled = true,
-        notify = false,
+        enabled = false,
+        notify = true,
     },
 })
 

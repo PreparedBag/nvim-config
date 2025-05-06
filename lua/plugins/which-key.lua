@@ -10,11 +10,16 @@ return {
         })
 
         wk.add({
-            -- Location Navigation
+            -- LSP
             { "<leader>k",   desc = "Next Location",                 mode = "n" },
             { "<leader>j",   desc = "Previous Location",             mode = "n" },
-            { "gd",  desc = "Go To Definition",                      mode = "n" },
-            { "gD",  desc = "Go To Declaration",                     mode = "n" },
+            { "<leader>l",   group = "LSP"},
+            { "<leader>lr",   desc = "Show References",              mode = "n" },
+            { "<leader>lt",   desc = "Toggle Autocompletion",        mode = "n" },
+            { "<leader>la",   desc = "Code Actions",                 mode = "n" },
+            { "<leader>ld",   desc = "Code Diagnostics",             mode = "n" },
+            { "<leader>ls",   desc = "Start LSP Server",             mode = "n" },
+            { "<leader>lc",   desc = "Stop LSP Server",              mode = "n" },
 
             -- Find (Telescope)
             { "<leader>f",   group = "Find" },
@@ -81,7 +86,7 @@ return {
             { "<leader>d",   desc = "Delete without Yank",           mode = { "n", "v" } },
 
             -- Terminal
-            { "<leader>,",   desc = "Toggle Terminal",               mode = "n" },
+            -- { "<leader>,",   desc = "Toggle Terminal",               mode = "n" },
 
             -- Undotree Toggle
             { "<leader>u",   desc = "Toggle Undotree",               mode = "n" },
