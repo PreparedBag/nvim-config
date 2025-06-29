@@ -11,7 +11,7 @@ return {
         event = { "BufReadPre", "BufNewFile" },
         dependencies = { "neovim/nvim-lspconfig" },
         config = function()
-            local servers = { "clangd", "pyright", "lua_ls" }
+            local servers = { "clangd", "pyright", "lua_ls", "ts_ls", "html", "cssls" }
             require("mason-lspconfig").setup({
                 ensure_installed = servers
             })
@@ -20,7 +20,17 @@ return {
             local signature_active = true
             local on_attach = function(_, bufnr)
                 local opts = { noremap = true, silent = true, buffer = bufnr }
-                vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+                vim.keymap.set("n", "gd", function()
+                    local params = vim.lsp.util.make_position_params()
+                    vim.lsp.buf_request(0, "textDocument/definition", params, function(_, result)
+                        if result == nil or vim.tbl_isempty(result) then return end
+                        if vim.tbl_islist(result) then
+                            vim.lsp.util.jump_to_location(result[1], "utf-8")
+                        else
+                            vim.lsp.util.jump_to_location(result, "utf-8")
+                        end
+                    end)
+                end, opts)
                 vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
                 vim.keymap.set('n', '<leader>la', vim.lsp.buf.code_action, opts)
                 vim.keymap.set('n', '<leader>ld', vim.diagnostic.open_float, opts)
@@ -42,12 +52,10 @@ return {
                 end, { noremap = true, silent = true, desc = "Toggle Autocomplete" })
                 vim.keymap.set('n', '<leader>lr', function()
                     require('telescope.builtin').lsp_references {
-                        attach_mappings = function(_, map)
-                            vim.schedule(function()
-                                vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
-                            end)
-                            return true
-                        end
+                        fname_width = 0,
+                        trim_text = true,
+                        show_line = true,
+                        initial_mode = "normal",
                     }
                 end, opts)
             end
