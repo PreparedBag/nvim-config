@@ -77,6 +77,20 @@ vim.api.nvim_set_keymap("n", "<leader>q", ":q<CR>", opts)
 vim.api.nvim_set_keymap("n", "<leader>bd", ":bd<CR>", opts)
 -- Open buffer list with Telescope
 vim.api.nvim_set_keymap("n", "<leader>bb", ":Telescope buffers<CR><ESC>", opts)
+-- Toggle binary mode
+vim.keymap.set("n", "<leader>bt", function()
+    local is_binary = vim.fn.getline(1):match("^%x%x%x%x%x%x%x%x:")
+    if is_binary then
+        vim.cmd("syntax on")
+        vim.cmd("LspStart")
+        vim.cmd("%!xxd -r")
+        vim.cmd("write")
+    else
+        vim.cmd("syntax off")
+        vim.cmd("LspStop")
+        vim.cmd("%!xxd")
+    end
+end, { desc = "Toggle Binary Mode" })
 -- Make file executable
 vim.api.nvim_set_keymap("n", "<leader>x", "<cmd>!chmod +x %<CR>", opts)
 -- Replace word under cursor globally

@@ -98,6 +98,7 @@ return {
             { "<leader>b",   group = "Buffers",                      mode = "n" },
             { "<leader>bb",  desc = "Show Buffers",                  mode = "n" },
             { "<leader>bd",  desc = "Delete Current Buffer",         mode = "n" },
+            { "<leader>bt",  desc = "Toggle Binary View",            mode = "n" },
         })
     end
 }
