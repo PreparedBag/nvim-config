@@ -8,6 +8,8 @@ Make sure you are using the latest neovim. The ones in the apt sources are usual
 
 https://github.com/neovim/neovim/blob/master/INSTALL.md
 
+#### x86_64
+
 ```bash
 curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
 sudo rm -rf /opt/nvim
@@ -20,10 +22,33 @@ Then add to your .bashrc to add to PATH on login:
 export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
 ```
 
-And create an alias to replace 'vim':
+And create an alias to replace 'vim' (Optional):
 
 ```bash
 alias vim='/opt/nvim-linux-x86_64/bin/nvim'
+```
+
+#### arm_64
+
+```sh
+sudo apt install ninja-build gettext cmake unzip curl build-essential
+cd
+git clone https://github.com/neovim/neovim
+cd neovim
+make CMAKE_BUILD_TYPE=Release
+sudo make install
+```
+
+Then add to your .bashrc to add to PATH on login:
+
+```bash
+export PATH="$PATH:$HOME/neovim/build/bin"
+```
+
+And create an alias to replace 'vim' (Optional):
+
+```bash
+alias vim="$HOME/neovim/build/bin/nvim"
 ```
 
 ### pre-requisites

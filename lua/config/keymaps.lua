@@ -41,6 +41,17 @@ vim.api.nvim_set_keymap('n', '<leader>ls', '<cmd>LspStart<CR>', opts)
 -- Stop LSP
 vim.api.nvim_set_keymap('n', '<leader>lc', '<cmd>LspStop<CR>', opts)
 
+-- Marks
+-- Add mark
+vim.api.nvim_set_keymap('n', '<leader>mah', 'mh', opts)
+vim.api.nvim_set_keymap('n', '<leader>maj', 'mj', opts)
+vim.api.nvim_set_keymap('n', '<leader>mak', 'mk', opts)
+vim.api.nvim_set_keymap('n', '<leader>mal', 'ml', opts)
+vim.api.nvim_set_keymap('n', '<leader>mh', '`h', opts)
+vim.api.nvim_set_keymap('n', '<leader>mj', '`j', opts)
+vim.api.nvim_set_keymap('n', '<leader>mk', '`k', opts)
+vim.api.nvim_set_keymap('n', '<leader>ml', '`l', opts)
+
 -- Window Management
 -- Split window horizontally
 vim.api.nvim_set_keymap('n', '<leader>sh', ':split<CR>', opts)

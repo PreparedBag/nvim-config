@@ -75,12 +75,19 @@ return {
             { "<leader>4",   hidden = true },
             { "<leader>5",   hidden = true },
 
-            -- Markdown Tools
-            { "<leader>m",   group = "Markdown",                     mode = "n" },
-            { "<leader>mp",  desc = "Markdown Live Preview Toggle",  mode = "n" },
+            -- Marks and Markdown Tools
+            { "<leader>m",   group = "Marks & Markdown",             mode = "n" },
+            { "<leader>mah",  desc = "Add Mark h",                   mode = "n" },
+            { "<leader>maj",  desc = "Add Mark j",                   mode = "n" },
+            { "<leader>mak",  desc = "Add Mark k",                   mode = "n" },
+            { "<leader>mal",  desc = "Add Mark l",                   mode = "n" },
+            { "<leader>mh",  desc = "Goto Mark h",                   mode = "n" },
+            { "<leader>mj",  desc = "Goto Mark j",                   mode = "n" },
+            { "<leader>mk",  desc = "Goto Mark k",                   mode = "n" },
+            { "<leader>ml",  desc = "Goto Mark l",                   mode = "n" },
 
             -- Clipboard and Paste
-            { "<leader>v",   '"+P',                                  desc = "Paste from Clipboard", mode = { "n", "v" } },
+            { "<leader>v", '"+P', desc = "Paste from Clipboard",     mode = { "n", "v" } },
             { "<leader>p",   desc = "Paste without Yank",            mode = "x" },
             { "<leader>y",   desc = "Yank to Clipboard",             mode = { "n", "v" } },
             { "<leader>d",   desc = "Delete without Yank",           mode = { "n", "v" } },

@@ -54,7 +54,7 @@ return {
             }
 
             vim.g.mkdp_filetypes = { "markdown" }
-            vim.g.mkdp_markdown_css = '/home/sean/.config/nvim/markdown/markdown.css'
+            vim.g.mkdp_markdown_css = vim.fn.expand("$HOME/.config/nvim/markdown/markdown.css")
             vim.g.mkdp_highlight_css = ''
             vim.g.mkdp_port = '6969'
             vim.g.mkdp_theme = 'light'
