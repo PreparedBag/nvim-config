@@ -1,3 +1,5 @@
 .undodir/
 lazy-lock.json
 .luarc.json
+node_modules/
+package-lock.json
