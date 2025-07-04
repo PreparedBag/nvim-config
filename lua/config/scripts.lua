@@ -10,29 +10,13 @@ end
 -- Command to run the function
 vim.api.nvim_create_user_command('InsertCurrentDate', insert_current_date, {})
 
-local function insert_logo()
-    -- Insert the logo and the font import at the top of the document
-    local logo_html = [[
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
-</style>
-<img src="/home/sean/.config/nvim/markdown/dd-horizontal.png" alt="Done Design Logo" style="width:77%; height:auto; display: block; margin: auto; padding: 20px;"/>
-    ]]
-    -- Split the content into lines and insert at the top
-    vim.api.nvim_put(vim.split(logo_html, '\n'), 'c', true, true)
-end
-
--- Create a command to run the function easily
-vim.api.nvim_create_user_command('InsertLogo', insert_logo, {})
-
 local function insert_header()
-    -- Insert the logo and the font import at the top of the document
+    -- Insert the font import at the top of the document
     local header_html = [[
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap');
 </style>
-<br><br><br>
     ]]
     -- Split the content into lines and insert at the top
     vim.api.nvim_put(vim.split(header_html, '\n'), 'c', true, true)
@@ -41,19 +25,7 @@ end
 -- Create a command to run the function easily
 vim.api.nvim_create_user_command('InsertHeader', insert_header, {})
 
--- Function to insert the logo header and a page break
-local function insert_logo_and_page_break()
-    local logo_html = [[
-<div style="page-break-before: always;"></div>
-<img src="/home/sean/.config/nvim/markdown/dd-horizontal.png" alt="Done Design Logo" style="width:67%; height:auto; margin-top: 40px">
-    ]]
-    vim.api.nvim_put(vim.split(logo_html, '\n'), 'c', true, true)
-end
-
--- Create a command to run the function easily
-vim.api.nvim_create_user_command('InsertPageBreakAndLogo', insert_logo_and_page_break, {})
-
--- Function to insert the logo header and a page break
+-- Function to insert a page break
 local function insert_page_break()
     local logo_html = [[<div style="page-break-before: always;"></div>]]
     vim.api.nvim_put({ logo_html }, 'c', true, true)
