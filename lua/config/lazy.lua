@@ -26,6 +26,7 @@ require("lazy").setup({
         { import = "plugins.lsp-config" },
         { import = "plugins.noice" },
         { import = "plugins.telescope" },
+        { import = "plugins.nerdtree" },
         -- { import = "plugins.toggle-term" },
         { import = "plugins.treesitter" },
         { import = "plugins.undotree" },
