@@ -1,6 +1,6 @@
-# nvim-config
+# NVIM-CONFIG
 
-## installation
+## INSTALLATION
 
 ***NOTE:*** Before continuing, backup any local nvim configurations you may have in ~/.config/nvim
 
@@ -10,7 +10,7 @@ Open terminal and clone the repo into the nvim folder:
 git clone https://github.com/PreparedBag/nvim-config.git ~/.config/nvim
 ```
 
-### update neovim
+### UPDATE NEOVIM
 
 Make sure you are using the latest neovim. The ones in the apt sources are usually too old for these plugins:
 
@@ -36,7 +36,7 @@ And create an alias in ~/.bash_aliases to replace 'vim' (Optional):
 grep -qxF "alias vim='/opt/nvim-linux-x86_64/bin/nvim'" ~/.bash_aliases || echo "alias vim='/opt/nvim-linux-x86_64/bin/nvim'" >> ~/.bash_aliases
 ```
 
-#### arm_64
+#### ARM_64
 
 ```sh
 sudo apt install ninja-build gettext cmake unzip curl build-essential
@@ -59,7 +59,7 @@ And create an alias to replace 'vim' (Optional):
 grep -qxF "alias vim='$HOME/neovim/build/bin/nvim'" ~/.bash_aliases || echo "alias vim='$HOME/neovim/build/bin/nvim'" >> ~/.bash_aliases
 ```
 
-### pre-requisites
+### PRE-REQUISITES
 
 For full functionality:
 
@@ -84,7 +84,7 @@ Check health of plugins by going into nvim and running:
 
 You can add additional dependencies if needed.
 
-## optional
+## OPTIONAL
 
 For markdown-preview:
 
@@ -94,7 +94,7 @@ npm install
 npm audit fix
 ```
 
-### updating mermaid.js
+### UPDATING MERMAID.JS
 
 To update mermaid.js, copy the version you want to:
 
