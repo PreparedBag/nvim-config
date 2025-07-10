@@ -59,7 +59,7 @@ vim.opt.hidden = true
 -- Enable line wrapping
 vim.opt.wrap = true
 -- Use system clipboard for all yank, delete, change, and put operations
-vim.opt.clipboard = "unnamedplus"
+-- vim.opt.clipboard = "unnamedplus"
 -- Highlight the current line
 vim.opt.cursorline = true
 

@@ -70,10 +70,10 @@ vim.api.nvim_set_keymap('n', '<leader>wk', '<C-w>k', opts)
 
 -- Clipboard
 -- Paste from system clipboard
-vim.api.nvim_set_keymap('n', '<leader>v', '"+P', opts)
-vim.api.nvim_set_keymap('v', '<leader>v', '"+P', opts)
+vim.api.nvim_set_keymap('n', '<leader>p', '"+P', opts)
+vim.api.nvim_set_keymap('v', '<leader>p', '"+P', opts)
 -- Paste over selection without overwriting default register
-vim.api.nvim_set_keymap("x", "<leader>p", [["_dP]], opts)
+vim.api.nvim_set_keymap("x", "<leader>v", [["_dP]], opts)
 -- Yank to system clipboard
 vim.api.nvim_set_keymap("n", "<leader>y", [["+y]], opts)
 vim.api.nvim_set_keymap("v", "<leader>y", [["+y]], opts)
@@ -90,6 +90,7 @@ vim.api.nvim_set_keymap("n", "<leader>bd", ":bd<CR>", opts)
 vim.api.nvim_set_keymap("n", "<leader>bb", ":Telescope buffers<CR><ESC>", opts)
 -- Toggle binary mode
 vim.keymap.set("n", "<leader>bt", function()
+    if vim.bo.filetype == "oil" or vim.bo.buftype ~= "" then return end
     local is_binary = vim.fn.getline(1):match("^%x%x%x%x%x%x%x%x:")
     if is_binary then
         vim.cmd("syntax on")
