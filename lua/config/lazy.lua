@@ -27,12 +27,12 @@ require("lazy").setup({
         { import = "plugins.noice" },
         { import = "plugins.telescope" },
         { import = "plugins.nerdtree" },
-        -- { import = "plugins.toggle-term" },
         { import = "plugins.treesitter" },
         { import = "plugins.undotree" },
         { import = "plugins.which-key" },
         { import = "plugins.comment" },
         { import = "plugins.oil" },
+        -- { import = "plugins.toggle-term" },
     },
 
     -- Lazy.nvim options
