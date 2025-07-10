@@ -2,6 +2,14 @@
 
 ## installation
 
+***NOTE:*** Before continuing, backup any local nvim configurations you may have in ~/.config/nvim
+
+Open terminal and clone the repo into the nvim folder:
+
+```bash
+git clone https://github.com/PreparedBag/nvim-config.git ~/.config/nvim
+```
+
 ### update neovim
 
 Make sure you are using the latest neovim. The ones in the apt sources are usually too old for these plugins:
@@ -19,13 +27,13 @@ sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
 Then add to your .bashrc to add to PATH on login:
 
 ```bash
-export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
+grep -qxF 'export PATH="$PATH:/opt/nvim-linux-x86_64/bin"' ~/.bashrc || echo 'export PATH="$PATH:/opt/nvim-linux-x86_64/bin"' >> ~/.bashrc
 ```
 
-And create an alias to replace 'vim' (Optional):
+And create an alias in ~/.bash_aliases to replace 'vim' (Optional):
 
 ```bash
-alias vim='/opt/nvim-linux-x86_64/bin/nvim'
+grep -qxF "alias vim='/opt/nvim-linux-x86_64/bin/nvim'" ~/.bash_aliases || echo "alias vim='/opt/nvim-linux-x86_64/bin/nvim'" >> ~/.bash_aliases
 ```
 
 #### arm_64
@@ -42,13 +50,13 @@ sudo make install
 Then add to your .bashrc to add to PATH on login:
 
 ```bash
-export PATH="$PATH:$HOME/neovim/build/bin"
+grep -qxF 'export PATH="$PATH:$HOME/neovim/build/bin"' ~/.bashrc || echo 'export PATH="$PATH:$HOME/neovim/build/bin"' >> ~/.bashrc
 ```
 
 And create an alias to replace 'vim' (Optional):
 
 ```bash
-alias vim="$HOME/neovim/build/bin/nvim"
+grep -qxF "alias vim='$HOME/neovim/build/bin/nvim'" ~/.bash_aliases || echo "alias vim='$HOME/neovim/build/bin/nvim'" >> ~/.bash_aliases
 ```
 
 ### pre-requisites
@@ -90,8 +98,12 @@ npm audit fix
 
 To update mermaid.js, copy the version you want to:
 
-```
+```bash
 ~/.local/share/nvim/lazy/markdown-preview.nvim/app/_static/
 ```
 
-Version 11.6.0 is included and the latest as of the last commit.
+Version 11.6.0 is included and can be copied with:
+
+```bash
+cp ~/.config/nvim/mermaid-11.6.0.min.js ~/.local/share/nvim/lazy/markdown-preview.nvim/app/_static/
+```
