@@ -86,7 +86,19 @@ You can add additional dependencies if needed.
 
 ## OPTIONAL
 
-For markdown-preview:
+### INSTALL CATPUCCIN
+
+Navigate to a directory where you want to clone the repo and run:
+
+```bash
+git clone https://github.com/catppuccin/gnome-terminal.git
+cd gnome-terminal
+./install.py
+```
+
+### MARKDOWN-PREVIEW
+
+Install markdown preview with npm:
 
 ```bash
 cd ~/.local/share/nvim/lazy/markdown-preview.nvim/app

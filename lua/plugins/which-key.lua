@@ -75,6 +75,9 @@ return {
             { "<leader>3",          hidden = true },
             { "<leader>4",          hidden = true },
             { "<leader>5",          hidden = true },
+            { "<leader>6",          hidden = true },
+            { "<leader>7",          hidden = true },
+            { "<leader>8",          hidden = true },
 
             -- Marks and Markdown Tools
             { "<leader>m",          group = "Markdown",                             mode = "n" },

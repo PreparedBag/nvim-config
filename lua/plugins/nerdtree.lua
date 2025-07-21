@@ -14,6 +14,7 @@ return {
             pattern = 'nerdtree',
             callback = function()
                 vim.keymap.set('n', 't', '<Nop>', { buffer = true, noremap = true, silent = true })
+                vim.keymap.set('n', 'T', '<Nop>', { buffer = true, noremap = true, silent = true })
             end,
         })
     end,

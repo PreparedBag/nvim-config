@@ -83,9 +83,11 @@ vim.opt.foldlevel = 99
 vim.opt.foldlevelstart = 99
 -- Enable folding
 vim.opt.foldenable = true
+-- Set fold to syntax 
+vim.opt.foldmethod = "syntax"
 -- Set the fold column width to 0 (hide fold column)
-vim.opt.foldcolumn = "0"
+-- vim.opt.foldcolumn = "0"
 -- Set maximum nested folds
 vim.opt.foldnestmax = 5
 -- Set empty fold text (fold summary)
-vim.opt.foldtext = ""
+-- vim.opt.foldtext = ""

@@ -9,7 +9,7 @@ return {
             -- Function to set the working directory to the original one
             local set_telescope_cwd_to_original = function()
                 if _G.original_working_directory then
-                    vim.cmd('lcd ' .. vim.fn.fnameescape(_G.original_working_directory))
+                    vim.cmd('cd ' .. vim.fn.fnameescape(_G.original_working_directory))
                     print('Changed working directory to original: ' .. _G.original_working_directory)
                 else
                     print('Error: Original working directory is not set.')
@@ -23,7 +23,7 @@ return {
                 -- Check if Oil is active and set the directory accordingly
                 local oil_dir = oil.get_current_dir()  -- This is an Oil-specific function
                 if oil_dir and vim.fn.isdirectory(oil_dir) == 1 then
-                    vim.cmd('lcd ' .. vim.fn.fnameescape(oil_dir))
+                    vim.cmd('cd ' .. vim.fn.fnameescape(oil_dir))
                     print('Changed working directory to Oil path: ' .. oil_dir)
                 else
                     -- Fallback to regular Netrw behavior
