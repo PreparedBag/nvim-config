@@ -31,6 +31,7 @@ require("lazy").setup({
         { import = "plugins.which-key" },
         { import = "plugins.comment" },
         { import = "plugins.oil" },
+        { import = "plugins.bracey" },
         -- { import = "plugins.toggle-term" },
     },
 

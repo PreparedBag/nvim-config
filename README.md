@@ -64,7 +64,7 @@ grep -qxF "alias vim='$HOME/neovim/build/bin/nvim'" ~/.bash_aliases || echo "ali
 For full functionality:
 
 ```sh
-sudo apt install luarocks ripgrep nodejs npm golang cargo default-jdk-headless default-jre-headless fd-find
+sudo apt install luarocks ripgrep nodejs npm golang cargo default-jdk-headless default-jre-headless fd-find python3-neovim
 sudo npm install -g neovim
 ```
 

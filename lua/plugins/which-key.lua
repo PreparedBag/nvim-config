@@ -80,7 +80,8 @@ return {
             { "<leader>8",          hidden = true },
 
             -- Marks and Markdown Tools
-            { "<leader>m",          group = "Markdown",                             mode = "n" },
+            { "<leader>m",          group = "Markdown & HTML",                      mode = "n" },
+            { "<leader>mh",         desc = "Start HTML Server",                      mode = "n" },
             -- { "<leader>m",          group = "Marks & Markdown",                     mode = "n" },
             -- { "<leader>mah",        desc = "Add Mark h",                            mode = "n" },
             -- { "<leader>maj",        desc = "Add Mark j",                            mode = "n" },
