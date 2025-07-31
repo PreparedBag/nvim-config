@@ -16,6 +16,13 @@ return {
                 ensure_installed = servers
             })
             local lspconfig = require("lspconfig")
+            lspconfig.html.setup({
+                settings = {
+                    css = { validate = false },
+                    less = { validate = false },
+                    scss = { validate = false },
+                }
+            })
 
             local signature_active = true
             local on_attach = function(_, bufnr)
@@ -34,6 +41,12 @@ return {
                 vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
                 vim.keymap.set('n', '<leader>la', vim.lsp.buf.code_action, opts)
                 vim.keymap.set('n', '<leader>ld', vim.diagnostic.open_float, opts)
+                vim.keymap.set('n', '<leader>lc', function()
+                    vim.lsp.stop_client(vim.lsp.get_active_clients({ bufnr = 0 }))
+                end, opts)
+                vim.keymap.set('n', '<leader>ls', function()
+                    vim.cmd("edit")
+                end, opts)
                 vim.keymap.set('n', '<C-h>', vim.lsp.buf.signature_help, opts)
                 vim.keymap.set('i', '<C-h>', function()
                     if not signature_active then

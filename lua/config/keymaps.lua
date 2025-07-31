@@ -35,12 +35,6 @@ vim.api.nvim_set_keymap("n", "<leader>k", "<cmd>lnext<CR>zz", opts)
 -- Go to previous location list item and center
 vim.api.nvim_set_keymap("n", "<leader>j", "<cmd>lprev<CR>zz", opts)
 
--- LSP Management
--- Start LSP
-vim.api.nvim_set_keymap('n', '<leader>ls', '<cmd>LspStart<CR>', opts)
--- Stop LSP
-vim.api.nvim_set_keymap('n', '<leader>lc', '<cmd>LspStop<CR>', opts)
-
 -- Marks
 -- Add mark
 -- vim.api.nvim_set_keymap('n', '<leader>mah', 'mh', opts)
