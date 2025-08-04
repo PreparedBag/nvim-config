@@ -42,7 +42,9 @@ return {
                 vim.keymap.set('n', '<leader>la', vim.lsp.buf.code_action, opts)
                 vim.keymap.set('n', '<leader>ld', vim.diagnostic.open_float, opts)
                 vim.keymap.set('n', '<leader>lc', function()
-                    vim.lsp.stop_client(vim.lsp.get_active_clients({ bufnr = 0 }))
+                    for _, client in ipairs(vim.lsp.get_clients()) do
+                        vim.lsp.stop_client(client.id)
+                    end
                 end, opts)
                 vim.keymap.set('n', '<leader>ls', function()
                     vim.cmd("edit")
