@@ -102,6 +102,22 @@ vim.api.nvim_set_keymap("n", "<leader>x", "<cmd>!chmod +x %<CR>", opts)
 -- Replace word under cursor globally
 vim.api.nvim_set_keymap("n", "<leader>rw", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], opts)
 
+vim.keymap.set('n', '<leader>lr', function()
+    vim.notify("LSP not attached")
+end, opts)
+vim.keymap.set('n', '<leader>gD', function()
+    vim.notify("LSP not attached")
+end, opts)
+vim.keymap.set('n', '<leader>ld', function()
+    vim.notify("LSP not attached")
+end, opts)
+vim.keymap.set('n', '<leader>la', function()
+    vim.notify("LSP not attached")
+end, opts)
+vim.keymap.set('n', '<leader>lt', function()
+    vim.notify("LSP not attached")
+end, opts)
+
 -- Terminal
 -- Exit terminal mode
 vim.api.nvim_set_keymap('t', '<ESC>', '<C-\\><C-n>', opts)

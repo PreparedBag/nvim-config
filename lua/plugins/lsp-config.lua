@@ -34,21 +34,13 @@ return {
                         if vim.tbl_islist(result) then
                             vim.lsp.util.jump_to_location(result[1], "utf-8")
                         else
-                            vim.lsp.util.jump_to_location(result, "utf-8")
+                            vim.lsp.buf.definition(result, "utf-8")
                         end
                     end)
                 end, opts)
-                vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
+                -- vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
                 vim.keymap.set('n', '<leader>la', vim.lsp.buf.code_action, opts)
                 vim.keymap.set('n', '<leader>ld', vim.diagnostic.open_float, opts)
-                vim.keymap.set('n', '<leader>lc', function()
-                    for _, client in ipairs(vim.lsp.get_clients()) do
-                        vim.lsp.stop_client(client.id)
-                    end
-                end, opts)
-                vim.keymap.set('n', '<leader>ls', function()
-                    vim.cmd("edit")
-                end, opts)
                 vim.keymap.set('n', '<C-h>', vim.lsp.buf.signature_help, opts)
                 vim.keymap.set('i', '<C-h>', function()
                     if not signature_active then
@@ -74,6 +66,29 @@ return {
                     }
                 end, opts)
             end
+
+            local opts = { noremap = true, silent = true }
+            vim.keymap.set('n', '<leader>lc', function()
+                for _, client in ipairs(vim.lsp.get_clients()) do
+                    vim.lsp.stop_client(client.id)
+                end
+                vim.api.nvim_input('<Esc>')
+                vim.notify("LSP clients stopped")
+            end, opts)
+            vim.keymap.set('n', '<leader>ls', function()
+                local ok = pcall(vim.cmd, "edit")
+                if not ok then
+                    vim.notify("Please save pending changes or discard...", vim.log.levels.WARN)
+                    return
+                end
+
+                local bufnr = vim.api.nvim_get_current_buf()
+                for _, client in ipairs(vim.lsp.get_clients({ bufnr = bufnr })) do
+                    on_attach(client, bufnr)
+                end
+
+                vim.notify("LSP started")
+            end, opts)
 
             vim.api.nvim_create_autocmd({ "InsertCharPre", "CursorMoved" }, {
                 callback = function()
