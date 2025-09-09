@@ -104,7 +104,11 @@ vim.api.nvim_set_keymap('n', '<leader>ig', ':lua insert_gantt_template()<CR>', {
 
 -- Common function to open Telescope and get an image file using ripgrep
 function select_image(callback, prompt_title)
-    local image_dir = vim.fn.expand("~/Pictures/") -- Ensure correct path resolution
+    local buf_path = vim.api.nvim_buf_get_name(0)
+    local buf_dir = buf_path ~= "" and vim.fn.fnamemodify(buf_path, ":p:h") or vim.fn.getcwd()
+    local image_dir = vim.fn.fnamemodify(buf_dir .. "/assets", ":p")
+
+    -- local image_dir = vim.fn.expand("assets/") -- Ensure correct path resolution
 
     -- Check if the directory exists, if not, create it
     if vim.fn.isdirectory(image_dir) == 0 then
@@ -121,9 +125,10 @@ function select_image(callback, prompt_title)
             map('i', '<CR>', function(prompt_bufnr)
                 local selection = require('telescope.actions.state').get_selected_entry()
                 require('telescope.actions').close(prompt_bufnr)
+                local rel = vim.fn.fnamemodify(selection.path, ":." .. buf_dir)
 
                 -- Call the callback with the selected file path
-                callback(selection.path)
+                callback(rel)
             end)
             return true
         end

@@ -15,6 +15,10 @@ break {
     display: block;
 }
 
+hidden {
+    display: none;
+}
+
 :root {
     --background-color: #fff;
     --light-background-color: #d6d4f2;
