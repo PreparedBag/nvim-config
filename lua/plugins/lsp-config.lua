@@ -15,7 +15,10 @@ return {
             require("mason-lspconfig").setup({
                 ensure_installed = servers
             })
+
             local lspconfig = require("lspconfig")
+
+            -- HTML LSP specific settings
             lspconfig.html.setup({
                 settings = {
                     css = { validate = false },
@@ -24,9 +27,26 @@ return {
                 }
             })
 
+            -- Helper function to enable autocomplete
+            local function enable_autocomplete()
+                local cmp = require('cmp')
+                cmp.setup({ completion = { autocomplete = { "TextChanged" } } })
+            end
+
+            -- Helper function to disable autocomplete
+            local function disable_autocomplete()
+                local cmp = require('cmp')
+                cmp.setup({ completion = { autocomplete = {} } })
+            end
+
+            -- Track signature help window state
             local signature_active = true
+
+            -- LSP on_attach callback - sets up buffer-local keymaps
             local on_attach = function(_, bufnr)
                 local opts = { noremap = true, silent = true, buffer = bufnr }
+
+                -- Go to definition
                 vim.keymap.set("n", "gd", function()
                     local params = vim.lsp.util.make_position_params()
                     vim.lsp.buf_request(0, "textDocument/definition", params, function(_, result)
@@ -38,25 +58,25 @@ return {
                         end
                     end)
                 end, opts)
-                -- vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
+
+                -- Code action
                 vim.keymap.set('n', '<leader>la', vim.lsp.buf.code_action, opts)
+
+                -- Diagnostic float
                 vim.keymap.set('n', '<leader>ld', vim.diagnostic.open_float, opts)
+
+                -- Signature help (normal mode)
                 vim.keymap.set('n', '<C-h>', vim.lsp.buf.signature_help, opts)
+
+                -- Signature help (insert mode - only if not already active)
                 vim.keymap.set('i', '<C-h>', function()
                     if not signature_active then
                         vim.lsp.buf.signature_help()
                         signature_active = true
                     end
                 end, opts)
-                vim.keymap.set('n', '<leader>lt', function()
-                    local cmp = require('cmp')
-                    local cfg = cmp.get_config()
-                    local auto = cfg.completion.autocomplete or {}
-                    local is_enabled = vim.tbl_contains(auto, "TextChanged")
-                    local new_value = is_enabled and {} or { "TextChanged" }
-                    cmp.setup({ completion = { autocomplete = new_value } })
-                    require("noice").notify("Autocomplete " .. (is_enabled and "disabled" or "enabled"))
-                end, { noremap = true, silent = true, desc = "Toggle Autocomplete" })
+
+                -- LSP references via Telescope
                 vim.keymap.set('n', '<leader>lr', function()
                     require('telescope.builtin').lsp_references {
                         fname_width = 0,
@@ -67,14 +87,17 @@ return {
                 end, opts)
             end
 
+            -- Global keymaps (not buffer-specific)
             local opts = { noremap = true, silent = true }
+
+            -- <leader>lc - Cancel/disable autocomplete entirely
             vim.keymap.set('n', '<leader>lc', function()
-                for _, client in ipairs(vim.lsp.get_clients()) do
-                    vim.lsp.stop_client(client.id)
-                end
+                disable_autocomplete()
                 vim.api.nvim_input('<Esc>')
-                vim.notify("LSP clients stopped")
+                vim.notify("Autocomplete disabled")
             end, opts)
+
+            -- <leader>ls - Start LSP and enable autocomplete
             vim.keymap.set('n', '<leader>ls', function()
                 local ok = pcall(vim.cmd, "edit")
                 if not ok then
@@ -83,13 +106,17 @@ return {
                 end
 
                 local bufnr = vim.api.nvim_get_current_buf()
-                for _, client in ipairs(vim.lsp.get_clients({ bufnr = bufnr })) do
+                local clients = vim.lsp.get_clients({ bufnr = bufnr })
+
+                for _, client in ipairs(clients) do
                     on_attach(client, bufnr)
                 end
 
-                vim.notify("LSP started")
+                enable_autocomplete()
+                vim.notify("LSP started with autocomplete enabled")
             end, opts)
 
+            -- Track signature help window state
             vim.api.nvim_create_autocmd({ "InsertCharPre", "CursorMoved" }, {
                 callback = function()
                     local active = false
@@ -104,6 +131,20 @@ return {
                 end,
             })
 
+            -- Re-enable autocomplete when switching buffers (for split navigation)
+            vim.api.nvim_create_autocmd("BufEnter", {
+                callback = function()
+                    local bufnr = vim.api.nvim_get_current_buf()
+                    local clients = vim.lsp.get_clients({ bufnr = bufnr })
+
+                    -- Only re-enable if LSP is attached to this buffer
+                    if #clients > 0 then
+                        enable_autocomplete()
+                    end
+                end,
+            })
+
+            -- Setup all LSP servers
             for _, server in ipairs(servers) do
                 local capabilities = require("cmp_nvim_lsp").default_capabilities()
                 lspconfig[server].setup({
@@ -151,6 +192,9 @@ return {
                 sources = cmp.config.sources({
                     { name = "nvim_lsp", keyword_length = 1 },
                 }),
+                completion = {
+                    autocomplete = { "TextChanged" }
+                }
             })
         end
     }
