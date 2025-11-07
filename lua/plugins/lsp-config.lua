@@ -39,6 +39,94 @@ return {
                 cmp.setup({ completion = { autocomplete = {} } })
             end
 
+            -- <leader>lg - Generate compile_commands.json
+            vim.keymap.set('n', '<leader>lg', function()
+                -- Find project root (git root or current directory)
+                local function find_project_root()
+                    local git_root = vim.fn.system("git rev-parse --show-toplevel 2>/dev/null"):gsub("\n", "")
+                    if vim.v.shell_error == 0 and git_root ~= "" then
+                        return git_root
+                    end
+                    return vim.fn.getcwd()
+                end
+
+                -- Find all .c files recursively
+                local function find_c_files(root)
+                    local c_files = {}
+                    local find_cmd = string.format("find '%s' -type f -name '*.c' 2>/dev/null", root)
+                    local handle = io.popen(find_cmd)
+                    if handle then
+                        for file in handle:lines() do
+                            table.insert(c_files, file)
+                        end
+                        handle:close()
+                    end
+                    return c_files
+                end
+
+                -- Generate compile_commands.json
+                local function generate_compile_commands(root, c_files)
+                    local compile_commands = {}
+
+                    -- Standard compiler flags with system includes
+                    local flags = {
+                        "-std=c11",
+                        "-Wall",
+                        "-Wextra",
+                        "-I.",
+                        "-I" .. root,
+                        "-I/usr/include",
+                        "-I/usr/local/include",
+                    }
+
+                    for _, file in ipairs(c_files) do
+                        local entry = {
+                            directory = root,
+                            command = "gcc " .. table.concat(flags, " ") .. " -c " .. file,
+                            file = file
+                        }
+                        table.insert(compile_commands, entry)
+                    end
+
+                    return compile_commands
+                end
+
+                -- Write compile_commands.json
+                local function write_compile_commands(root, commands)
+                    local json = vim.fn.json_encode(commands)
+                    local output_file = root .. "/compile_commands.json"
+                    local file = io.open(output_file, "w")
+                    if file then
+                        file:write(json)
+                        file:close()
+                        return output_file
+                    end
+                    return nil
+                end
+
+                vim.notify("Generating compile_commands.json...", vim.log.levels.INFO)
+
+                local root = find_project_root()
+                local c_files = find_c_files(root)
+
+                if #c_files == 0 then
+                    vim.notify("No .c files found in " .. root, vim.log.levels.WARN)
+                    return
+                end
+
+                local commands = generate_compile_commands(root, c_files)
+                local output = write_compile_commands(root, commands)
+
+                if output then
+                    vim.notify(string.format("Generated %s with %d entries", output, #c_files), vim.log.levels.INFO)
+
+                    -- Restart LSP to pick up the new compile_commands.json
+                    vim.cmd("LspRestart")
+                else
+                    vim.notify("Failed to write compile_commands.json", vim.log.levels.ERROR)
+                end
+            end, opts)
+
             -- Track signature help window state
             local signature_active = true
 

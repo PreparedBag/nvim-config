@@ -19,6 +19,7 @@ return {
             { "<leader>lt",         desc = "Toggle Autocompletion",                mode = "n" },
             { "<leader>la",         desc = "Code Actions",                         mode = "n" },
             { "<leader>ld",         desc = "Code Diagnostics",                     mode = "n" },
+            { "<leader>lg",         desc = "Generate compile_commands.json",       mode = "n" },
             { "<leader>ls",         desc = "Start LSP Server",                     mode = "n" },
             { "<leader>lc",         desc = "Stop LSP Server",                      mode = "n" },
 
