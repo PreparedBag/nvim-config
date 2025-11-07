@@ -16,17 +16,6 @@ return {
                 ensure_installed = servers
             })
 
-            local lspconfig = require("lspconfig")
-
-            -- HTML LSP specific settings
-            lspconfig.html.setup({
-                settings = {
-                    css = { validate = false },
-                    less = { validate = false },
-                    scss = { validate = false },
-                }
-            })
-
             -- Helper function to enable autocomplete
             local function enable_autocomplete()
                 local cmp = require('cmp')
@@ -180,13 +169,27 @@ return {
                 end,
             })
 
-            -- Setup all LSP servers
-            for _, server in ipairs(servers) do
-                local capabilities = require("cmp_nvim_lsp").default_capabilities()
-                lspconfig[server].setup({
+            -- Setup all LSP servers using the new vim.lsp.config API (Neovim 0.11+)
+            local capabilities = require("cmp_nvim_lsp").default_capabilities()
+
+            -- HTML LSP with specific settings
+            vim.lsp.config.html = {
+                settings = {
+                    css = { validate = false },
+                    less = { validate = false },
+                    scss = { validate = false },
+                },
+                on_attach = on_attach,
+                capabilities = capabilities,
+            }
+
+            -- Setup remaining LSP servers
+            local other_servers = { "clangd", "pyright", "lua_ls", "ts_ls", "cssls" }
+            for _, server in ipairs(other_servers) do
+                vim.lsp.config[server] = {
                     on_attach = on_attach,
                     capabilities = capabilities,
-                })
+                }
             end
         end
     },
