@@ -154,26 +154,129 @@ return {
 
                 local opts = { noremap = true, silent = true, buffer = bufnr }
 
-                -- Go to definition
-                vim.keymap.set("n", "gd", function()
-                    local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
-                    vim.lsp.buf_request(0, "textDocument/definition", params, function(_, result)
-                        if result == nil or vim.tbl_isempty(result) then return end
-                        if vim.tbl_islist(result) then
-                            vim.lsp.util.jump_to_location(result[1], client.offset_encoding)
-                        else
-                            vim.lsp.buf.definition(result, client.offset_encoding)
-                        end
-                    end)
-                end, opts)
-
                 -- Code action
                 vim.keymap.set('n', '<leader>la', vim.lsp.buf.code_action, opts)
 
                 -- Diagnostic float
                 vim.keymap.set('n', '<leader>ld', vim.diagnostic.open_float, opts)
 
-                -- Signature help (normal mode)
+                -- Diagnostic function to check LSP configuration for C/C++ macro/static definitions
+                -- vim.keymap.set('n', '<leader>ld', function()
+                --     local bufnr = vim.api.nvim_get_current_buf()
+                --     local clients = vim.lsp.get_clients({ bufnr = bufnr })
+                --
+                --     if #clients == 0 then
+                --         vim.notify("No LSP client attached", vim.log.levels.WARN)
+                --         return
+                --     end
+                --
+                --     vim.notify("=== LSP Diagnostic Info ===", vim.log.levels.INFO)
+                --
+                --     for _, client in ipairs(clients) do
+                --         vim.notify(string.format("\nClient: %s", client.name), vim.log.levels.INFO)
+                --         vim.notify(string.format("Root dir: %s", client.config.root_dir or "none"), vim.log.levels.INFO)
+                --
+                --         -- Check for common C/C++ language servers
+                --         if client.name == "clangd" then
+                --             vim.notify("\nclangd detected - Checking configuration:", vim.log.levels.INFO)
+                --             vim.notify("Recommended clangd settings for macros:", vim.log.levels.INFO)
+                --             vim.notify("  --query-driver=<your-gcc-path>", vim.log.levels.INFO)
+                --             vim.notify("  --compile-commands-dir=<build-dir>", vim.log.levels.INFO)
+                --             vim.notify("  --background-index", vim.log.levels.INFO)
+                --             vim.notify("  --completion-style=detailed", vim.log.levels.INFO)
+                --
+                --         elseif client.name == "ccls" then
+                --             vim.notify("\nccls detected - Check .ccls or compile_commands.json", vim.log.levels.INFO)
+                --
+                --         end
+                --
+                --         -- Show capabilities
+                --         if client.server_capabilities then
+                --             vim.notify("\nServer capabilities:", vim.log.levels.INFO)
+                --             vim.notify(string.format("  definitionProvider: %s", 
+                --                 vim.inspect(client.server_capabilities.definitionProvider)), vim.log.levels.INFO)
+                --             vim.notify(string.format("  referencesProvider: %s", 
+                --                 vim.inspect(client.server_capabilities.referencesProvider)), vim.log.levels.INFO)
+                --         end
+                --     end
+                --
+                --     -- Check for compile_commands.json
+                --     local root_dir = clients[1].config.root_dir
+                --     if root_dir then
+                --         local compile_commands = root_dir .. "/compile_commands.json"
+                --         local build_compile_commands = root_dir .. "/build/compile_commands.json"
+                --
+                --         if vim.fn.filereadable(compile_commands) == 1 then
+                --             vim.notify(string.format("\n✓ Found: %s", compile_commands), vim.log.levels.INFO)
+                --         elseif vim.fn.filereadable(build_compile_commands) == 1 then
+                --             vim.notify(string.format("\n✓ Found: %s", build_compile_commands), vim.log.levels.INFO)
+                --         else
+                --             vim.notify("\n✗ compile_commands.json not found!", vim.log.levels.WARN)
+                --             vim.notify("Generate it with: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON", vim.log.levels.INFO)
+                --         end
+                --     end
+                --
+                --     -- Check current file
+                --     local filepath = vim.api.nvim_buf_get_name(bufnr)
+                --     vim.notify(string.format("\nCurrent file: %s", filepath), vim.log.levels.INFO)
+                --
+                --     -- Get word under cursor
+                --     local word = vim.fn.expand("<cword>")
+                --     vim.notify(string.format("Word under cursor: %s", word), vim.log.levels.INFO)
+                --
+                -- end, { desc = "LSP diagnostics for macro/static definitions" })
+
+                -- Common fixes for missing macro/static definitions:
+                --
+                -- 1. FOR CLANGD:
+                --    Add to your LSP config:
+                --    ```lua
+                --    require('lspconfig').clangd.setup({
+                --        cmd = {
+                --            "clangd",
+                --            "--background-index",
+                --            "--clang-tidy",
+                --            "--completion-style=detailed",
+                --            "--header-insertion=never",
+                --            "--query-driver=/path/to/your/gcc",  -- Important for system headers
+                --        },
+                --        root_dir = require('lspconfig.util').root_pattern(
+                --            'compile_commands.json',
+                --            '.clangd',
+                --            '.git'
+                --        ),
+                --    })
+                --    ```
+                --
+                -- 2. GENERATE compile_commands.json:
+                --    For CMake projects:
+                --    cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -B build
+                --    
+                --    For Zephyr/West projects:
+                --    west build -t compile_commands.json
+                --    
+                --    Then symlink to project root:
+                --    ln -s build/compile_commands.json compile_commands.json
+                --
+                -- 3. CREATE .clangd configuration file in project root:
+                --    ```yaml
+                --    CompileFlags:
+                --      Add: 
+                --        - "-I/path/to/include/dirs"
+                --        - "-DCONFIG_NET_SAMPLE_NUM_WEBSOCKET_HANDLERS=4"  # Define missing macros
+                --      Remove: 
+                --        - "-m*"  # Remove machine-specific flags if needed
+                --    ```
+                --
+                -- 4. FOR ZEPHYR PROJECTS specifically:
+                --    Make sure clangd can find your Kconfig options:
+                --    - The compile_commands.json should include -include autoconf.h
+                --    - Check that build/zephyr/include/generated/autoconf.h exists
+                --
+                -- 5. MANUAL DEFINITION SEARCH:
+                --    Use ripgrep to find where the macro is defined:
+                --    :terminal rg "CONFIG_NET_SAMPLE_NUM_WEBSOCKET_HANDLERS" 
+
                 vim.keymap.set('n', '<C-h>', vim.lsp.buf.signature_help, opts)
 
                 -- Signature help (insert mode - only if not already active)
@@ -184,25 +287,150 @@ return {
                     end
                 end, opts)
 
-                -- LSP references via Telescope
-                vim.keymap.set('n', '<leader>lr', function()
-                    require('telescope.builtin').lsp_references {
-                        fname_width = 0,
-                        trim_text = true,
-                        show_line = true,
-                        initial_mode = "normal",
-                    }
+                vim.keymap.set("n", "gd", function()
+                    local bufnr = vim.api.nvim_get_current_buf()
+                    local clients = vim.lsp.get_clients({ bufnr = bufnr })
+
+                    if #clients == 0 then
+                        vim.notify("gd: No LSP client attached", vim.log.levels.WARN)
+                        return
+                    end
+
+                    local client = clients[1]
+                    local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
+
+                    vim.lsp.buf_request(0, "textDocument/definition", params, function(err, result)
+                        if err then
+                            vim.notify(string.format("gd: Error - %s", vim.inspect(err)), vim.log.levels.ERROR)
+                            return
+                        end
+
+                        if result == nil or vim.tbl_isempty(result) then 
+                            vim.notify("gd: No definition found", vim.log.levels.WARN)
+                            return 
+                        end
+
+                        if vim.islist(result) then
+                            vim.notify(string.format("gd: Jumping to first of %d result(s)", #result), vim.log.levels.INFO)
+                            vim.lsp.util.show_document(result[1], client.offset_encoding, { focus = true })
+                        else
+                            vim.notify("gd: Jumping to single result", vim.log.levels.INFO)
+                            vim.lsp.util.show_document(result, client.offset_encoding, { focus = true })
+                        end
+                    end)
                 end, opts)
+
+                -- LSP references via Telescope with fallback to ripgrep
+                vim.keymap.set('n', '<leader>lr', function()
+                    vim.notify("lr: Starting references lookup", vim.log.levels.INFO)
+
+                    -- Get the first LSP client to retrieve the offset encoding
+                    local bufnr = vim.api.nvim_get_current_buf()
+                    local clients = vim.lsp.get_clients({ bufnr = bufnr })
+
+                    if #clients == 0 then
+                        vim.notify("lr: No LSP client attached", vim.log.levels.WARN)
+                        return
+                    end
+
+                    -- Use the first client's offset encoding
+                    local client = clients[1]
+                    local word = vim.fn.expand("<cword>")
+
+                    vim.notify(string.format("lr: Using client '%s' with encoding '%s'", 
+                        client.name, client.offset_encoding), vim.log.levels.INFO)
+                    vim.notify(string.format("lr: Searching for '%s'", word), vim.log.levels.INFO)
+
+                    -- Try LSP references first
+                    local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
+
+                    vim.lsp.buf_request(0, "textDocument/references", params, function(err, result, ctx, config)
+                        if err then
+                            vim.notify(string.format("lr: LSP error - %s", vim.inspect(err)), vim.log.levels.ERROR)
+                            return
+                        end
+
+                        if result == nil or vim.tbl_isempty(result) then
+                            vim.notify(string.format("lr: No LSP references found for '%s'", word), vim.log.levels.WARN)
+                            vim.notify("lr: Falling back to ripgrep search...", vim.log.levels.INFO)
+
+                            -- Fallback to ripgrep search via Telescope
+                            vim.schedule(function()
+                                require('telescope.builtin').grep_string({
+                                    search = word,
+                                    initial_mode = "normal",
+                                    prompt_title = string.format("Ripgrep: %s (LSP found nothing)", word),
+                                })
+                            end)
+                            return
+                        end
+
+                        vim.notify(string.format("lr: Found %d LSP reference(s)", #result), vim.log.levels.INFO)
+
+                        -- Use Telescope to show LSP results
+                        vim.schedule(function()
+                            require('telescope.builtin').lsp_references({
+                                fname_width = 0,
+                                trim_text = true,
+                                show_line = true,
+                                initial_mode = "normal",
+                                offset_encoding = client.offset_encoding,
+                            })
+                            vim.notify("lr: Telescope picker opened", vim.log.levels.INFO)
+                        end)
+                    end)
+                end, opts)
+
+
+                -- Alternative: Direct ripgrep search (useful for macros/Kconfig)
+                vim.keymap.set('n', '<leader>lR', function()
+                    local word = vim.fn.expand("<cword>")
+                    vim.notify(string.format("lR: Searching entire project for '%s' with ripgrep", word), vim.log.levels.INFO)
+
+                    require('telescope.builtin').grep_string({
+                        search = word,
+                        initial_mode = "normal",
+                        prompt_title = string.format("Ripgrep: %s", word),
+                    })
+                end, { desc = "Search project with ripgrep (bypass LSP)" })
+
+
+                -- Search for macro definitions specifically
+                vim.keymap.set('n', '<leader>lm', function()
+                    local word = vim.fn.expand("<cword>")
+                    vim.notify(string.format("lm: Searching for macro definition of '%s'", word), vim.log.levels.INFO)
+
+                    -- Search for #define or Kconfig patterns
+                    require('telescope.builtin').grep_string({
+                        search = string.format([[#define\s+%s|config\s+%s]], word, word),
+                        use_regex = true,
+                        initial_mode = "normal",
+                        prompt_title = string.format("Macro Definition: %s", word),
+                    })
+                end, { desc = "Search for macro/Kconfig definition" })
+
             end
 
             -- Global keymaps (not buffer-specific)
             local opts = { noremap = true, silent = true }
 
-            -- <leader>lc - Cancel/disable autocomplete entirely
+            -- <leader>lc - Stop LSP clients and disable autocomplete entirely
             vim.keymap.set('n', '<leader>lc', function()
+                -- Stop all LSP clients for the current buffer
+                local bufnr = vim.api.nvim_get_current_buf()
+                local clients = vim.lsp.get_clients({ bufnr = bufnr })
+
+                for _, client in ipairs(clients) do
+                    vim.lsp.stop_client(client.id)
+                end
+
+                -- Disable autocomplete
                 disable_autocomplete()
+
+                -- Clear the command line
                 vim.api.nvim_input('<Esc>')
-                vim.notify("Autocomplete disabled")
+
+                vim.notify("LSP stopped and autocomplete disabled")
             end, opts)
 
             -- <leader>ls - Start LSP and enable autocomplete
@@ -221,7 +449,7 @@ return {
                 end
 
                 enable_autocomplete()
-                vim.notify("LSP started with autocomplete enabled")
+                vim.notify("LSP started and autocomplete enabled")
             end, opts)
 
             -- Track signature help window state
