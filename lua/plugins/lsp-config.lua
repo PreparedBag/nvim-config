@@ -42,19 +42,55 @@ return {
             -- Track signature help window state
             local signature_active = true
 
+            -- Helper function to check if buffer should have LSP attached
+            local function is_valid_lsp_buffer(bufnr)
+                local buftype = vim.api.nvim_get_option_value('buftype', { buf = bufnr })
+                local filetype = vim.api.nvim_get_option_value('filetype', { buf = bufnr })
+
+                -- Skip special buffer types
+                if buftype ~= '' then
+                    return false
+                end
+
+                -- Skip certain filetypes that shouldn't have LSP
+                local excluded_filetypes = {
+                    'oil',
+                    'help',
+                    'qf',
+                    'netrw',
+                    'man',
+                    'lazy',
+                    'mason',
+                }
+
+                for _, ft in ipairs(excluded_filetypes) do
+                    if filetype == ft then
+                        return false
+                    end
+                end
+
+                return true
+            end
+
             -- LSP on_attach callback - sets up buffer-local keymaps
-            local on_attach = function(_, bufnr)
+            local on_attach = function(client, bufnr)
+                -- Only attach to valid file buffers
+                if not is_valid_lsp_buffer(bufnr) then
+                    vim.lsp.buf_detach_client(bufnr, client.id)
+                    return
+                end
+
                 local opts = { noremap = true, silent = true, buffer = bufnr }
 
                 -- Go to definition
                 vim.keymap.set("n", "gd", function()
-                    local params = vim.lsp.util.make_position_params()
+                    local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
                     vim.lsp.buf_request(0, "textDocument/definition", params, function(_, result)
                         if result == nil or vim.tbl_isempty(result) then return end
                         if vim.tbl_islist(result) then
-                            vim.lsp.util.jump_to_location(result[1], "utf-8")
+                            vim.lsp.util.jump_to_location(result[1], client.offset_encoding)
                         else
-                            vim.lsp.buf.definition(result, "utf-8")
+                            vim.lsp.buf.definition(result, client.offset_encoding)
                         end
                     end)
                 end, opts)
