@@ -11,11 +11,6 @@ return {
         event = { "BufReadPre", "BufNewFile" },
         dependencies = { "neovim/nvim-lspconfig" },
         config = function()
-            local servers = { "clangd", "pyright", "lua_ls", "ts_ls", "html", "cssls" }
-            require("mason-lspconfig").setup({
-                ensure_installed = servers
-            })
-
             -- Helper function to enable autocomplete
             local function enable_autocomplete()
                 local cmp = require('cmp')
@@ -171,9 +166,13 @@ return {
 
             -- Setup all LSP servers using the new vim.lsp.config API (Neovim 0.11+)
             local capabilities = require("cmp_nvim_lsp").default_capabilities()
+            local servers = { "clangd", "pyright", "lua_ls", "ts_ls", "html", "cssls" }
 
             -- HTML LSP with specific settings
             vim.lsp.config.html = {
+                cmd = { 'vscode-html-language-server', '--stdio' },
+                filetypes = { 'html' },
+                root_markers = { '.git' },
                 settings = {
                     css = { validate = false },
                     less = { validate = false },
@@ -184,13 +183,56 @@ return {
             }
 
             -- Setup remaining LSP servers
-            local other_servers = { "clangd", "pyright", "lua_ls", "ts_ls", "cssls" }
-            for _, server in ipairs(other_servers) do
-                vim.lsp.config[server] = {
-                    on_attach = on_attach,
-                    capabilities = capabilities,
+            vim.lsp.config.clangd = {
+                cmd = { 'clangd' },
+                filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda' },
+                root_markers = { '.git' },
+                on_attach = on_attach,
+                capabilities = capabilities,
+            }
+
+            vim.lsp.config.pyright = {
+                cmd = { 'pyright-langserver', '--stdio' },
+                filetypes = { 'python' },
+                root_markers = { '.git', 'pyproject.toml', 'setup.py' },
+                on_attach = on_attach,
+                capabilities = capabilities,
+            }
+
+            vim.lsp.config.lua_ls = {
+                cmd = { 'lua-language-server' },
+                filetypes = { 'lua' },
+                root_markers = { '.git', '.luarc.json' },
+                on_attach = on_attach,
+                capabilities = capabilities,
+            }
+
+            vim.lsp.config.ts_ls = {
+                cmd = { 'typescript-language-server', '--stdio' },
+                filetypes = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
+                root_markers = { '.git', 'package.json' },
+                on_attach = on_attach,
+                capabilities = capabilities,
+            }
+
+            vim.lsp.config.cssls = {
+                cmd = { 'vscode-css-language-server', '--stdio' },
+                filetypes = { 'css', 'scss', 'less' },
+                root_markers = { '.git' },
+                on_attach = on_attach,
+                capabilities = capabilities,
+            }
+
+            -- Use mason-lspconfig handlers to enable LSP without triggering deprecated API
+            require("mason-lspconfig").setup({
+                ensure_installed = servers,
+                handlers = {
+                    -- Default handler that enables LSP servers
+                    function(server_name)
+                        vim.lsp.enable(server_name)
+                    end,
                 }
-            end
+            })
         end
     },
     {
