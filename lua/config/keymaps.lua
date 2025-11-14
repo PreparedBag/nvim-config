@@ -82,21 +82,69 @@ vim.api.nvim_set_keymap("n", "<leader>q", ":q<CR>", opts)
 vim.api.nvim_set_keymap("n", "<leader>bd", ":bd<CR>", opts)
 -- Open buffer list with Telescope
 vim.api.nvim_set_keymap("n", "<leader>bb", ":Telescope buffers<CR><ESC>", opts)
+
 -- Toggle binary mode
 vim.keymap.set("n", "<leader>bt", function()
-    if vim.bo.filetype == "oil" or vim.bo.buftype ~= "" then return end
-    local is_binary = vim.fn.getline(1):match("^%x%x%x%x%x%x%x%x:")
-    if is_binary then
-        vim.cmd("syntax on")
-        vim.cmd("LspStart")
-        vim.cmd("%!xxd -r")
-        vim.cmd("write")
-    else
-        vim.cmd("syntax off")
-        vim.cmd("LspStop")
-        vim.cmd("%!xxd")
+    local current_bufnr = vim.api.nvim_get_current_buf()
+    local preview_bufnr = vim.g.binary_preview_bufnr
+    local preview_winid = vim.g.binary_preview_winid
+    
+    -- If we're IN the preview buffer, close it and return to original
+    if preview_bufnr and current_bufnr == preview_bufnr then
+        if preview_winid and vim.api.nvim_win_is_valid(preview_winid) then
+            vim.api.nvim_win_close(preview_winid, true)
+            vim.g.binary_preview_winid = nil
+            vim.g.binary_preview_bufnr = nil
+        end
+        return
     end
-end, { desc = "Toggle Binary Mode" })
+    
+    -- Don't run in oil or special buffers (but we already handled preview above)
+    if vim.bo.filetype == "oil" or vim.bo.buftype ~= "" then 
+        return 
+    end
+    
+    -- If preview exists and is valid, close it
+    if preview_winid and vim.api.nvim_win_is_valid(preview_winid) then
+        vim.api.nvim_win_close(preview_winid, true)
+        vim.g.binary_preview_winid = nil
+        vim.g.binary_preview_bufnr = nil
+        return
+    end
+    
+    -- Get the current buffer content
+    local lines = vim.api.nvim_buf_get_lines(current_bufnr, 0, -1, false)
+    local filename = vim.api.nvim_buf_get_name(current_bufnr)
+    
+    -- Create a new split and scratch buffer
+    vim.cmd("split")
+    local preview_win = vim.api.nvim_get_current_win()
+    local preview_buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_win_set_buf(preview_win, preview_buf)
+    
+    -- Set buffer options for scratch buffer
+    vim.api.nvim_buf_set_option(preview_buf, "buftype", "nofile")
+    vim.api.nvim_buf_set_option(preview_buf, "bufhidden", "wipe")
+    vim.api.nvim_buf_set_option(preview_buf, "swapfile", false)
+    vim.api.nvim_buf_set_option(preview_buf, "modifiable", false)
+    
+    -- Set a descriptive name
+    vim.api.nvim_buf_set_name(preview_buf, "[Binary Preview] " .. vim.fn.fnamemodify(filename, ":t"))
+    
+    -- Run xxd on the content
+    local xxd_output = vim.fn.systemlist("xxd", lines)
+    
+    -- Insert the xxd output
+    vim.api.nvim_buf_set_option(preview_buf, "modifiable", true)
+    vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, xxd_output)
+    vim.api.nvim_buf_set_option(preview_buf, "modifiable", false)
+    
+    -- Store the window and buffer IDs for toggling
+    vim.g.binary_preview_winid = preview_win
+    vim.g.binary_preview_bufnr = preview_buf
+    
+end, { desc = "Toggle Binary Preview" })
+
 -- Make file executable
 vim.api.nvim_set_keymap("n", "<leader>x", "<cmd>!chmod +x %<CR>", opts)
 -- Replace word under cursor globally
