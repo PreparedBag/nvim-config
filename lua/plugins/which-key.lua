@@ -1,5 +1,6 @@
 return {
     "folke/which-key.nvim",
+    event = "VeryLazy",
     config = function()
         local wk = require("which-key")
 
@@ -139,6 +140,9 @@ return {
             { "<leader>bb",  desc = "Show Buffers",                           mode = "n" },
             { "<leader>bd",  desc = "Delete Current Buffer",                  mode = "n" },
             { "<leader>bt",  desc = "Toggle Binary View",                     mode = "n" },
+
+            -- Oil
+            { "<leader>h",   desc = "Toggle Hidden Files (in Oil)",           mode = "n" },
         })
     end
 }

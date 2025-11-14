@@ -1,6 +1,6 @@
 return {
     'nvim-lualine/lualine.nvim',
-    version = '*',
+    event = "VeryLazy", -- Load after startup
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     config = function()
         local lualine = require('lualine')
@@ -8,8 +8,8 @@ return {
             options = {
                 icons_enabled = true,
                 theme = "auto",
-                component_separators = { left = '', right = '' },
-                section_separators = { left = '', right = '' },
+                component_separators = { left = '', right = '' },
+                section_separators = { left = '', right = '' },
                 disabled_filetypes = {
                     statusline = { "nerdtree" },
                     winbar = { "nerdtree" },
@@ -27,13 +27,13 @@ return {
                 lualine_a = { 'mode' },
                 lualine_b = { 'branch', 'diff', 'diagnostics' },
                 lualine_c = {
-                  {
-                    'filename',
-                    path = 2,
-                    fmt = function(str)
-                      return str:gsub("^oil://", "")
-                    end,
-                  },
+                    {
+                        'filename',
+                        path = 2,
+                        fmt = function(str)
+                            return str:gsub("^oil://", "")
+                        end,
+                    },
                 },
                 lualine_x = { 'filetype' },
                 lualine_y = { 'progress' },

@@ -1,20 +1,21 @@
 return {
     {
         "williamboman/mason.nvim",
-        event = "BufReadPre",
+        cmd = "Mason",
+        build = ":MasonUpdate",
         config = function()
             require("mason").setup()
         end
     },
     {
         "williamboman/mason-lspconfig.nvim",
-        event = { "BufReadPre", "BufNewFile" },
+        event = { "BufReadPost", "BufNewFile" },
         dependencies = { "neovim/nvim-lspconfig" },
         config = function()
             -- ============================================================================
             -- HELPER FUNCTIONS
             -- ============================================================================
-            
+
             local function enable_autocomplete()
                 local cmp = require('cmp')
                 cmp.setup({ completion = { autocomplete = { "TextChanged" } } })
@@ -45,7 +46,7 @@ return {
             -- ============================================================================
             -- COMPILE_COMMANDS.JSON GENERATION FUNCTIONS
             -- ============================================================================
-            
+
             local function find_project_root()
                 local git_root = vim.fn.system("git rev-parse --show-toplevel 2>/dev/null"):gsub("\n", "")
                 if vim.v.shell_error == 0 and git_root ~= "" then
@@ -88,7 +89,7 @@ return {
             -- ============================================================================
             -- LSP ON_ATTACH - BUFFER-LOCAL KEYMAPS
             -- ============================================================================
-            
+
             local signature_active = true
 
             local on_attach = function(client, bufnr)
@@ -241,7 +242,7 @@ return {
             -- ============================================================================
             -- GLOBAL LSP KEYMAPS
             -- ============================================================================
-            
+
             local opts = { noremap = true, silent = true }
 
             -- Stop LSP and disable autocomplete
@@ -372,7 +373,7 @@ return {
             -- ============================================================================
             -- LSP SERVER SETUP
             -- ============================================================================
-            
+
             local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
             -- Configure LSP servers

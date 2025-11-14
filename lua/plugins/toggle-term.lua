@@ -1,6 +1,8 @@
 return {
     'akinsho/toggleterm.nvim',
-    version = '*',
+    keys = {
+        { "<leader>,", ":ToggleTerm<CR>", desc = "Toggle Terminal" },
+    },
     config = function()
         require('toggleterm').setup({
             direction = 'float',
@@ -24,7 +26,5 @@ return {
             shade_terminals = true,
             persist_size = true,
         })
-        local opts = { noremap = true, silent = true }
-        vim.api.nvim_set_keymap("n", "<leader>,", ":ToggleTerm<CR>", opts)
     end
 }

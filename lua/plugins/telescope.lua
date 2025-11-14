@@ -18,10 +18,10 @@ return {
 
             -- Function to set the working directory to the updated Netrw directory
             local set_telescope_cwd_to_updated = function()
-                local oil = require("oil")  -- Assuming Oil is loaded and required
+                local oil = require("oil") -- Assuming Oil is loaded and required
 
                 -- Check if Oil is active and set the directory accordingly
-                local oil_dir = oil.get_current_dir()  -- This is an Oil-specific function
+                local oil_dir = oil.get_current_dir() -- This is an Oil-specific function
                 if oil_dir and vim.fn.isdirectory(oil_dir) == 1 then
                     vim.cmd('cd ' .. vim.fn.fnameescape(oil_dir))
                     print('Changed working directory to Oil path: ' .. oil_dir)
