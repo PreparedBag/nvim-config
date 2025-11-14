@@ -23,72 +23,70 @@ return {
                 cmp.setup({ completion = { autocomplete = {} } })
             end
 
-            -- <leader>lg - Generate compile_commands.json
-            vim.keymap.set('n', '<leader>lg', function()
-                -- Find project root (git root or current directory)
-                local function find_project_root()
-                    local git_root = vim.fn.system("git rev-parse --show-toplevel 2>/dev/null"):gsub("\n", "")
-                    if vim.v.shell_error == 0 and git_root ~= "" then
-                        return git_root
-                    end
-                    return vim.fn.getcwd()
+            -- Shared helper functions
+            local function find_project_root()
+                local git_root = vim.fn.system("git rev-parse --show-toplevel 2>/dev/null"):gsub("\n", "")
+                if vim.v.shell_error == 0 and git_root ~= "" then
+                    return git_root
                 end
+                return vim.fn.getcwd()
+            end
 
-                -- Find all .c files recursively
-                local function find_c_files(root)
-                    local c_files = {}
-                    local find_cmd = string.format("find '%s' -type f -name '*.c' 2>/dev/null", root)
-                    local handle = io.popen(find_cmd)
-                    if handle then
-                        for file in handle:lines() do
-                            table.insert(c_files, file)
-                        end
-                        handle:close()
+            local function find_c_files(root)
+                local c_files = {}
+                local find_cmd = string.format("find '%s' -type f -name '*.c' 2>/dev/null", root)
+                local handle = io.popen(find_cmd)
+                if handle then
+                    for file in handle:lines() do
+                        table.insert(c_files, file)
                     end
-                    return c_files
+                    handle:close()
                 end
+                return c_files
+            end
 
-                -- Generate compile_commands.json
-                local function generate_compile_commands(root, c_files)
-                    local compile_commands = {}
-
-                    -- Standard compiler flags with system includes
-                    local flags = {
-                        "-std=c11",
-                        "-Wall",
-                        "-Wextra",
-                        "-I.",
-                        "-I" .. root,
-                        "-I/usr/include",
-                        "-I/usr/local/include",
-                    }
-
-                    for _, file in ipairs(c_files) do
-                        local entry = {
-                            directory = root,
-                            command = "gcc " .. table.concat(flags, " ") .. " -c " .. file,
-                            file = file
-                        }
-                        table.insert(compile_commands, entry)
-                    end
-
-                    return compile_commands
-                end
-
-                -- Write compile_commands.json
-                local function write_compile_commands(root, commands)
-                    local json = vim.fn.json_encode(commands)
-                    local output_file = root .. "/compile_commands.json"
-                    local file = io.open(output_file, "w")
-                    if file then
-                        file:write(json)
-                        file:close()
-                        return output_file
-                    end
+            local function write_compile_commands(root, commands)
+                local output_file = root .. "/compile_commands.json"
+                local file = io.open(output_file, "w")
+                if not file then
                     return nil
                 end
 
-                vim.notify("Generating compile_commands.json...", vim.log.levels.INFO)
+                -- Pretty-print JSON manually
+                file:write("[\n")
+                for i, entry in ipairs(commands) do
+                    file:write("  {\n")
+                    file:write(string.format('    "directory": "%s",\n', entry.directory:gsub('\\', '\\\\')))
+                    file:write(string.format('    "command": "%s",\n', entry.command:gsub('\\', '\\\\')))
+                    file:write(string.format('    "file": "%s"\n', entry.file:gsub('\\', '\\\\')))
+                    if i < #commands then
+                        file:write("  },\n")
+                    else
+                        file:write("  }\n")
+                    end
+                end
+                file:write("]\n")
+
+                file:close()
+                return output_file
+            end
+
+            -- <leader>lgc - Generate via CMake
+            vim.keymap.set('n', '<leader>lgc', function()
+                vim.fn.system("cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -B build")
+                vim.fn.system("ln -sf build/compile_commands.json .")
+                vim.cmd("LspRestart")
+            end, opts)
+
+            -- <leader>lgw - Generate via west build
+            vim.keymap.set('n', '<leader>lgw', function()
+                vim.fn.system("west build -t compile_commands")
+                vim.cmd("LspRestart")
+            end, opts)
+
+            -- <leader>lgg - Generate generic compile_commands.json
+            vim.keymap.set('n', '<leader>lgg', function()
+                vim.notify("Generating generic compile_commands.json...", vim.log.levels.INFO)
 
                 local root = find_project_root()
                 local c_files = find_c_files(root)
@@ -98,13 +96,90 @@ return {
                     return
                 end
 
-                local commands = generate_compile_commands(root, c_files)
-                local output = write_compile_commands(root, commands)
+                local compile_commands = {}
+                local flags = {
+                    "-std=c11",
+                    "-Wall",
+                    "-Wextra",
+                    "-I.",
+                    "-I" .. root,
+                    "-I/usr/include",
+                    "-I/usr/local/include",
+                }
 
+                for _, file in ipairs(c_files) do
+                    local entry = {
+                        directory = root,
+                        command = "gcc " .. table.concat(flags, " ") .. " -c " .. file,
+                        file = file
+                    }
+                    table.insert(compile_commands, entry)
+                end
+
+                local output = write_compile_commands(root, commands)
                 if output then
                     vim.notify(string.format("Generated %s with %d entries", output, #c_files), vim.log.levels.INFO)
+                    vim.cmd("LspRestart")
+                else
+                    vim.notify("Failed to write compile_commands.json", vim.log.levels.ERROR)
+                end
+            end, opts)
 
-                    -- Restart LSP to pick up the new compile_commands.json
+            -- <leader>lgz - Generate Zephyr-aware compile_commands.json
+            vim.keymap.set('n', '<leader>lgz', function()
+                vim.notify("Generating Zephyr compile_commands.json...", vim.log.levels.INFO)
+
+                local root = find_project_root()
+                local c_files = find_c_files(root)
+
+                if #c_files == 0 then
+                    vim.notify("No .c files found in " .. root, vim.log.levels.WARN)
+                    return
+                end
+
+                -- Look for Zephyr-specific paths
+                local zephyr_base = os.getenv("ZEPHYR_BASE") or (root .. "/zephyr")
+                local build_dir = root .. "/build"
+                local autoconf_h = build_dir .. "/zephyr/include/generated/autoconf.h"
+
+                local compile_commands = {}
+                local flags = {
+                    "-std=c11",
+                    "-Wall",
+                    "-Wextra",
+                    "-I.",
+                    "-I" .. root,
+                    "-I" .. root .. "/include",
+                    "-I" .. zephyr_base .. "/include",
+                    "-I" .. zephyr_base .. "/include/zephyr",
+                    "-I" .. zephyr_base .. "/drivers",
+                    "-I" .. zephyr_base .. "/soc",
+                    "-I" .. build_dir .. "/zephyr/include/generated",
+                    "-I/usr/include",
+                    "-I/usr/local/include",
+                }
+
+                -- Add Kconfig-generated defines if autoconf.h exists
+                if vim.fn.filereadable(autoconf_h) == 1 then
+                    table.insert(flags, "-include")
+                    table.insert(flags, autoconf_h)
+                    vim.notify("Including Kconfig autoconf.h", vim.log.levels.INFO)
+                else
+                    vim.notify("Warning: autoconf.h not found at " .. autoconf_h, vim.log.levels.WARN)
+                end
+
+                for _, file in ipairs(c_files) do
+                    local entry = {
+                        directory = root,
+                        command = "gcc " .. table.concat(flags, " ") .. " -c " .. file,
+                        file = file
+                    }
+                    table.insert(compile_commands, entry)
+                end
+
+                local output = write_compile_commands(root, compile_commands)
+                if output then
+                    vim.notify(string.format("Generated Zephyr %s with %d entries", output, #c_files), vim.log.levels.INFO)
                     vim.cmd("LspRestart")
                 else
                     vim.notify("Failed to write compile_commands.json", vim.log.levels.ERROR)

@@ -32,7 +32,7 @@ require("lazy").setup({
         { import = "plugins.comment" },
         { import = "plugins.oil" },
         { import = "plugins.bracey" },
-        -- { import = "plugins.toggle-term" },
+        { import = "plugins.toggle-term" },
     },
 
     -- Lazy.nvim options
