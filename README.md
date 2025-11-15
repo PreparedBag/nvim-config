@@ -15,64 +15,129 @@ A modern, optimized Neovim configuration with LSP support, fuzzy finding, file m
 
 ## INSTALLATION
 
-***NOTE:*** Before continuing, backup any local nvim configurations you may have in `~/.config/nvim`
+### Quick Install (Recommended)
 
-Open terminal and clone the repo into the nvim folder:
+For automatic installation with OS and architecture detection:
 
 ```bash
-git clone https://github.com/PreparedBag/nvim-config.git ~/.config/nvim
+curl -fsSL https://raw.githubusercontent.com/PreparedBag/nvim-config/main/install.sh | bash
 ```
 
-## UPDATE NEOVIM
+Or download and inspect the script first:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/PreparedBag/nvim-config/main/install.sh -o install.sh
+chmod +x install.sh
+./install.sh
+```
+
+**What the installer does:**
+- Detects your OS (Ubuntu, Debian, Fedora, Arch, macOS) and architecture (x86_64, ARM64)
+- Installs Neovim 0.10.0+ automatically
+- Installs all required dependencies
+- Sets up Node.js via nvm
+- Clones the configuration
+- Backs up any existing config
+- Configures your shell
+
+**Supported Operating Systems:**
+- Ubuntu / Debian / Pop!_OS
+- Fedora
+- Arch Linux / Manjaro
+- macOS (with Homebrew)
+
+**Supported Architectures:**
+- x86_64 (Intel/AMD 64-bit)
+- ARM64 / aarch64 (Raspberry Pi 4, Apple Silicon, etc.)
+
+**Uninstall:**
+To remove the configuration and optionally Neovim itself:
+```bash
+curl -fsSL https://raw.githubusercontent.com/PreparedBag/nvim-config/main/uninstall.sh | bash
+```
+
+**Troubleshooting the installer:**
+If the automated installation fails:
+1. Check the error messages - they indicate what went wrong
+2. Try the manual installation method below
+3. Make sure you have sudo privileges
+4. On macOS, ensure Homebrew is installed first: https://brew.sh
+5. Check that your OS is supported (see list above)
+
+---
+
+### Manual Installation
+
+If you prefer to install manually, follow these steps:
+
+Follow these steps in order:
+
+1. **Update Neovim** - Install Neovim 0.10.0 or higher
+2. **Install Prerequisites** - Install required dependencies and tools
+3. **Clone Configuration** - Download this config to `~/.config/nvim`
+4. **First Launch** - Let plugins auto-install on first run
+5. **Verify Setup** - Run `:checkhealth` to confirm everything works
+
+### Step 1: Update Neovim
 
 Make sure you are using the latest Neovim (0.10.0+). The ones in the apt sources are usually too old for these plugins:
 
 https://github.com/neovim/neovim/blob/master/INSTALL.md
 
-### x86_64
+#### x86_64
 
 ```bash
+# Download and install Neovim
 curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
 sudo rm -rf /opt/nvim
 sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
-```
+rm nvim-linux-x86_64.tar.gz
 
-Add to your `.bashrc` to add to PATH on login:
-
-```bash
+# Add to PATH
 grep -qxF 'export PATH="$PATH:/opt/nvim-linux-x86_64/bin"' ~/.bashrc || echo 'export PATH="$PATH:/opt/nvim-linux-x86_64/bin"' >> ~/.bashrc
-```
 
-Create an alias in `~/.bash_aliases` to replace 'vim' (Optional):
-
-```bash
+# Create alias (Optional)
+touch ~/.bash_aliases
 grep -qxF "alias vim='/opt/nvim-linux-x86_64/bin/nvim'" ~/.bash_aliases || echo "alias vim='/opt/nvim-linux-x86_64/bin/nvim'" >> ~/.bash_aliases
+
+# Reload shell configuration
+source ~/.bashrc
 ```
 
-### ARM_64
+#### ARM_64
 
 ```bash
+# Install build dependencies
 sudo apt install ninja-build gettext cmake unzip curl build-essential
-cd
+
+# Build from source
+cd ~
 git clone https://github.com/neovim/neovim
 cd neovim
 make CMAKE_BUILD_TYPE=Release
 sudo make install
+
+# Create alias (Optional)
+touch ~/.bash_aliases
+grep -qxF "alias vim='nvim'" ~/.bash_aliases || echo "alias vim='nvim'" >> ~/.bash_aliases
+
+# Reload shell configuration
+source ~/.bashrc
 ```
 
-Add to your `.bashrc` to add to PATH on login:
+**Note for ARM_64**: `sudo make install` installs Neovim to `/usr/local/bin/nvim`, which is already in your PATH. No additional PATH configuration needed.
+
+#### Verify Installation
+
+After installing Neovim, verify it's working:
 
 ```bash
-grep -qxF 'export PATH="$PATH:$HOME/neovim/build/bin"' ~/.bashrc || echo 'export PATH="$PATH:$HOME/neovim/build/bin"' >> ~/.bashrc
+nvim --version
 ```
 
-Create an alias to replace 'vim' (Optional):
+You should see Neovim v0.10.0 or higher. If you get "command not found", restart your terminal and try again.
 
-```bash
-grep -qxF "alias vim='$HOME/neovim/build/bin/nvim'" ~/.bash_aliases || echo "alias vim='$HOME/neovim/build/bin/nvim'" >> ~/.bash_aliases
-```
-
-## PRE-REQUISITES
+### Step 2: Install Prerequisites
 
 For full functionality, install the following dependencies:
 
@@ -81,15 +146,48 @@ sudo apt install luarocks ripgrep nodejs npm golang cargo default-jdk-headless d
 sudo npm install -g neovim yarn
 ```
 
-Make sure Node.js is updated using nvm:
+### Update Node.js with nvm
+
+Install and use the latest LTS version of Node.js:
 
 ```bash
+# Install nvm
 curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-source ~/.nvm/nvm.sh
+
+# Load nvm into current shell
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# Install and use LTS version
 nvm install --lts
+nvm use --lts
+
+# Verify installation
+node --version
+npm --version
 ```
 
-### First Launch
+**Note**: After installing nvm, you may need to restart your terminal or run `source ~/.bashrc` for it to take effect in future sessions.
+
+### Step 3: Clone Configuration
+
+***IMPORTANT:*** Backup any existing nvim configurations before proceeding!
+
+```bash
+# Backup existing config (if any)
+[ -d ~/.config/nvim ] && mv ~/.config/nvim ~/.config/nvim.backup.$(date +%Y%m%d_%H%M%S)
+
+# Clone this configuration
+git clone https://github.com/PreparedBag/nvim-config.git ~/.config/nvim
+```
+
+### Step 4: First Launch
+
+Launch Neovim for the first time:
+
+```bash
+nvim
+```
 
 On first launch, Neovim will automatically:
 1. Install lazy.nvim plugin manager
@@ -98,7 +196,7 @@ On first launch, Neovim will automatically:
 
 This may take a few minutes. Once complete, restart Neovim.
 
-### Health Check
+### Step 5: Verify Setup
 
 Check the health of plugins by running inside nvim:
 
@@ -127,7 +225,7 @@ You can add additional dependencies if needed based on the health check results.
 - `<leader>lf` - Format document
 - `<leader>lr` - Show references
 - `<leader>ld` - Show diagnostics
-- `[d` / `]d` - Navigate diagnostics
+- `<leader>j` / `<leader>k` - Navigate diagnostics
 
 ### Harpoon Quick Switching
 - `<leader>a` - Add file to Harpoon

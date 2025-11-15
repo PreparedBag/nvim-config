@@ -86,6 +86,25 @@ return {
                 return output_file
             end
 
+            -- Project type detection
+            local function detect_project_type(root)
+                -- Check for Zephyr project indicators
+                if vim.fn.filereadable(root .. "/west.yml") == 1 or
+                    vim.fn.isdirectory(root .. "/.west") == 1 or
+                    vim.fn.isdirectory(root .. "/zephyr") == 1 or
+                    vim.fn.filereadable(root .. "/prj.conf") == 1 then
+                    return "zephyr"
+                end
+
+                -- Check for CMake project
+                if vim.fn.filereadable(root .. "/CMakeLists.txt") == 1 then
+                    return "cmake"
+                end
+
+                -- Default to generic
+                return "generic"
+            end
+
             -- ============================================================================
             -- LSP ON_ATTACH - BUFFER-LOCAL KEYMAPS
             -- ============================================================================
@@ -126,50 +145,41 @@ return {
 
                 -- Diagnostics
                 vim.keymap.set('n', '<leader>ld', vim.diagnostic.open_float, opts)
-                vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, opts)
-                vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
-                vim.keymap.set('n', '<leader>lq', vim.diagnostic.setloclist, opts)
+                ---@diagnostic disable-next-line: deprecated
+                vim.keymap.set('n', '<leader>j', vim.diagnostic.goto_prev, opts)
+                ---@diagnostic disable-next-line: deprecated
+                vim.keymap.set('n', '<leader>k', vim.diagnostic.goto_next, opts)
 
-                -- References with Telescope fallback to ripgrep
+                -- LSP references with Telescope
                 vim.keymap.set('n', '<leader>lr', function()
-                    local clients = vim.lsp.get_clients({ bufnr = bufnr })
-                    if #clients == 0 then
-                        vim.notify("No LSP client attached", vim.log.levels.WARN)
-                        return
-                    end
-
-                    local client = clients[1]
-                    local word = vim.fn.expand("<cword>")
-                    local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
-
-                    vim.lsp.buf_request(0, "textDocument/references", params, function(err, result)
-                        if err then
-                            vim.notify("LSP error: " .. vim.inspect(err), vim.log.levels.ERROR)
-                            return
-                        end
-
-                        if not result or vim.tbl_isempty(result) then
-                            vim.notify("No LSP references found, falling back to ripgrep", vim.log.levels.INFO)
-                            vim.schedule(function()
-                                require('telescope.builtin').grep_string({
-                                    search = word,
-                                    initial_mode = "normal",
-                                    prompt_title = "Ripgrep: " .. word,
-                                })
-                            end)
-                            return
-                        end
-
-                        vim.schedule(function()
-                            require('telescope.builtin').lsp_references({
-                                fname_width = 0,
-                                trim_text = true,
-                                show_line = true,
-                                initial_mode = "normal",
-                            })
-                        end)
-                    end)
-                end, opts)
+                    -- First try LSP references
+                    vim.lsp.buf.references(nil, {
+                        on_list = function(options)
+                            if #options.items == 0 then
+                                -- No LSP results, fallback to ripgrep
+                                local word = vim.fn.expand("<cword>")
+                                vim.notify("No LSP references found, falling back to ripgrep", vim.log.levels.INFO)
+                                vim.schedule(function()
+                                    require('telescope.builtin').grep_string({
+                                        search = word,
+                                        initial_mode = "normal",
+                                        prompt_title = "Ripgrep: " .. word,
+                                    })
+                                end)
+                            else
+                                -- Show LSP results in Telescope
+                                vim.schedule(function()
+                                    require('telescope.builtin').lsp_references({
+                                        fname_width = 0,
+                                        trim_text = true,
+                                        show_line = true,
+                                        initial_mode = "normal",
+                                    })
+                                end)
+                            end
+                        end,
+                    })
+                end, { buffer = bufnr, desc = "Show References" })
 
                 -- Workspace symbols
                 vim.keymap.set('n', '<leader>lw', function()
@@ -188,17 +198,6 @@ return {
                         search = word,
                         initial_mode = "normal",
                         prompt_title = "Ripgrep: " .. word,
-                    })
-                end, opts)
-
-                -- Search for macro definitions
-                vim.keymap.set('n', '<leader>lm', function()
-                    local word = vim.fn.expand("<cword>")
-                    require('telescope.builtin').grep_string({
-                        search = string.format([[#define\s+%s|config\s+%s]], word, word),
-                        use_regex = true,
-                        initial_mode = "normal",
-                        prompt_title = "Macro Definition: " .. word,
                     })
                 end, opts)
 
@@ -254,7 +253,7 @@ return {
                 end
                 disable_autocomplete()
                 vim.api.nvim_input('<Esc>')
-                vim.notify("LSP stopped and autocomplete disabled")
+                vim.notify("LSP stopped")
             end, opts)
 
             -- Start LSP and enable autocomplete
@@ -270,23 +269,120 @@ return {
                     on_attach(client, bufnr)
                 end
                 enable_autocomplete()
-                vim.notify("LSP started and autocomplete enabled")
+                vim.notify("LSP started")
             end, opts)
 
-            -- Generate compile_commands.json variants
+            -- ============================================================================
+            -- AUTO-DETECT compile_commands.json generation (<leader>lg)
+            -- ============================================================================
+
+            vim.keymap.set('n', '<leader>lga', function()
+                local root = find_project_root()
+                local project_type = detect_project_type(root)
+
+                vim.notify("Detected project type: " .. project_type)
+
+                if project_type == "zephyr" then
+                    -- Use west build system
+                    vim.notify("Generating Zephyr compile_commands.json via west...")
+
+                    -- First ensure the build exists
+                    vim.fn.system("west build")
+
+                    -- Generate compile_commands.json
+                    local result = vim.fn.system("west build -t compile_commands 2>&1")
+
+                    -- Create symlink from build to root
+                    if vim.fn.filereadable(root .. "/build/compile_commands.json") == 1 then
+                        vim.fn.system(string.format("ln -sf build/compile_commands.json '%s/compile_commands.json'", root))
+                        vim.cmd("LspRestart")
+                        vim.notify("West compile_commands.json generated and symlinked")
+                    else
+                        vim.notify("West build failed or compile_commands.json not found:\n" .. result,
+                            vim.log.levels.ERROR)
+                    end
+                elseif project_type == "cmake" then
+                    -- Use CMake
+                    vim.notify("Generating CMake compile_commands.json...")
+                    vim.fn.system("cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -B build")
+                    vim.fn.system(string.format("ln -sf build/compile_commands.json '%s/compile_commands.json'", root))
+                    vim.cmd("LspRestart")
+                    vim.notify("CMake compile_commands.json generated and symlinked")
+                else
+                    -- Generic fallback
+                    vim.notify("Generating generic compile_commands.json...")
+                    local c_files = find_c_files(root)
+
+                    if #c_files == 0 then
+                        vim.notify("No .c files found in " .. root, vim.log.levels.WARN)
+                        return
+                    end
+
+                    local compile_commands = {}
+                    local flags = {
+                        "-std=c11",
+                        "-Wall",
+                        "-Wextra",
+                        "-I.",
+                        "-I" .. root,
+                        "-I/usr/include",
+                        "-I/usr/local/include",
+                    }
+
+                    for _, file in ipairs(c_files) do
+                        table.insert(compile_commands, {
+                            directory = root,
+                            command = "gcc " .. table.concat(flags, " ") .. " -c " .. file,
+                            file = file
+                        })
+                    end
+
+                    local output = write_compile_commands(root, compile_commands)
+                    if output then
+                        vim.notify(string.format("Generated %s with %d entries", output, #c_files))
+                        vim.cmd("LspRestart")
+                    else
+                        vim.notify("Failed to write compile_commands.json", vim.log.levels.ERROR)
+                    end
+                end
+            end, opts)
+
+            -- ============================================================================
+            -- MANUAL compile_commands.json generation (specific variants)
+            -- ============================================================================
+
+            -- CMake specific
             vim.keymap.set('n', '<leader>lgc', function()
+                local root = find_project_root()
+                vim.notify("Generating CMake compile_commands.json...")
                 vim.fn.system("cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -B build")
-                vim.fn.system("ln -sf build/compile_commands.json .")
+                vim.fn.system(string.format("ln -sf build/compile_commands.json '%s/compile_commands.json'", root))
                 vim.cmd("LspRestart")
-                vim.notify("CMake compile_commands.json generated")
+                vim.notify("CMake compile_commands.json generated and symlinked")
             end, opts)
 
+            -- West (Zephyr) specific
             vim.keymap.set('n', '<leader>lgw', function()
-                vim.fn.system("west build -t compile_commands")
-                vim.cmd("LspRestart")
-                vim.notify("West compile_commands.json generated")
+                local root = find_project_root()
+                vim.notify("Generating West compile_commands.json...")
+
+                -- First ensure the build exists
+                vim.fn.system("west build")
+
+                -- Generate compile_commands.json
+                local result = vim.fn.system("west build -t compile_commands 2>&1")
+
+                -- Create symlink from build to root
+                if vim.fn.filereadable(root .. "/build/compile_commands.json") == 1 then
+                    vim.fn.system(string.format("ln -sf build/compile_commands.json '%s/compile_commands.json'", root))
+                    vim.cmd("LspRestart")
+                    vim.notify("West compile_commands.json generated and symlinked")
+                else
+                    vim.notify("West build failed:\n" .. result, vim.log.levels.ERROR)
+                end
             end, opts)
 
+            -- Generic C project
             vim.keymap.set('n', '<leader>lgg', function()
                 vim.notify("Generating generic compile_commands.json...")
                 local root = find_project_root()
@@ -299,8 +395,13 @@ return {
 
                 local compile_commands = {}
                 local flags = {
-                    "-std=c11", "-Wall", "-Wextra", "-I.", "-I" .. root,
-                    "-I/usr/include", "-I/usr/local/include",
+                    "-std=c11",
+                    "-Wall",
+                    "-Wextra",
+                    "-I.",
+                    "-I" .. root,
+                    "-I/usr/include",
+                    "-I/usr/local/include",
                 }
 
                 for _, file in ipairs(c_files) do
@@ -320,8 +421,9 @@ return {
                 end
             end, opts)
 
+            -- Zephyr with manual includes (legacy/fallback)
             vim.keymap.set('n', '<leader>lgz', function()
-                vim.notify("Generating Zephyr compile_commands.json...")
+                vim.notify("Generating Zephyr compile_commands.json (manual includes)...")
                 local root = find_project_root()
                 local c_files = find_c_files(root)
 
@@ -336,21 +438,26 @@ return {
 
                 local compile_commands = {}
                 local flags = {
-                    "-std=c11", "-Wall", "-Wextra", "-I.", "-I" .. root,
+                    "-std=c11",
+                    "-Wall",
+                    "-Wextra",
+                    "-I.",
+                    "-I" .. root,
                     "-I" .. root .. "/include",
                     "-I" .. zephyr_base .. "/include",
                     "-I" .. zephyr_base .. "/include/zephyr",
                     "-I" .. zephyr_base .. "/drivers",
                     "-I" .. zephyr_base .. "/soc",
                     "-I" .. build_dir .. "/zephyr/include/generated",
-                    "-I/usr/include", "-I/usr/local/include",
+                    "-I/usr/include",
+                    "-I/usr/local/include",
                 }
 
                 if vim.fn.filereadable(autoconf_h) == 1 then
                     table.insert(flags, "-include")
                     table.insert(flags, autoconf_h)
                 else
-                    vim.notify("Warning: autoconf.h not found", vim.log.levels.WARN)
+                    vim.notify("Warning: autoconf.h not found at " .. autoconf_h, vim.log.levels.WARN)
                 end
 
                 for _, file in ipairs(c_files) do

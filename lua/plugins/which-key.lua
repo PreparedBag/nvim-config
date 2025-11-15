@@ -20,10 +20,8 @@ return {
             { "<C-h>",       desc = "Signature Help",                         mode = { "n", "i" } },
 
             -- Diagnostics Navigation
-            { "[d",          desc = "Previous Diagnostic",                    mode = "n" },
-            { "]d",          desc = "Next Diagnostic",                        mode = "n" },
-            { "<leader>k",   desc = "Next Location",                          mode = "n" },
-            { "<leader>j",   desc = "Previous Location",                      mode = "n" },
+            { "<leader>j",   desc = "Previous Diagnostic",                    mode = "n" },
+            { "<leader>k",   desc = "Next Diagnostic",                        mode = "n" },
 
             -- LSP Group
             { "<leader>l",   group = "LSP" },
@@ -33,12 +31,10 @@ return {
             { "<leader>ln",  desc = "Rename Symbol",                          mode = "n" },
             { "<leader>lf",  desc = "Format Document",                        mode = "n" },
             { "<leader>ld",  desc = "Show Diagnostics",                       mode = "n" },
-            { "<leader>lq",  desc = "Send Diagnostics to Quickfix",           mode = "n" },
 
             -- LSP References and Search
             { "<leader>lr",  desc = "Show References",                        mode = "n" },
             { "<leader>lR",  desc = "Ripgrep Search (Bypass LSP)",            mode = "n" },
-            { "<leader>lm",  desc = "Search for Macro Definition",            mode = "n" },
 
             -- LSP Symbols
             { "<leader>lw",  desc = "Workspace Symbols",                      mode = "n" },
@@ -51,6 +47,7 @@ return {
             -- LSP Generate Group
             { "<leader>lg",  group = "Generate compile_commands.json" },
             { "<leader>lgc", desc = "Generate CMake compile_commands.json",   mode = "n" },
+            { "<leader>lga", desc = "Generate compile_commands.json (Auto)",  mode = "n" },
             { "<leader>lgz", desc = "Generate Zephyr compile_commands.json",  mode = "n" },
             { "<leader>lgw", desc = "Generate West compile_commands.json",    mode = "n" },
             { "<leader>lgg", desc = "Generate Generic compile_commands.json", mode = "n" },
