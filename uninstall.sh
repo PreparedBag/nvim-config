@@ -12,6 +12,39 @@ NC='\033[0m' # No Color
 
 # Script configuration
 VERBOSE=true
+AUTO_YES=false
+
+# Parse command line arguments
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -y|--yes)
+                AUTO_YES=true
+                shift
+                ;;
+            -q|--quiet)
+                VERBOSE=false
+                shift
+                ;;
+            -h|--help)
+                echo "Neovim Configuration Uninstaller"
+                echo ""
+                echo "Usage: $0 [OPTIONS]"
+                echo ""
+                echo "Options:"
+                echo "  -y, --yes     Skip confirmation prompts"
+                echo "  -q, --quiet   Disable verbose output"
+                echo "  -h, --help    Show this help message"
+                echo ""
+                exit 0
+                ;;
+            *)
+                print_warning "Unknown option: $1"
+                shift
+                ;;
+        esac
+    done
+}
 
 # Print functions
 print_info() {
@@ -42,6 +75,35 @@ print_verbose() {
 
 print_command() {
     echo -e "${CYAN}$ ${NC}$1"
+}
+
+# Read from actual terminal, even when script is piped
+read_from_terminal() {
+    local prompt="$1"
+    local default="$2"
+    
+    # If auto-yes mode, return yes
+    if [ "$AUTO_YES" = true ]; then
+        echo "y"
+        return 0
+    fi
+    
+    # Try to read from /dev/tty (actual terminal)
+    if [ -t 0 ]; then
+        # stdin is a terminal, read normally
+        read -p "$prompt" -n 1 -r
+        echo ""
+        echo "$REPLY"
+    elif [ -c /dev/tty ]; then
+        # stdin is not a terminal (piped), but /dev/tty is available
+        read -p "$prompt" -n 1 -r < /dev/tty
+        echo ""
+        echo "$REPLY"
+    else
+        # No terminal available, use default
+        print_warning "No terminal available for input, using default: $default"
+        echo "$default"
+    fi
 }
 
 # Check if running as root
@@ -139,10 +201,10 @@ remove_aliases() {
             print_warning "Found vim alias in ~/.bash_aliases:"
             grep "alias vim=" "$HOME/.bash_aliases"
             echo ""
-            read -p "Remove vim -> nvim alias? (y/N) " -n 1 -r
-            echo ""
             
-            if [[ $REPLY =~ ^[Yy]$ ]]; then
+            local reply=$(read_from_terminal "Remove vim -> nvim alias? (y/N) " "N")
+            
+            if [[ $reply =~ ^[Yy]$ ]]; then
                 print_verbose "Removing vim alias from .bash_aliases"
                 print_command "sed -i '/alias vim=/d' ~/.bash_aliases"
                 
@@ -194,10 +256,9 @@ remove_neovim() {
         print_verbose "Version: $nvim_version"
         echo ""
         
-        read -p "Remove Neovim itself? (y/N) " -n 1 -r
-        echo ""
+        local reply=$(read_from_terminal "Remove Neovim itself? (y/N) " "N")
         
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if [[ $reply =~ ^[Yy]$ ]]; then
             if [[ "$nvim_location" == "/opt/nvim"* ]] || [[ "$nvim_location" == "/usr/local/bin/nvim" ]]; then
                 # Check if it's the /opt installation
                 if [ -d "/opt/nvim-linux64" ]; then
@@ -321,10 +382,9 @@ remove_npm_packages() {
         fi
         
         if [ "$neovim_installed" = true ] || [ "$yarn_installed" = true ]; then
-            read -p "Remove these npm packages? (y/N) " -n 1 -r
-            echo ""
+            local reply=$(read_from_terminal "Remove these npm packages? (y/N) " "N")
             
-            if [[ $REPLY =~ ^[Yy]$ ]]; then
+            if [[ $reply =~ ^[Yy]$ ]]; then
                 if [ "$neovim_installed" = true ]; then
                     print_info "Removing neovim npm package..."
                     if npm uninstall -g neovim; then
@@ -414,10 +474,13 @@ show_summary() {
 
 # Main uninstall flow
 main() {
+    # Parse command line arguments
+    parse_args "$@"
+    
     clear
     echo "╔════════════════════════════════════════════════════════╗"
     echo "║                                                        ║"
-    echo "║        Neovim Configuration Uninstaller v2.0           ║"
+    echo "║        Neovim Configuration Uninstaller v2.1           ║"
     echo "║                                                        ║"
     echo "╚════════════════════════════════════════════════════════╝"
     echo ""
@@ -431,13 +494,17 @@ main() {
     echo ""
     print_info "Your configuration will be backed up before removal"
     print_info "Verbose mode: $VERBOSE"
-    echo ""
-    read -p "Continue with uninstallation? (y/N) " -n 1 -r
-    echo ""
     
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        print_info "Uninstallation cancelled"
-        exit 0
+    if [ "$AUTO_YES" = true ]; then
+        print_info "Auto-yes mode: enabled (skipping confirmation)"
+    else
+        echo ""
+        local reply=$(read_from_terminal "Continue with uninstallation? (y/N) " "N")
+        
+        if [[ ! $reply =~ ^[Yy]$ ]]; then
+            print_info "Uninstallation cancelled"
+            exit 0
+        fi
     fi
     
     echo ""

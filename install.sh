@@ -15,10 +15,46 @@ NC='\033[0m' # No Color
 NVIM_CONFIG_REPO="https://github.com/PreparedBag/nvim-config.git"
 REQUIRED_NVIM_VERSION="0.10.0"
 VERBOSE=true
+AUTO_YES=false
 
 # Track what was installed for rollback
 INSTALLED_ITEMS=()
 BACKUP_DIR=""
+
+# Parse command line arguments
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -y|--yes)
+                AUTO_YES=true
+                shift
+                ;;
+            -q|--quiet)
+                VERBOSE=false
+                shift
+                ;;
+            -h|--help)
+                echo "Neovim Configuration Installer"
+                echo ""
+                echo "Usage: $0 [OPTIONS]"
+                echo ""
+                echo "Options:"
+                echo "  -y, --yes     Skip confirmation prompts (for piped install)"
+                echo "  -q, --quiet   Disable verbose output"
+                echo "  -h, --help    Show this help message"
+                echo ""
+                echo "Example:"
+                echo "  curl -fsSL https://raw.githubusercontent.com/.../install.sh | bash -s -- -y"
+                echo ""
+                exit 0
+                ;;
+            *)
+                print_warning "Unknown option: $1"
+                shift
+                ;;
+        esac
+    done
+}
 
 # Print functions
 print_info() {
@@ -51,6 +87,35 @@ print_command() {
     echo -e "${CYAN}$ ${NC}$1"
 }
 
+# Read from actual terminal, even when script is piped
+read_from_terminal() {
+    local prompt="$1"
+    local default="$2"
+    
+    # If auto-yes mode, return yes
+    if [ "$AUTO_YES" = true ]; then
+        echo "y"
+        return 0
+    fi
+    
+    # Try to read from /dev/tty (actual terminal)
+    if [ -t 0 ]; then
+        # stdin is a terminal, read normally
+        read -p "$prompt" -n 1 -r
+        echo ""
+        echo "$REPLY"
+    elif [ -c /dev/tty ]; then
+        # stdin is not a terminal (piped), but /dev/tty is available
+        read -p "$prompt" -n 1 -r < /dev/tty
+        echo ""
+        echo "$REPLY"
+    else
+        # No terminal available, use default
+        print_warning "No terminal available for input, using default: $default"
+        echo "$default"
+    fi
+}
+
 # Error handler with rollback
 handle_error() {
     local line_num=${1:-"unknown"}
@@ -60,10 +125,9 @@ handle_error() {
     print_error "Installation failed at line $line_num with exit code $error_code"
     echo ""
     
-    read -p "Do you want to rollback changes? (Y/n) " -n 1 -r
-    echo ""
+    local reply=$(read_from_terminal "Do you want to rollback changes? (Y/n) " "Y")
     
-    if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+    if [[ ! $reply =~ ^[Nn]$ ]]; then
         rollback_installation
     fi
     
@@ -749,10 +813,13 @@ final_setup() {
 
 # Main installation flow
 main() {
+    # Parse command line arguments
+    parse_args "$@"
+    
     clear
     echo "╔════════════════════════════════════════════════════════╗"
     echo "║                                                        ║"
-    echo "║        Neovim Configuration Installer v2.0             ║"
+    echo "║        Neovim Configuration Installer v2.1             ║"
     echo "║                                                        ║"
     echo "╚════════════════════════════════════════════════════════╝"
     echo ""
@@ -771,13 +838,17 @@ main() {
     echo ""
     print_info "Verbose mode: $VERBOSE"
     print_info "Rollback available on errors"
-    echo ""
-    read -p "Continue with installation? (y/N) " -n 1 -r
-    echo ""
     
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        print_info "Installation cancelled"
-        exit 0
+    if [ "$AUTO_YES" = true ]; then
+        print_info "Auto-yes mode: enabled (skipping confirmation)"
+    else
+        echo ""
+        local reply=$(read_from_terminal "Continue with installation? (y/N) " "N")
+        
+        if [[ ! $reply =~ ^[Yy]$ ]]; then
+            print_info "Installation cancelled"
+            exit 0
+        fi
     fi
     
     echo ""
