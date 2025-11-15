@@ -20,7 +20,7 @@ A modern, optimized Neovim configuration with LSP support, fuzzy finding, file m
 For automatic installation with OS and architecture detection:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/PreparedBag/nvim-config/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/PreparedBag/nvim-config/main/install.sh | bash -s -- -y
 ```
 
 Or download and inspect the script first:
