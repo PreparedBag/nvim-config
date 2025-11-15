@@ -77,35 +77,6 @@ print_command() {
     echo -e "${CYAN}$ ${NC}$1"
 }
 
-# Read from actual terminal, even when script is piped
-read_from_terminal() {
-    local prompt="$1"
-    local default="$2"
-    
-    # If auto-yes mode, return yes
-    if [ "$AUTO_YES" = true ]; then
-        echo "y"
-        return 0
-    fi
-    
-    # Try to read from /dev/tty (actual terminal)
-    if [ -t 0 ]; then
-        # stdin is a terminal, read normally
-        read -p "$prompt" -n 1 -r
-        echo ""
-        echo "$REPLY"
-    elif [ -c /dev/tty ]; then
-        # stdin is not a terminal (piped), but /dev/tty is available
-        read -p "$prompt" -n 1 -r < /dev/tty
-        echo ""
-        echo "$REPLY"
-    else
-        # No terminal available, use default
-        print_warning "No terminal available for input, using default: $default"
-        echo "$default"
-    fi
-}
-
 # Check if running as root
 check_root() {
     if [[ $EUID -eq 0 ]]; then
@@ -202,9 +173,9 @@ remove_aliases() {
             grep "alias vim=" "$HOME/.bash_aliases"
             echo ""
             
-            local reply=$(read_from_terminal "Remove vim -> nvim alias? (y/N) " "N")
+            read -p "Remove vim -> nvim alias? (y/N)" -n 1 -r
             
-            if [[ $reply =~ ^[Yy]$ ]]; then
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
                 print_verbose "Removing vim alias from .bash_aliases"
                 print_command "sed -i '/alias vim=/d' ~/.bash_aliases"
                 
@@ -256,9 +227,9 @@ remove_neovim() {
         print_verbose "Version: $nvim_version"
         echo ""
         
-        local reply=$(read_from_terminal "Remove Neovim itself? (y/N) " "N")
+        read -p "Remove Neovim itself? (y/N)" -n 1 -r
         
-        if [[ $reply =~ ^[Yy]$ ]]; then
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
             if [[ "$nvim_location" == "/opt/nvim"* ]] || [[ "$nvim_location" == "/usr/local/bin/nvim" ]]; then
                 # Check if it's the /opt installation
                 if [ -d "/opt/nvim-linux64" ]; then
@@ -382,9 +353,9 @@ remove_npm_packages() {
         fi
         
         if [ "$neovim_installed" = true ] || [ "$yarn_installed" = true ]; then
-            local reply=$(read_from_terminal "Remove these npm packages? (y/N) " "N")
+            read -p "Remove these npm packages? (y/N)" -n 1 -r
             
-            if [[ $reply =~ ^[Yy]$ ]]; then
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
                 if [ "$neovim_installed" = true ]; then
                     print_info "Removing neovim npm package..."
                     if npm uninstall -g neovim; then
@@ -499,9 +470,10 @@ main() {
         print_info "Auto-yes mode: enabled (skipping confirmation)"
     else
         echo ""
-        local reply=$(read_from_terminal "Continue with uninstallation? (y/N) " "N")
-        
-        if [[ ! $reply =~ ^[Yy]$ ]]; then
+        read -p "Continue with uninstallation? (y/N) " -n 1 -r
+        echo ""
+
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
             print_info "Uninstallation cancelled"
             exit 0
         fi
