@@ -12,7 +12,7 @@ return {
                 "icon",
             },
             view_options = {
-                show_hidden = false, -- Start with hidden files not shown
+                show_hidden = true, -- Start with hidden files not shown
                 is_hidden_file = function(name, bufnr)
                     return vim.startswith(name, ".")
                 end,
