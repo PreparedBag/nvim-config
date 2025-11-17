@@ -23,6 +23,7 @@ require("lazy").setup({
         { import = "plugins.lualine" },
         { import = "plugins.markdown" },
         { import = "plugins.lsp-config" },
+        { import = "plugins.claude" },
         { import = "plugins.noice" },
         { import = "plugins.telescope" },
         { import = "plugins.nerdtree" },
