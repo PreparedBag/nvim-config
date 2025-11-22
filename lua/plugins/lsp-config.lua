@@ -146,9 +146,9 @@ return {
                 -- Diagnostics
                 vim.keymap.set('n', '<leader>ld', vim.diagnostic.open_float, opts)
                 ---@diagnostic disable-next-line: deprecated
-                vim.keymap.set('n', '<leader>j', vim.diagnostic.goto_prev, opts)
+                vim.keymap.set('n', '<leader>k', vim.diagnostic.goto_prev, opts)
                 ---@diagnostic disable-next-line: deprecated
-                vim.keymap.set('n', '<leader>k', vim.diagnostic.goto_next, opts)
+                vim.keymap.set('n', '<leader>j', vim.diagnostic.goto_next, opts)
 
                 -- LSP references with Telescope
                 vim.keymap.set('n', '<leader>lr', function()

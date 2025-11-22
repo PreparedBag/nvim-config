@@ -1,5 +1,5 @@
 return {
-  "neoclide/coc.nvim",
-  branch = "release",
-  build = "npm ci",
+    "neoclide/coc.nvim",
+    branch = "release",
+    build = "npm ci",
 }

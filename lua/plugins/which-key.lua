@@ -20,8 +20,8 @@ return {
             { "<C-h>",       desc = "Signature Help",                         mode = { "n", "i" } },
 
             -- Diagnostics Navigation
-            { "<leader>j",   desc = "Previous Diagnostic",                    mode = "n" },
-            { "<leader>k",   desc = "Next Diagnostic",                        mode = "n" },
+            { "<leader>k",   desc = "Previous Diagnostic",                    mode = "n" },
+            { "<leader>j",   desc = "Next Diagnostic",                        mode = "n" },
 
             -- LSP Group
             { "<leader>l",   group = "LSP" },
