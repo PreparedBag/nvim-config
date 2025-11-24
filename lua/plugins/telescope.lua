@@ -2,7 +2,13 @@ return {
     {
         'nvim-telescope/telescope.nvim',
         tag = '0.1.8',
-        dependencies = { 'nvim-lua/plenary.nvim' },
+        dependencies = {
+            'nvim-lua/plenary.nvim',
+            {
+                'nvim-telescope/telescope-fzf-native.nvim',
+                build = 'make', -- or 'cmake -S. -Bbuild && cmake --build build --config Release'
+            },
+        },
         config = function()
             local telescope = require('telescope')
 
@@ -37,9 +43,6 @@ return {
                 end
             end
 
-            -- Load media files extension
-            local builtin = require('telescope.builtin')
-
             -- Telescope setup
             telescope.setup({
                 defaults = {
@@ -47,6 +50,12 @@ return {
                     layout_config = {
                         horizontal = { preview_width = 0.5 },
                         vertical = { preview_height = 0.5 },
+                    },
+                    fzf = {
+                        fuzzy = true, -- keep fuzzy
+                        override_generic_sorter = true,
+                        override_file_sorter = true,
+                        case_mode = "smart_case",
                     },
                     -- file_ignore_patterns = {
                     --     "%.jpg", "%.jpeg", "%.png", "%.gif", "%.bmp", "%.tiff",
@@ -70,12 +79,22 @@ return {
             })
 
             telescope.load_extension("ui-select")
+            telescope.load_extension('fzf')
+
+            -- Load media files extension
+            local builtin = require('telescope.builtin')
 
             local opts = { noremap = true, silent = true }
-
             vim.keymap.set("n", "<leader>ff", builtin.find_files, opts)
             vim.keymap.set("n", "<leader>fa", function() builtin.find_files({ hidden = true }) end, opts)
-            vim.keymap.set("n", "<leader>fp", builtin.live_grep, opts)
+            vim.keymap.set("n", "<leader>fp", function()
+                require("telescope.builtin").live_grep({
+                    additional_args = function()
+                        return { "--fixed-strings" }
+                    end,
+                })
+            end, { desc = "Grep (exact string)" })
+            -- vim.keymap.set("n", "<leader>fp", builtin.live_grep, opts)
             vim.keymap.set("n", "<leader>fh", builtin.help_tags, opts)
             vim.keymap.set("n", "<leader>fs", ":Telescope find_files<CR><ESC>", opts)
             vim.keymap.set("n", "<leader>fb", ":Telescope buffers<CR><ESC>", opts)
