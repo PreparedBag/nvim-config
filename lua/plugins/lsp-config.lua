@@ -16,16 +16,6 @@ return {
             -- HELPER FUNCTIONS
             -- ============================================================================
 
-            local function enable_autocomplete()
-                local cmp = require('cmp')
-                cmp.setup({ completion = { autocomplete = { "TextChanged" } } })
-            end
-
-            local function disable_autocomplete()
-                local cmp = require('cmp')
-                cmp.setup({ completion = { autocomplete = {} } })
-            end
-
             local function is_valid_lsp_buffer(bufnr)
                 local buftype = vim.api.nvim_get_option_value('buftype', { buf = bufnr })
                 local filetype = vim.api.nvim_get_option_value('filetype', { buf = bufnr })
@@ -227,36 +217,24 @@ return {
                 end,
             })
 
-            -- Re-enable autocomplete when switching buffers
-            vim.api.nvim_create_autocmd("BufEnter", {
-                callback = function()
-                    local bufnr = vim.api.nvim_get_current_buf()
-                    local clients = vim.lsp.get_clients({ bufnr = bufnr })
-                    if #clients > 0 then
-                        enable_autocomplete()
-                    end
-                end,
-            })
-
             -- ============================================================================
             -- GLOBAL LSP KEYMAPS
             -- ============================================================================
 
             local opts = { noremap = true, silent = true }
 
-            -- Stop LSP and disable autocomplete
+            -- Stop LSP
             vim.keymap.set('n', '<leader>lc', function()
                 local bufnr = vim.api.nvim_get_current_buf()
                 local clients = vim.lsp.get_clients({ bufnr = bufnr })
                 for _, client in ipairs(clients) do
                     vim.lsp.stop_client(client.id)
                 end
-                disable_autocomplete()
                 vim.api.nvim_input('<Esc>')
                 vim.notify("LSP stopped")
             end, opts)
 
-            -- Start LSP and enable autocomplete
+            -- Start LSP
             vim.keymap.set('n', '<leader>ls', function()
                 local ok = pcall(vim.cmd, "edit")
                 if not ok then
@@ -268,7 +246,6 @@ return {
                 for _, client in ipairs(clients) do
                     on_attach(client, bufnr)
                 end
-                enable_autocomplete()
                 vim.notify("LSP started")
             end, opts)
 
@@ -481,7 +458,12 @@ return {
             -- LSP SERVER SETUP
             -- ============================================================================
 
-            local capabilities = require("cmp_nvim_lsp").default_capabilities()
+            local capabilities = vim.lsp.protocol.make_client_capabilities()
+
+            -- Integrate blink.cmp capabilities if available
+            pcall(function()
+                capabilities = require('blink.cmp').get_lsp_capabilities(capabilities)
+            end)
 
             -- Configure LSP servers
             vim.lsp.config.clangd = {
@@ -557,53 +539,6 @@ return {
                         vim.lsp.enable(server_name)
                     end,
                 }
-            })
-        end
-    },
-    {
-        "hrsh7th/nvim-cmp",
-        event = "InsertEnter",
-        dependencies = {
-            "hrsh7th/cmp-nvim-lsp",
-            "hrsh7th/cmp-buffer",
-            "hrsh7th/cmp-path",
-            "hrsh7th/cmp-cmdline",
-            "L3MON4D3/LuaSnip",
-            "saadparwaiz1/cmp_luasnip",
-        },
-        config = function()
-            vim.o.completeopt = "menu,menuone,noselect"
-
-            local cmp = require("cmp")
-            local luasnip = require("luasnip")
-
-            cmp.setup({
-                snippet = {
-                    expand = function(args)
-                        luasnip.lsp_expand(args.body)
-                    end,
-                },
-                mapping = cmp.mapping.preset.insert({
-                    ["<C-j>"] = cmp.mapping.select_next_item(),
-                    ["<C-k>"] = cmp.mapping.select_prev_item(),
-                    ["<CR>"] = cmp.mapping.confirm({ select = true }),
-                    ["<C-Space>"] = function()
-                        if cmp.visible() then
-                            cmp.abort()
-                        else
-                            cmp.complete()
-                        end
-                    end,
-                }),
-                sources = cmp.config.sources({
-                    { name = "nvim_lsp", keyword_length = 1 },
-                }),
-                completion = {
-                    autocomplete = { "TextChanged" }
-                },
-                performance = {
-                    max_view_entries = 50,
-                },
             })
         end
     }

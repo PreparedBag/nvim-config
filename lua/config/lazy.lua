@@ -22,7 +22,6 @@ require("lazy").setup({
         { import = "plugins.harpoon" },
         { import = "plugins.lualine" },
         { import = "plugins.markdown" },
-        { import = "plugins.lsp-config" },
         { import = "plugins.claude" },
         { import = "plugins.noice" },
         { import = "plugins.telescope" },
@@ -34,6 +33,9 @@ require("lazy").setup({
         { import = "plugins.oil" },
         { import = "plugins.bracey" },
         { import = "plugins.toggle-term" },
+
+        { import = "plugins.blink" },
+        { import = "plugins.lsp-config" },
     },
 
     -- Lazy.nvim options
