@@ -53,17 +53,11 @@ vim.api.nvim_set_keymap('n', '<leader>wj', '<C-w>j', opts)
 vim.api.nvim_set_keymap('n', '<leader>wk', '<C-w>k', opts)
 
 -- Clipboard
--- Paste from system clipboard
-vim.api.nvim_set_keymap('n', '<leader>p', '"+P', opts)
-vim.api.nvim_set_keymap('v', '<leader>p', '"+P', opts)
 -- Paste over selection without overwriting default register
-vim.api.nvim_set_keymap("x", "<leader>v", [["_dP]], opts)
+vim.api.nvim_set_keymap("x", "<leader>p", [["_dP]], opts)
 -- Yank to system clipboard
 vim.api.nvim_set_keymap("n", "<leader>y", [["+y]], opts)
 vim.api.nvim_set_keymap("v", "<leader>y", [["+y]], opts)
--- Delete without affecting clipboard
-vim.api.nvim_set_keymap("n", "<leader>d", [["_d]], opts)
-vim.api.nvim_set_keymap("v", "<leader>d", [["_d]], opts)
 
 -- Miscellaneous
 -- Quit

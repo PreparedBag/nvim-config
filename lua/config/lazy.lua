@@ -22,7 +22,7 @@ require("lazy").setup({
         { import = "plugins.harpoon" },
         { import = "plugins.lualine" },
         { import = "plugins.markdown" },
-        { import = "plugins.claude" },
+        -- { import = "plugins.claude" },
         { import = "plugins.noice" },
         { import = "plugins.telescope" },
         { import = "plugins.nerdtree" },
@@ -33,6 +33,7 @@ require("lazy").setup({
         { import = "plugins.oil" },
         { import = "plugins.bracey" },
         { import = "plugins.toggle-term" },
+        { import = "plugins.debugger" },
 
         { import = "plugins.blink" },
         { import = "plugins.lsp-config" },
