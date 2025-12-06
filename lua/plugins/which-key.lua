@@ -47,9 +47,9 @@ return {
             -- Find (Telescope)
             { "<leader>f",   group = "Find" },
             { "<leader>ff",  desc = "Find Files (Fuzzy Finder)",     mode = "n" },
-            { "<leader>fa",  desc = "Find Files (Include Hidden)",   mode = "n" },
+            { "<leader>fa",  desc = "Find All Files (Include All)",  mode = "n" },
             { "<leader>fp",  desc = "Find Phrase (Live Grep)",       mode = "n" },
-            { "<leader>fs",  desc = "File Scroll",                   mode = "n" },
+            { "<leader>fs",  desc = "Find String (Include All)",     mode = "n" },
             { "<leader>fh",  desc = "Find Help Tags",                mode = "n" },
             { "<leader>fb",  desc = "Find Buffers",                  mode = "n" },
             { "<leader>fd",  desc = "Set Telescope CWD Here",        mode = "n" },

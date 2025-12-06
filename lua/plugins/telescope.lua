@@ -83,25 +83,80 @@ return {
 
             -- Load media files extension
             local builtin = require('telescope.builtin')
-
             local opts = { noremap = true, silent = true }
-            vim.keymap.set("n", "<leader>ff", builtin.find_files, opts)
-            vim.keymap.set("n", "<leader>fa", function() builtin.find_files({ hidden = true }) end, opts)
-            vim.keymap.set("n", "<leader>fp", function()
-                require("telescope.builtin").live_grep({
-                    additional_args = function()
-                        return { "--fixed-strings" }
-                    end,
-                })
-            end, { desc = "Grep (exact string)" })
-            -- vim.keymap.set("n", "<leader>fp", builtin.live_grep, opts)
-            vim.keymap.set("n", "<leader>fh", builtin.help_tags, opts)
-            vim.keymap.set("n", "<leader>fs", ":Telescope find_files<CR><ESC>", opts)
-            vim.keymap.set("n", "<leader>fb", ":Telescope buffers<CR><ESC>", opts)
 
+            vim.keymap.set("n", "<leader>ff", function()
+                builtin.find_files({
+                    find_command = {
+                        'rg',
+                        '--files',
+                        '--glob',
+                        '!.git/*'
+                    }
+                })
+            end, opts)
+
+            vim.keymap.set("n", "<leader>fa", function()
+                builtin.find_files({
+                    hidden = true,
+                    find_command = {
+                        'rg',
+                        '--files',
+                        '--hidden',
+                        '--no-ignore',
+                        '--glob',
+                        '!.git/*'
+                    }
+                })
+            end, opts)
+
+            vim.keymap.set("n", "<leader>fs", function()
+                builtin.live_grep({
+                    vimgrep_arguments = {
+                        'rg',
+                        '--color=never',
+                        '--no-heading',
+                        '--with-filename',
+                        '--line-number',
+                        '--column',
+                        '--smart-case',
+                        '--no-ignore',
+                        '--hidden',
+                        '--glob',
+                        '!.git/*',
+                        '--glob',
+                        '!node_modules/*',
+                        '--glob',
+                        '!*.min.js'
+                    }
+                })
+            end, opts)
+
+            vim.keymap.set("n", "<leader>fp", function()
+                builtin.live_grep({
+                    vimgrep_arguments = {
+                        'rg',
+                        '--color=never',
+                        '--no-heading',
+                        '--with-filename',
+                        '--line-number',
+                        '--column',
+                        '--smart-case',
+                        '--glob',
+                        '!.git/*',
+                        '--glob',
+                        '!node_modules/*',
+                        '--glob',
+                        '!*.min.js'
+                    }
+                })
+            end, opts)
+
+            vim.keymap.set("n", "<leader>fh", builtin.help_tags, opts)
+
+            vim.keymap.set("n", "<leader>fe", ":Oil<CR>", opts)
             vim.keymap.set("n", "<leader>fd", function() set_telescope_cwd_to_updated() end, opts)
             vim.keymap.set("n", "<leader>fo", function() set_telescope_cwd_to_original() end, opts)
-            vim.keymap.set("n", "<leader>fe", ":Oil<CR>", opts)
         end
     },
     {

@@ -18,31 +18,30 @@ vim.opt.rtp:prepend(lazypath)
 require("lazy").setup({
     -- Include plugins from the lua/plugins/ folder
     spec = {
+        { import = "plugins.blink" },
+        { import = "plugins.bracey" },
+        -- { import = "plugins.claude" },
         { import = "plugins.colorschemes" },
+        { import = "plugins.comment" },
+        { import = "plugins.debugger" },
         { import = "plugins.harpoon" },
         { import = "plugins.lualine" },
+        { import = "plugins.lsp-config" },
         { import = "plugins.markdown" },
-        -- { import = "plugins.claude" },
-        { import = "plugins.noice" },
-        { import = "plugins.telescope" },
         { import = "plugins.nerdtree" },
+        { import = "plugins.noice" },
+        { import = "plugins.oil" },
+        { import = "plugins.telescope" },
+        { import = "plugins.toggle-term" },
         { import = "plugins.treesitter" },
         { import = "plugins.undotree" },
         { import = "plugins.which-key" },
-        { import = "plugins.comment" },
-        { import = "plugins.oil" },
-        { import = "plugins.bracey" },
-        { import = "plugins.toggle-term" },
-        { import = "plugins.debugger" },
-
-        { import = "plugins.blink" },
-        { import = "plugins.lsp-config" },
     },
 
     -- Lazy.nvim options
     checker = {
-        enabled = false,
-        notify = true,
+        enabled = true,
+        notify = false,
     },
 })
 

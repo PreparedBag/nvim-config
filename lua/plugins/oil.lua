@@ -10,8 +10,9 @@ return {
             default_file_explorer = true,
             columns = {
                 "icon",
-                "mtime",
+                "permissions",
                 "size",
+                "mtime",
             },
             view_options = {
                 show_hidden = true, -- Start with hidden files not shown
