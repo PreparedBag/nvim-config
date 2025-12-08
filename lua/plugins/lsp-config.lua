@@ -161,31 +161,94 @@ return {
 
             local opts = { noremap = true, silent = true }
 
-            -- Stop LSP
+            -- ============================================
+            -- AUTOCOMPLETE (blink.cmp) CONTROL
+            -- ============================================
+
+            vim.keymap.set('n', '<leader>ba', function()
+                local ok, blink = pcall(require, 'blink.cmp')
+                if not ok then
+                    vim.notify("blink.cmp not installed", vim.log.levels.WARN)
+                    return
+                end
+
+                local bufnr = vim.api.nvim_get_current_buf()
+                local current_state = vim.b[bufnr].blink_cmp_enabled
+
+                if current_state == false then
+                    vim.b[bufnr].blink_cmp_enabled = nil -- Set to nil to use default (enabled)
+                    vim.notify("Autocomplete enabled")
+                else
+                    vim.b[bufnr].blink_cmp_enabled = false
+                    vim.notify("Autocomplete disabled")
+                    -- Force close any open menu
+                    vim.api.nvim_input('<C-e>')
+                end
+
+                -- Trigger blink to re-evaluate enabled state
+                vim.cmd('doautocmd TextChanged')
+            end, vim.tbl_extend('force', opts, { desc = 'Toggle blink autocomplete' }))
+
+            -- ============================================
+            -- BUFFER-SPECIFIC LSP CONTROL
+            -- ============================================
+
+            -- Detach LSP from current buffer only
             vim.keymap.set('n', '<leader>lc', function()
                 local bufnr = vim.api.nvim_get_current_buf()
                 local clients = vim.lsp.get_clients({ bufnr = bufnr })
-                for _, client in ipairs(clients) do
-                    vim.lsp.stop_client(client.id)
-                end
-                vim.api.nvim_input('<Esc>')
-                vim.notify("LSP stopped")
-            end, opts)
 
-            -- Start LSP
-            vim.keymap.set('n', '<leader>ls', function()
-                local ok = pcall(vim.cmd, "edit")
-                if not ok then
-                    vim.notify("Please save pending changes or discard", vim.log.levels.WARN)
+                if #clients == 0 then
+                    vim.notify("No LSP clients attached", vim.log.levels.WARN)
                     return
                 end
-                local bufnr = vim.api.nvim_get_current_buf()
-                local clients = vim.lsp.get_clients({ bufnr = bufnr })
+
+                -- Detach from buffer instead of stopping client entirely
                 for _, client in ipairs(clients) do
-                    on_attach(client, bufnr)
+                    vim.lsp.buf_detach_client(bufnr, client.id)
                 end
-                vim.notify("LSP started")
-            end, opts)
+
+                vim.api.nvim_input('<Esc>')
+                vim.notify("LSP detached from buffer")
+            end, vim.tbl_extend('force', opts, { desc = 'Detach LSP from buffer' }))
+
+            -- Attach LSP to current buffer
+            vim.keymap.set('n', '<leader>ls', function()
+                local bufnr = vim.api.nvim_get_current_buf()
+                local filetype = vim.bo[bufnr].filetype
+
+                if filetype == "" then
+                    vim.notify("No filetype set for buffer", vim.log.levels.WARN)
+                    return
+                end
+
+                -- Get all available clients for this filetype
+                local all_clients = vim.lsp.get_clients()
+                local attached = 0
+
+                for _, client in ipairs(all_clients) do
+                    -- Check if client supports this filetype
+                    if client.config.filetypes then
+                        for _, ft in ipairs(client.config.filetypes) do
+                            if ft == filetype then
+                                -- Attach client to buffer
+                                vim.lsp.buf_attach_client(bufnr, client.id)
+                                if on_attach then
+                                    on_attach(client, bufnr)
+                                end
+                                attached = attached + 1
+                                break
+                            end
+                        end
+                    end
+                end
+
+                if attached > 0 then
+                    vim.notify("LSP attached to buffer")
+                else
+                    vim.notify("No suitable LSP clients found for " .. filetype, vim.log.levels.WARN)
+                end
+            end, vim.tbl_extend('force', opts, { desc = 'Attach LSP to buffer' }))
 
             -- ============================================================================
             -- LSP SERVER SETUP
