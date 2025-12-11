@@ -23,7 +23,7 @@ This document explains the automated installation system created for the nvim-co
 **Usage:**
 ```bash
 # One-liner installation
-curl -fsSL https://raw.githubusercontent.com/PreparedBag/nvim-config/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/PreparedBag/nvim-config/main/install.sh | bash -s -- -y
 
 # Or download and inspect first
 curl -fsSL https://raw.githubusercontent.com/PreparedBag/nvim-config/main/install.sh -o install.sh
