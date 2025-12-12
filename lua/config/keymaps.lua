@@ -96,9 +96,13 @@ vim.keymap.set("n", "<leader>bt", function()
         return
     end
 
-    -- Get the current buffer content
-    local lines = vim.api.nvim_buf_get_lines(current_bufnr, 0, -1, false)
     local filename = vim.api.nvim_buf_get_name(current_bufnr)
+
+    -- Check if file exists
+    if filename == "" or vim.fn.filereadable(filename) == 0 then
+        vim.notify("Cannot read file", vim.log.levels.ERROR)
+        return
+    end
 
     -- Create a new split and scratch buffer
     vim.cmd("split")
@@ -115,8 +119,8 @@ vim.keymap.set("n", "<leader>bt", function()
     -- Set a descriptive name
     vim.api.nvim_buf_set_name(preview_buf, "[Binary Preview] " .. vim.fn.fnamemodify(filename, ":t"))
 
-    -- Run xxd on the content
-    local xxd_output = vim.fn.systemlist("xxd", lines)
+    -- Run xxd directly on the file (fixed line)
+    local xxd_output = vim.fn.systemlist("xxd " .. vim.fn.shellescape(filename))
 
     -- Insert the xxd output
     vim.api.nvim_buf_set_option(preview_buf, "modifiable", true)
