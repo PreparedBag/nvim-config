@@ -14,8 +14,19 @@ return {
                 section_separators   = { left = '', right = '' },
 
                 disabled_filetypes   = {
-                    statusline = { "nerdtree" },
-                    winbar = { "nerdtree" },
+                    statusline = {
+                        "nerdtree",
+                        "dapui_scopes",
+                        "dapui_breakpoints",
+                        "dapui_stacks",
+                        "dapui_watches",
+                        "dapui_console",
+                        "dapui_repl",
+                        "dap-repl",
+                    },
+                    winbar = {
+                        "nerdtree",
+                    },
                 },
                 always_divide_middle = true,
                 globalstatus         = false,

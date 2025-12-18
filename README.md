@@ -297,15 +297,6 @@ The following language servers are automatically installed:
 - **HTML**: html
 - **CSS**: cssls
 
-### Generating compile_commands.json (C/C++)
-
-For proper C/C++ LSP functionality, you may need to generate a `compile_commands.json` file:
-
-- `<leader>lgc` - Generate via CMake
-- `<leader>lgw` - Generate via West (Zephyr)
-- `<leader>lgz` - Generate Zephyr-specific compile_commands.json
-- `<leader>lgg` - Generate generic compile_commands.json
-
 ## TROUBLESHOOTING
 
 ### LSP Not Working

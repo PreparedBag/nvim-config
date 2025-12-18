@@ -1,3 +1,5 @@
+vim.env.OLLAMA_HOST = "http://192.168.1.25:11435"
+
 return {
     "olimorris/codecompanion.nvim",
     lazy = false,   -- Load immediately to ensure init runs

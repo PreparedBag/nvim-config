@@ -49,7 +49,7 @@ vim.opt.termguicolors = true
 -- Keep 9 lines above and below the cursor
 vim.opt.scrolloff = 9
 -- Always show the sign column
-vim.opt.signcolumn = "yes"
+vim.opt.signcolumn = "yes:2"
 -- Append '@-@' to valid file names
 vim.opt.isfname:append("@-@")
 -- Set update time to 100ms for faster UI updates
@@ -83,7 +83,7 @@ vim.opt.foldlevel = 99
 vim.opt.foldlevelstart = 99
 -- Enable folding
 vim.opt.foldenable = true
--- Set fold to syntax 
+-- Set fold to syntax
 vim.opt.foldmethod = "syntax"
 -- Set the fold column width to 0 (hide fold column)
 -- vim.opt.foldcolumn = "0"

@@ -31,7 +31,9 @@ require("lazy").setup({
         { import = "plugins.minidiff" },
         { import = "plugins.nerdtree" },
         { import = "plugins.noice" },
+
         { import = "plugins.ollama" },
+
         { import = "plugins.oil" },
         { import = "plugins.telescope" },
         { import = "plugins.toggle-term" },
@@ -51,3 +53,4 @@ require("lazy").setup({
 vim.cmd.colorscheme "catppuccin-frappe"
 
 require("after.color-fix")
+require("after.autocmds")

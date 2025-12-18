@@ -91,6 +91,10 @@ return {
             -- Table Mode
             { "<leader>t",   group = "Table",                        mode = "n" },
 
+            -- Table Mode
+            { "<leader>dt",  group = "Target Actions",               mode = "n" },
+            { "<leader>dg",  group = "Go To Actions",                mode = "n" },
+
             -- Harpoon
             { "<leader>e",   desc = "Harpoon Quick Menu",            mode = "n" },
             { "<leader>a",   desc = "Add to Harpoon",                mode = "n" },
