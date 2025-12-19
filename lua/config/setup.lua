@@ -4,6 +4,8 @@ vim.g.mapleader = " "
 -- Set space as the local leader key
 vim.g.maplocalleader = " "
 
+vim.opt.nrformats = { "alpha", "hex", "bin" }
+
 -- Disable Netrw banner
 vim.g.netrw_banner = 0
 

@@ -30,6 +30,7 @@ require("lazy").setup({
         { import = "plugins.markdown" },
         { import = "plugins.minidiff" },
         { import = "plugins.nerdtree" },
+        { import = "plugins.nibbler" },
         { import = "plugins.noice" },
 
         { import = "plugins.ollama" },

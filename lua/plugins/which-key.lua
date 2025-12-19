@@ -91,6 +91,12 @@ return {
             -- Table Mode
             { "<leader>t",   group = "Table",                        mode = "n" },
 
+            -- Ollama
+            { "<leader>o",   group = "Ollama",                       mode = "n" },
+
+            -- Convert
+            { "<leader>c",   group = "Convert",                      mode = "n" },
+
             -- Table Mode
             { "<leader>dt",  group = "Target Actions",               mode = "n" },
             { "<leader>dg",  group = "Go To Actions",                mode = "n" },
