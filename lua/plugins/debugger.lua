@@ -132,6 +132,27 @@ return {
             dapui.close()
         end
 
+        -- Clean up DAP UI state when session ends
+        dap.listeners.before['event_terminated']['cleanup'] = function()
+            vim.cmd('sign unplace *') -- Remove all signs
+            -- Reset any special buffer options
+            for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+                if vim.api.nvim_buf_is_valid(buf) then
+                    pcall(vim.api.nvim_buf_del_var, buf, 'dap_session')
+                    -- Clear any DAP-related buffer options
+                end
+            end
+        end
+
+        dap.listeners.before['event_exited']['cleanup'] = function()
+            vim.cmd('sign unplace *')
+            for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+                if vim.api.nvim_buf_is_valid(buf) then
+                    pcall(vim.api.nvim_buf_del_var, buf, 'dap_session')
+                end
+            end
+        end
+
         -- ============================================================================
         -- SIGNS AND ICONS
         -- ============================================================================
@@ -342,21 +363,16 @@ return {
                 select_elf_file(flash_elf)
                 return
             end
-
             vim.notify('Flashing ' .. selected_elf_path .. '...', vim.log.levels.INFO)
-
             local script_path = '/tmp/jlink_flash.jlink'
-            local script_content = string.format('loadfile %s\nr\ng\nqc\n', selected_elf_path)
-
+            local script_content = string.format('erase\nloadfile %s\nreset\ngo\nexit\n', selected_elf_path)
             local file = io.open(script_path, 'w')
             if not file then
                 vim.notify('Failed to create flash script', vim.log.levels.ERROR)
                 return
             end
-
             file:write(script_content)
             file:close()
-
             local flash_cmd = {
                 'JLinkExe',
                 '-device',
@@ -370,7 +386,6 @@ return {
                 '-CommandFile',
                 script_path,
             }
-
             vim.fn.jobstart(flash_cmd, {
                 on_exit = function(_, exit_code)
                     if exit_code == 0 then
