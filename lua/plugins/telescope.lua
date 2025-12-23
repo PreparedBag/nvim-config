@@ -51,6 +51,7 @@ return {
                         horizontal = { preview_width = 0.5 },
                         vertical = { preview_height = 0.5 },
                     },
+                    preview = { treesitter = false },
                     fzf = {
                         fuzzy = true, -- keep fuzzy
                         override_generic_sorter = true,
@@ -72,8 +73,7 @@ return {
                 },
                 extensions = {
                     ["ui-select"] = {
-                        require("telescope.themes").get_dropdown {
-                        }
+                        require("telescope.themes").get_dropdown({})
                     }
                 }
             })

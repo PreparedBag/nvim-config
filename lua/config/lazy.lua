@@ -23,7 +23,7 @@ require("lazy").setup({
         -- { import = "plugins.claude" },
         { import = "plugins.colorschemes" },
         { import = "plugins.comment" },
-        { import = "plugins.debugger" },
+        -- { import = "plugins.debugger" },
         { import = "plugins.harpoon" },
         { import = "plugins.lualine" },
         { import = "plugins.lsp-config" },
