@@ -65,7 +65,8 @@ return {
                 },
                 {
                     elements = {
-                        { id = 'repl', size = 1.00 },
+                        { id = 'repl',     size = 0.5 },
+                        { id = 'terminal', size = 0.5 },
                     },
                     size = 15,
                     position = 'bottom',
@@ -637,18 +638,90 @@ return {
         keymap('n', '<Leader>de', dapui.eval, vim.tbl_extend('force', opts, { desc = 'Eval Expression' }))
         keymap('v', '<Leader>de', dapui.eval, vim.tbl_extend('force', opts, { desc = 'Eval Selection' }))
 
-        -- Add to watches
+        -- Version 1: Print to REPL
+        keymap('n', '<Leader>dW', function()
+            local line = vim.fn.getline('.')
+            local col = vim.fn.col('.') - 1 -- 0-indexed
+
+            -- Find the end of the current word under cursor (no dots/arrows after)
+            local finish = col
+            while finish <= #line do
+                local char = line:sub(finish, finish)
+                if not char:match('[%w_]') then -- Only word chars, no dots
+                    break
+                end
+                finish = finish + 1
+            end
+
+            -- Walk backwards from current position to find start (include dots/arrows)
+            local start = col
+            while start > 0 do
+                local char = line:sub(start, start)
+                if not char:match('[%w_%.%->%[%]]') then
+                    start = start + 1
+                    break
+                end
+                start = start - 1
+            end
+            if start == 0 then
+                start = 1
+            end
+
+            -- Extract from start to end of current word
+            local word = line:sub(start, finish - 1)
+
+            if word == '' then
+                vim.notify('No variable under cursor', vim.log.levels.WARN)
+                return
+            end
+
+            dap.repl.execute('`p ' .. word)
+            vim.notify("Printed '" .. word .. "' to REPL", vim.log.levels.INFO)
+        end, vim.tbl_extend('force', opts, { desc = 'Print Variable' }))
+
+        -- Version 2: Add to Watches
         keymap('n', '<Leader>dw', function()
-            local word = vim.fn.expand('<cword>')
+            local line = vim.fn.getline('.')
+            local col = vim.fn.col('.') - 1 -- 0-indexed
+
+            -- Find the end of the current word under cursor (no dots/arrows after)
+            local finish = col
+            while finish <= #line do
+                local char = line:sub(finish, finish)
+                if not char:match('[%w_]') then -- Only word chars, no dots
+                    break
+                end
+                finish = finish + 1
+            end
+
+            -- Walk backwards from current position to find start (include dots/arrows)
+            local start = col
+            while start > 0 do
+                local char = line:sub(start, start)
+                if not char:match('[%w_%.%->%[%]]') then
+                    start = start + 1
+                    break
+                end
+                start = start - 1
+            end
+            if start == 0 then
+                start = 1
+            end
+
+            -- Extract from start to end of current word
+            local word = line:sub(start, finish - 1)
+
+            if word == '' then
+                vim.notify('No variable under cursor', vim.log.levels.WARN)
+                return
+            end
+
             dapui.elements.watches.add(word)
             vim.notify("Added '" .. word .. "' to watches", vim.log.levels.INFO)
         end, vim.tbl_extend('force', opts, { desc = 'Add to Watches' }))
 
         -- Run to cursor
         keymap('n', '<Leader>dC', dap_run_to_cursor, vim.tbl_extend('force', opts, { desc = 'Run to Cursor' }))
-
-        -- REPL
-        keymap('n', '<Leader>dr', dap.repl.open, vim.tbl_extend('force', opts, { desc = 'Open REPL' }))
 
         -- Stack navigation
         keymap('n', '<Leader>dk', function()
@@ -700,30 +773,6 @@ return {
         keymap('n', '<Leader>dgc', function()
             jump_to_dap_window('dapui_console')
         end, vim.tbl_extend('force', opts, { desc = 'Go to Console' }))
-
-        -- ============================================================================
-        -- Extra stop diagnostics (optional)
-        -- ============================================================================
-        dap.listeners.after.event_stopped['print_stop_reason'] = function(_, body)
-            local parts = {}
-
-            if body.reason then
-                table.insert(parts, 'reason=' .. tostring(body.reason))
-            end
-            if body.hitBreakpointIds then
-                table.insert(parts, 'hitBreakpointIds=' .. vim.inspect(body.hitBreakpointIds))
-            end
-            if body.description then
-                table.insert(parts, 'desc=' .. tostring(body.description))
-            end
-            if body.text then
-                table.insert(parts, 'text=' .. tostring(body.text))
-            end
-
-            vim.schedule(function()
-                vim.notify('DAP stopped: ' .. table.concat(parts, ' | '), vim.log.levels.WARN)
-            end)
-        end
 
         vim.notify('DAP configured successfully!', vim.log.levels.INFO)
     end,
