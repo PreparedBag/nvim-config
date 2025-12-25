@@ -1,28 +1,28 @@
-vim.env.OLLAMA_HOST = "http://192.168.1.25:11435"
+vim.env.OLLAMA_HOST = "http://192.168.2.7:11434"
 
 return {
     "olimorris/codecompanion.nvim",
-    lazy = false,   -- Load immediately to ensure init runs
-    priority = 100, -- Load early
+    lazy = false,
+    priority = 100,
     dependencies = {
         "nvim-lua/plenary.nvim",
         "nvim-treesitter/nvim-treesitter",
-        "hrsh7th/nvim-cmp",              -- Optional: for completion
-        "nvim-telescope/telescope.nvim", -- Optional: for slash commands
+        "hrsh7th/nvim-cmp",
+        "nvim-telescope/telescope.nvim",
         {
-            "stevearc/dressing.nvim",    -- Optional: improves UI
+            "stevearc/dressing.nvim",
             opts = {},
         },
     },
     init = function()
-        -- Set environment variable BEFORE plugin loads
-        -- This tells Ollama adapter where your server is
-        vim.env.OLLAMA_HOST = "http://192.168.1.25:11435"
+        vim.env.OLLAMA_HOST = "http://192.168.2.7:11434"
     end,
     config = function()
+        -- Store current model
+        local current_model = "qwen3-coder:16k"
+
         require("codecompanion").setup({
             strategies = {
-                -- Chat strategy - opens a chat buffer
                 chat = {
                     adapter = "ollama",
                     roles = {
@@ -43,11 +43,9 @@ return {
                         },
                     },
                 },
-                -- Inline strategy - replaces/inserts code inline
                 inline = {
                     adapter = "ollama",
                 },
-                -- Agent strategy - can use tools
                 agent = {
                     adapter = "ollama",
                 },
@@ -57,9 +55,9 @@ return {
                 http = {
                     ollama = function()
                         return require("codecompanion.adapters").extend("ollama", {
-                            url = "http://192.168.1.25:11435/api/chat",
+                            url = "http://192.168.2.7:11434/api/chat",
                             env = {
-                                url = "http://192.168.1.25:11435",
+                                url = "http://192.168.2.7:11434",
                             },
                             raw = {
                                 "--silent",
@@ -67,9 +65,7 @@ return {
                             },
                             schema = {
                                 model = {
-                                    default = "qwen3-coder:30b",
-                                    -- You can switch models easily
-                                    -- Other good options: "deepseek-coder:6.7b", "codellama:13b"
+                                    default = current_model,
                                 },
                                 num_ctx = {
                                     default = 16384,
@@ -103,7 +99,7 @@ return {
                 },
                 chat = {
                     window = {
-                        layout = "vertical", -- "vertical", "horizontal", "float"
+                        layout = "vertical",
                         border = "rounded",
                         height = 0.8,
                         width = 0.45,
@@ -126,7 +122,7 @@ return {
                 },
                 diff = {
                     enabled = true,
-                    provider = "mini_diff", -- "default" or "mini_diff"
+                    provider = "mini_diff",
                 },
                 inline = {
                     diff = {
@@ -135,32 +131,6 @@ return {
                 },
             },
 
-            -- Prompt library for quick actions
-            -- To add prompts with file context, use this syntax:
-            -- ["My Prompt"] = {
-            --   strategy = "chat",
-            --   description = "Description here",
-            --   opts = {
-            --     index = 10,
-            --     short_name = "myshortname",
-            --     auto_submit = false,
-            --   },
-            --   context = {
-            --     {
-            --       type = "file",
-            --       path = {
-            --         "path/to/file1.lua",
-            --         "path/to/file2.md",
-            --       },
-            --     },
-            --   },
-            --   prompts = {
-            --     {
-            --       role = "user",
-            --       content = "Your prompt here",
-            --     },
-            --   },
-            -- },
             prompt_library = {
                 ["Custom Prompt"] = {
                     strategy = "chat",
@@ -215,8 +185,10 @@ return {
                         {
                             role = "user",
                             content = function(context)
-                                local code = require("codecompanion.helpers.actions").get_code(context.start_line,
-                                    context.end_line)
+                                local code = require("codecompanion.helpers.actions").get_code(
+                                    context.start_line,
+                                    context.end_line
+                                )
                                 return "```" .. context.filetype .. "\n" .. code .. "\n```"
                             end,
                         },
@@ -241,8 +213,10 @@ return {
                         {
                             role = "user",
                             content = function(context)
-                                local code = require("codecompanion.helpers.actions").get_code(context.start_line,
-                                    context.end_line)
+                                local code = require("codecompanion.helpers.actions").get_code(
+                                    context.start_line,
+                                    context.end_line
+                                )
                                 return code
                             end,
                         },
@@ -267,8 +241,10 @@ return {
                         {
                             role = "user",
                             content = function(context)
-                                local code = require("codecompanion.helpers.actions").get_code(context.start_line,
-                                    context.end_line)
+                                local code = require("codecompanion.helpers.actions").get_code(
+                                    context.start_line,
+                                    context.end_line
+                                )
                                 return code
                             end,
                         },
@@ -293,8 +269,10 @@ return {
                         {
                             role = "user",
                             content = function(context)
-                                local code = require("codecompanion.helpers.actions").get_code(context.start_line,
-                                    context.end_line)
+                                local code = require("codecompanion.helpers.actions").get_code(
+                                    context.start_line,
+                                    context.end_line
+                                )
                                 return code
                             end,
                         },
@@ -319,8 +297,10 @@ return {
                         {
                             role = "user",
                             content = function(context)
-                                local code = require("codecompanion.helpers.actions").get_code(context.start_line,
-                                    context.end_line)
+                                local code = require("codecompanion.helpers.actions").get_code(
+                                    context.start_line,
+                                    context.end_line
+                                )
                                 return "```" .. context.filetype .. "\n" .. code .. "\n```"
                             end,
                         },
@@ -345,8 +325,10 @@ return {
                         {
                             role = "user",
                             content = function(context)
-                                local code = require("codecompanion.helpers.actions").get_code(context.start_line,
-                                    context.end_line)
+                                local code = require("codecompanion.helpers.actions").get_code(
+                                    context.start_line,
+                                    context.end_line
+                                )
                                 return code
                             end,
                         },
@@ -382,8 +364,10 @@ return {
                         {
                             role = "user",
                             content = function(context)
-                                local code = require("codecompanion.helpers.actions").get_code(context.start_line,
-                                    context.end_line)
+                                local code = require("codecompanion.helpers.actions").get_code(
+                                    context.start_line,
+                                    context.end_line
+                                )
                                 return code
                             end,
                         },
@@ -391,21 +375,58 @@ return {
                 },
             },
 
-            -- Inline assistant settings
             inline = {
                 diff = {
                     enabled = true,
                 },
             },
 
-            -- Options
             opts = {
-                log_level = "ERROR",                -- TRACE, DEBUG, ERROR, INFO
-                send_code = true,                   -- Send code context with requests
-                use_default_actions = true,         -- Use default actions
-                use_default_prompt_library = false, -- Use our custom prompts defined above
-                silence_notifications = false,      -- Show notifications
+                log_level = "ERROR",
+                send_code = true,
+                use_default_actions = true,
+                use_default_prompt_library = false,
+                silence_notifications = false,
             },
+        })
+
+        -- Model switching function
+        local function switch_model()
+            local models = {
+                "qwen3-coder:32k",
+                "qwen3-coder:16k",
+                "llama3.1:latest",
+                "gemma3:12b",
+                "deepseek-r1:32b",
+            }
+
+            -- Find current model index
+            local current_index = 1
+            for i, model in ipairs(models) do
+                if model == current_model then
+                    current_index = i
+                    break
+                end
+            end
+
+            -- Cycle to next model
+            local next_index = current_index % #models + 1
+            current_model = models[next_index]
+
+            -- Show notification
+            vim.notify("Switched to model: " .. current_model, vim.log.levels.INFO)
+        end
+
+        -- Create user command for model switching
+        vim.api.nvim_create_user_command("CodeCompanionSwitchModel", switch_model, {
+            desc = "Switch Ollama model"
+        })
+
+        -- Set up keymap for model switching
+        vim.keymap.set("n", "<leader>om", switch_model, {
+            noremap = true,
+            silent = true,
+            desc = "Switch Ollama model"
         })
     end,
 
@@ -414,7 +435,6 @@ return {
         -- Chat interface
         {
             "<leader>oo",
-
             "<cmd>CodeCompanionActions<cr><ESC>",
             mode = { "n", "v" },
             desc = "AI Actions",
@@ -440,7 +460,7 @@ return {
             desc = "AI Inline",
         },
 
-        -- Quick prompts - using short_name
+        -- Quick prompts
         {
             "<leader>oe",
             function()

@@ -364,9 +364,24 @@ return {
                 select_elf_file(flash_elf)
                 return
             end
+
+            -- Verify the file exists
+            if vim.fn.filereadable(selected_elf_path) ~= 1 then
+                vim.notify('ELF file not found: ' .. selected_elf_path, vim.log.levels.ERROR)
+                return
+            end
+
             vim.notify('Flashing ' .. selected_elf_path .. '...', vim.log.levels.INFO)
+
             local script_path = '/tmp/jlink_flash.jlink'
-            local script_content = string.format('erase\nloadfile %s\nreset\ngo\nexit\n', selected_elf_path)
+            local script_content = string.format([[
+erase
+loadfile %s
+reset
+go
+exit
+]], selected_elf_path)
+
             local file = io.open(script_path, 'w')
             if not file then
                 vim.notify('Failed to create flash script', vim.log.levels.ERROR)
@@ -374,6 +389,7 @@ return {
             end
             file:write(script_content)
             file:close()
+
             local flash_cmd = {
                 'JLinkExe',
                 '-device',
@@ -384,15 +400,26 @@ return {
                 '4000',
                 '-autoconnect',
                 '1',
+                '-ExitOnError',
+                '1',
                 '-CommandFile',
                 script_path,
             }
+
+            local output_lines = {}
+
             vim.fn.jobstart(flash_cmd, {
                 on_exit = function(_, exit_code)
                     if exit_code == 0 then
                         vim.notify('Flash complete!', vim.log.levels.INFO)
                     else
                         vim.notify('Flash failed with code: ' .. exit_code, vim.log.levels.ERROR)
+                        -- Print last few lines of output for debugging
+                        local last_lines = {}
+                        for i = math.max(1, #output_lines - 10), #output_lines do
+                            table.insert(last_lines, output_lines[i])
+                        end
+                        vim.notify('JLink error:\n' .. table.concat(last_lines, '\n'), vim.log.levels.ERROR)
                     end
                     os.remove(script_path)
                 end,
@@ -400,7 +427,18 @@ return {
                     if data then
                         for _, line in ipairs(data) do
                             if line ~= '' then
+                                table.insert(output_lines, line)
                                 print(line)
+                            end
+                        end
+                    end
+                end,
+                on_stderr = function(_, data)
+                    if data then
+                        for _, line in ipairs(data) do
+                            if line ~= '' then
+                                table.insert(output_lines, line)
+                                print('STDERR: ' .. line)
                             end
                         end
                     end

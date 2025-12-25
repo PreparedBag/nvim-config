@@ -208,3 +208,8 @@ end
 vim.api.nvim_set_keymap('n', '<leader>it', ':lua insert_table()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<leader>ii1', ':lua insert_image_link()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<leader>ii2', ':lua insert_two_image_links()<CR>', { noremap = true, silent = true })
+
+vim.keymap.set('n', '<leader>fc', function()
+    local config_path = vim.fn.expand('~/.config/nvim')
+    vim.cmd.ex(config_path)
+end, { desc = 'Open nvim config folder' })
