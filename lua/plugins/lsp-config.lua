@@ -273,7 +273,7 @@ return {
             vim.lsp.config.pyright = {
                 cmd = { 'pyright-langserver', '--stdio' },
                 filetypes = { 'python' },
-                root_markers = { '.git', 'pyproject.toml', 'setup.py' },
+                root_markers = { '.git', 'pyproject.toml', 'setup.py', 'webui.py', 'main.py', 'index.py' },
                 on_attach = on_attach,
                 capabilities = capabilities,
             }

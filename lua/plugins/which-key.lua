@@ -64,10 +64,6 @@ return {
             { "<leader>sh",  desc = "Horizontal Split",              mode = "n" },
             { "<leader>sv",  desc = "Vertical Split",                mode = "n" },
 
-            -- Search and Replace
-            { "<leader>r",   group = "Refactor",                     mode = "n" },
-            { "<leader>rw",  desc = "Refactor Word",                 mode = "n" },
-
             -- File Permissions
             { "<leader>x",   desc = "Make File Executable",          mode = "n" },
 

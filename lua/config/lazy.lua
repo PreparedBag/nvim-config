@@ -20,7 +20,7 @@ require("lazy").setup({
     spec = {
         { import = "plugins.blink" },
         { import = "plugins.bracey" },
-        -- { import = "plugins.claude" },
+        { import = "plugins.claude" },
         { import = "plugins.colorschemes" },
         { import = "plugins.comment" },
         { import = "plugins.debugger" },

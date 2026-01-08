@@ -610,45 +610,46 @@ exit
         -- ============================================================================
         -- KEY MAPPINGS
         -- ============================================================================
-        local keymap = vim.keymap.set
-        local opts = { noremap = true, silent = true }
 
         -- Target setup
-        keymap('n', '<Leader>dte', function()
+        vim.keymap.set('n', '<Leader>dte', function()
             select_elf_file()
-        end, vim.tbl_extend('force', opts, { desc = 'Set ELF' }))
+        end, { noremap = true, silent = true, desc = 'Set ELF' })
 
-        keymap('n', '<Leader>dtf', flash_elf, vim.tbl_extend('force', opts, { desc = 'Flash ELF' }))
-        keymap('n', '<Leader>dts', start_jlink_gdb_server, vim.tbl_extend('force', opts, { desc = 'Start Server' }))
-        keymap('n', '<Leader>dtc', stop_jlink_gdb_server, vim.tbl_extend('force', opts, { desc = 'Stop Server' }))
+        vim.keymap.set('n', '<Leader>dtf', flash_elf, { noremap = true, silent = true, desc = 'Flash ELF' })
+        vim.keymap.set('n', '<Leader>dts', start_jlink_gdb_server,
+            { noremap = true, silent = true, desc = 'Start Server' })
+        vim.keymap.set('n', '<Leader>dtc', stop_jlink_gdb_server, { noremap = true, silent = true, desc = 'Stop Server' })
 
         -- Session control
-        keymap('n', '<Leader>dc', function()
+        vim.keymap.set('n', '<Leader>dc', function()
             vim.defer_fn(function()
                 dap_continue()
             end, 200)
-        end, vim.tbl_extend('force', opts, { desc = 'Continue/Start (deferred)' }))
+        end, { noremap = true, silent = true, desc = 'Continue/Start (deferred)' })
 
-        keymap('n', '<Leader>dtt', dap_terminate, vim.tbl_extend('force', opts, { desc = 'Terminate' }))
-        keymap('n', '<Leader>dR', dap_mark_running_and(dap.restart), vim.tbl_extend('force', opts, { desc = 'Restart' }))
-        keymap('n', '<Leader>dp', dap.pause, vim.tbl_extend('force', opts, { desc = 'Pause' }))
+        vim.keymap.set('n', '<Leader>dtt', dap_terminate, { noremap = true, silent = true, desc = 'Terminate' })
+        vim.keymap.set('n', '<Leader>dR', dap_mark_running_and(dap.restart),
+            { noremap = true, silent = true, desc = 'Restart' })
+        vim.keymap.set('n', '<Leader>dp', dap.pause, { noremap = true, silent = true, desc = 'Pause' })
 
         -- Stepping
-        keymap('n', '<Leader>di', dap_step_into, vim.tbl_extend('force', opts, { desc = 'Step Into' }))
-        keymap('n', '<Leader>do', dap_step_over, vim.tbl_extend('force', opts, { desc = 'Step Over' }))
-        keymap('n', '<Leader>dO', dap_step_out, vim.tbl_extend('force', opts, { desc = 'Step Out' }))
+        vim.keymap.set('n', '<Leader>di', dap_step_into, { noremap = true, silent = true, desc = 'Step Into' })
+        vim.keymap.set('n', '<Leader>do', dap_step_over, { noremap = true, silent = true, desc = 'Step Over' })
+        vim.keymap.set('n', '<Leader>dO', dap_step_out, { noremap = true, silent = true, desc = 'Step Out' })
 
         -- Breakpoints
-        keymap('n', '<Leader>db', dap.toggle_breakpoint, vim.tbl_extend('force', opts, { desc = 'Toggle Breakpoint' }))
-        keymap('n', '<Leader>dB', function()
+        vim.keymap.set('n', '<Leader>db', dap.toggle_breakpoint,
+            { noremap = true, silent = true, desc = 'Toggle Breakpoint' })
+        vim.keymap.set('n', '<Leader>dB', function()
             dap.set_breakpoint(vim.fn.input('Breakpoint condition: '))
-        end, vim.tbl_extend('force', opts, { desc = 'Conditional Breakpoint' }))
-        keymap('n', '<Leader>dx', function()
+        end, { noremap = true, silent = true, desc = 'Conditional Breakpoint' })
+        vim.keymap.set('n', '<Leader>dx', function()
             dap.clear_breakpoints()
-        end, vim.tbl_extend('force', opts, { desc = 'Clear Breakpoints' }))
+        end, { noremap = true, silent = true, desc = 'Clear Breakpoints' })
 
         -- UI toggle
-        keymap('n', '<Leader>du', function()
+        vim.keymap.set('n', '<Leader>du', function()
             local is_open = false
             for _, win in ipairs(vim.api.nvim_list_wins()) do
                 local buf = vim.api.nvim_win_get_buf(win)
@@ -670,14 +671,14 @@ exit
                     end)
                 end, 50)
             end
-        end, vim.tbl_extend('force', opts, { desc = 'Toggle UI' }))
+        end, { noremap = true, silent = true, desc = 'Toggle UI' })
 
         -- Evaluation
-        keymap('n', '<Leader>de', dapui.eval, vim.tbl_extend('force', opts, { desc = 'Eval Expression' }))
-        keymap('v', '<Leader>de', dapui.eval, vim.tbl_extend('force', opts, { desc = 'Eval Selection' }))
+        vim.keymap.set('n', '<Leader>de', dapui.eval, { noremap = true, silent = true, desc = 'Eval Expression' })
+        vim.keymap.set('v', '<Leader>de', dapui.eval, { noremap = true, silent = true, desc = 'Eval Selection' })
 
         -- Version 1: Print to REPL
-        keymap('n', '<Leader>dW', function()
+        vim.keymap.set('n', '<Leader>dW', function()
             local line = vim.fn.getline('.')
             local col = vim.fn.col('.') - 1 -- 0-indexed
 
@@ -715,10 +716,10 @@ exit
 
             dap.repl.execute('`p ' .. word)
             vim.notify("Printed '" .. word .. "' to REPL", vim.log.levels.INFO)
-        end, vim.tbl_extend('force', opts, { desc = 'Print Variable' }))
+        end, { noremap = true, silent = true, desc = 'Print Variable' })
 
         -- Version 2: Add to Watches
-        keymap('n', '<Leader>dw', function()
+        vim.keymap.set('n', '<Leader>dw', function()
             local line = vim.fn.getline('.')
             local col = vim.fn.col('.') - 1 -- 0-indexed
 
@@ -756,24 +757,24 @@ exit
 
             dapui.elements.watches.add(word)
             vim.notify("Added '" .. word .. "' to watches", vim.log.levels.INFO)
-        end, vim.tbl_extend('force', opts, { desc = 'Add to Watches' }))
+        end, { noremap = true, silent = true, desc = 'Add to Watches' })
 
         -- Run to cursor
-        keymap('n', '<Leader>dC', dap_run_to_cursor, vim.tbl_extend('force', opts, { desc = 'Run to Cursor' }))
+        vim.keymap.set('n', '<Leader>dC', dap_run_to_cursor, { noremap = true, silent = true, desc = 'Run to Cursor' })
 
         -- Stack navigation
-        keymap('n', '<Leader>dk', function()
+        vim.keymap.set('n', '<Leader>dk', function()
             dap.up()
-        end, vim.tbl_extend('force', opts, { desc = 'Stack Up' }))
-        keymap('n', '<Leader>dj', function()
+        end, { noremap = true, silent = true, desc = 'Stack Up' })
+        vim.keymap.set('n', '<Leader>dj', function()
             dap.down()
-        end, vim.tbl_extend('force', opts, { desc = 'Stack Down' }))
+        end, { noremap = true, silent = true, desc = 'Stack Down' })
 
         -- Logging
-        keymap('n', '<Leader>dv', function()
+        vim.keymap.set('n', '<Leader>dv', function()
             dap.set_log_level('TRACE')
             vim.notify('DAP log: ' .. vim.fn.stdpath('cache') .. '/dap.log', vim.log.levels.INFO)
-        end, vim.tbl_extend('force', opts, { desc = 'Verbose Logging' }))
+        end, { noremap = true, silent = true, desc = 'Verbose Logging' })
 
         -- Window navigation
         local function jump_to_dap_window(filetype_pattern)
@@ -788,29 +789,29 @@ exit
             vim.notify('DAP window not found: ' .. filetype_pattern, vim.log.levels.WARN)
         end
 
-        keymap('n', '<Leader>dgs', function()
+        vim.keymap.set('n', '<Leader>dgs', function()
             jump_to_dap_window('dapui_scopes')
-        end, vim.tbl_extend('force', opts, { desc = 'Go to Scopes' }))
+        end, { noremap = true, silent = true, desc = 'Go to Scopes' })
 
-        keymap('n', '<Leader>dgw', function()
+        vim.keymap.set('n', '<Leader>dgw', function()
             jump_to_dap_window('dapui_watches')
-        end, vim.tbl_extend('force', opts, { desc = 'Go to Watches' }))
+        end, { noremap = true, silent = true, desc = 'Go to Watches' })
 
-        keymap('n', '<Leader>dgt', function()
+        vim.keymap.set('n', '<Leader>dgt', function()
             jump_to_dap_window('dapui_stacks')
-        end, vim.tbl_extend('force', opts, { desc = 'Go to Stacks' }))
+        end, { noremap = true, silent = true, desc = 'Go to Stacks' })
 
-        keymap('n', '<Leader>dgb', function()
+        vim.keymap.set('n', '<Leader>dgb', function()
             jump_to_dap_window('dapui_breakpoints')
-        end, vim.tbl_extend('force', opts, { desc = 'Go to Breakpoints' }))
+        end, { noremap = true, silent = true, desc = 'Go to Breakpoints' })
 
-        keymap('n', '<Leader>dgr', function()
+        vim.keymap.set('n', '<Leader>dgr', function()
             jump_to_dap_window('dapui_repl')
-        end, vim.tbl_extend('force', opts, { desc = 'Go to REPL' }))
+        end, { noremap = true, silent = true, desc = 'Go to REPL' })
 
-        keymap('n', '<Leader>dgc', function()
+        vim.keymap.set('n', '<Leader>dgc', function()
             jump_to_dap_window('dapui_console')
-        end, vim.tbl_extend('force', opts, { desc = 'Go to Console' }))
+        end, { noremap = true, silent = true, desc = 'Go to Console' })
 
         vim.notify('DAP configured successfully!', vim.log.levels.INFO)
     end,

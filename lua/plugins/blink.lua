@@ -67,6 +67,8 @@ return {
             ['<C-e>'] = { 'hide', 'fallback' },
             ['<C-y>'] = { 'accept', 'fallback' },
             ['<C-h>'] = { 'show_documentation', 'hide_documentation' },
+            ['<Tab>'] = { 'snippet_forward', 'fallback' },
+            ['<S-Tab>'] = { 'snippet_backward', 'fallback' },
         },
 
         appearance = {

@@ -3,69 +3,72 @@ local opts = { noremap = true, silent = true }
 
 -- Moving Lines
 -- Move selected text down
-vim.api.nvim_set_keymap("v", "J", ":m '>+1<CR>gv=gv", opts)
+vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", opts)
 -- Move selected text up
-vim.api.nvim_set_keymap("v", "K", ":m '<-2<CR>gv=gv", opts)
+vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", opts)
+-- Move cursor right in insert mode (useful after accepting completions with parens)
+vim.keymap.set('i', '<C-l>', '<Right>', { noremap = true, silent = true, desc = 'Move cursor right in insert mode' })
+vim.keymap.set('i', '<C-b>', '<Left>', { noremap = true, silent = true, desc = 'Move cursor left in insert mode' })
 
 -- Joining and Scrolling
 -- Join lines and keep cursor in place
-vim.api.nvim_set_keymap("n", "J", "mzJ`z", opts)
+vim.keymap.set("n", "J", "mzJ`z", opts)
 -- Scroll half-page down and center
-vim.api.nvim_set_keymap("n", "<C-d>", "<C-d>zz", opts)
+vim.keymap.set("n", "<C-d>", "<C-d>zz", opts)
 -- Scroll half-page up and center
-vim.api.nvim_set_keymap("n", "<C-u>", "<C-u>zz", opts)
+vim.keymap.set("n", "<C-u>", "<C-u>zz", opts)
 
 -- Search Navigation
 -- Next search result and center
-vim.api.nvim_set_keymap("n", "n", "nzzzv", opts)
+vim.keymap.set("n", "n", "nzzzv", opts)
 -- Previous search result and center
-vim.api.nvim_set_keymap("n", "N", "Nzzzv", opts)
+vim.keymap.set("n", "N", "Nzzzv", opts)
 -- Clear search highlight
-vim.api.nvim_set_keymap('n', '<Esc>', ':nohlsearch<CR><Esc>', opts)
+vim.keymap.set('n', '<Esc>', ':nohlsearch<CR><Esc>', opts)
 -- Show netrw
-vim.api.nvim_set_keymap('n', '<leader>fe', ':Ex<CR>', opts)
+vim.keymap.set('n', '<leader>fe', ':Ex<CR>', opts)
 
 -- Marks
 -- Add mark
--- vim.api.nvim_set_keymap('n', '<leader>mah', 'mh', opts)
--- vim.api.nvim_set_keymap('n', '<leader>maj', 'mj', opts)
--- vim.api.nvim_set_keymap('n', '<leader>mak', 'mk', opts)
--- vim.api.nvim_set_keymap('n', '<leader>mal', 'ml', opts)
--- vim.api.nvim_set_keymap('n', '<leader>mh', '`h', opts)
--- vim.api.nvim_set_keymap('n', '<leader>mj', '`j', opts)
--- vim.api.nvim_set_keymap('n', '<leader>mk', '`k', opts)
--- vim.api.nvim_set_keymap('n', '<leader>ml', '`l', opts)
+-- vim.keymap.set('n', '<leader>mah', 'mh', opts)
+-- vim.keymap.set('n', '<leader>maj', 'mj', opts)
+-- vim.keymap.set('n', '<leader>mak', 'mk', opts)
+-- vim.keymap.set('n', '<leader>mal', 'ml', opts)
+-- vim.keymap.set('n', '<leader>mh', '`h', opts)
+-- vim.keymap.set('n', '<leader>mj', '`j', opts)
+-- vim.keymap.set('n', '<leader>mk', '`k', opts)
+-- vim.keymap.set('n', '<leader>ml', '`l', opts)
 
 -- Window Management
 -- Split window horizontally
-vim.api.nvim_set_keymap('n', '<leader>sh', ':split<CR>', opts)
+vim.keymap.set('n', '<leader>sh', ':split<CR>', opts)
 -- Split window vertically
-vim.api.nvim_set_keymap('n', '<leader>sv', ':vsplit<CR>', opts)
+vim.keymap.set('n', '<leader>sv', ':vsplit<CR>', opts)
 -- Switch to the next window
-vim.api.nvim_set_keymap('n', '<leader>ww', '<C-w><C-w>', opts)
+vim.keymap.set('n', '<leader>ww', '<C-w><C-w>', opts)
 -- Focus left window
-vim.api.nvim_set_keymap('n', '<leader>wh', '<C-w>h', opts)
+vim.keymap.set('n', '<leader>wh', '<C-w>h', opts)
 -- Focus right window
-vim.api.nvim_set_keymap('n', '<leader>wl', '<C-w>l', opts)
+vim.keymap.set('n', '<leader>wl', '<C-w>l', opts)
 -- Focus below window
-vim.api.nvim_set_keymap('n', '<leader>wj', '<C-w>j', opts)
+vim.keymap.set('n', '<leader>wj', '<C-w>j', opts)
 -- Focus above window
-vim.api.nvim_set_keymap('n', '<leader>wk', '<C-w>k', opts)
+vim.keymap.set('n', '<leader>wk', '<C-w>k', opts)
 
 -- Clipboard
 -- Paste over selection without overwriting default register
-vim.api.nvim_set_keymap("x", "<leader>p", [["_dP]], opts)
+vim.keymap.set("x", "<leader>p", [["_dP]], opts)
 -- Yank to system clipboard
-vim.api.nvim_set_keymap("n", "<leader>y", [["+y]], opts)
-vim.api.nvim_set_keymap("v", "<leader>y", [["+y]], opts)
+vim.keymap.set("n", "<leader>y", [["+y]], opts)
+vim.keymap.set("v", "<leader>y", [["+y]], opts)
 
 -- Miscellaneous
 -- Quit
-vim.api.nvim_set_keymap("n", "<leader>q", ":q<CR>", opts)
+vim.keymap.set("n", "<leader>q", ":q<CR>", opts)
 -- Close buffer
-vim.api.nvim_set_keymap("n", "<leader>bd", ":bd<CR>", opts)
+vim.keymap.set("n", "<leader>bd", ":bd<CR>", opts)
 -- Open buffer list with Telescope
-vim.api.nvim_set_keymap("n", "<leader>bb", ":Telescope buffers<CR><ESC>", opts)
+vim.keymap.set("n", "<leader>bb", ":Telescope buffers<CR><ESC>", opts)
 
 -- Toggle binary mode
 vim.keymap.set("n", "<leader>bt", function()
@@ -133,9 +136,9 @@ vim.keymap.set("n", "<leader>bt", function()
 end, { desc = "Toggle Binary Preview" })
 
 -- Make file executable
-vim.api.nvim_set_keymap("n", "<leader>x", "<cmd>!chmod +x %<CR>", opts)
+vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", opts)
 -- Replace word under cursor globally
-vim.api.nvim_set_keymap("n", "<leader>rw", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], opts)
+-- vim.keymap.set("n", "<leader>rw", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], opts)
 
 vim.keymap.set('n', '<leader>lr', function()
     vim.notify("LSP not attached")
@@ -161,20 +164,20 @@ end, opts)
 
 -- Terminal
 -- Exit terminal mode
-vim.api.nvim_set_keymap('t', '<ESC>', '<C-\\><C-n>', opts)
+vim.keymap.set('t', '<ESC>', '<C-\\><C-n>', opts)
 
 -- Indentation in Visual Mode
 -- Indent right
-vim.api.nvim_set_keymap('v', '<Tab>', '>gv', opts)
+vim.keymap.set('v', '<Tab>', '>gv', opts)
 -- Indent left
-vim.api.nvim_set_keymap('v', '<S-Tab>', '<gv', opts)
+vim.keymap.set('v', '<S-Tab>', '<gv', opts)
 
 -- Escape in Insert Mode
 -- Map 'jk' to escape in insert mode
-vim.api.nvim_set_keymap('i', 'jk', '<Esc>', opts)
+vim.keymap.set('i', 'jk', '<Esc>', opts)
 
 -- Commenting with Comment.nvim
 -- Comment current line
-vim.api.nvim_set_keymap('n', 'gcc', '<Plug>(comment_toggle_linewise_current)', opts)
+vim.keymap.set('n', 'gcc', '<Plug>(comment_toggle_linewise_current)', opts)
 -- Comment selection in visual mode
-vim.api.nvim_set_keymap('x', 'gc', '<Plug>(comment_toggle_linewise_visual)', opts)
+vim.keymap.set('x', 'gc', '<Plug>(comment_toggle_linewise_visual)', opts)
