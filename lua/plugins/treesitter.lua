@@ -1,7 +1,9 @@
 return {
     {
         'nvim-treesitter/nvim-treesitter',
-        event = { "BufReadPost", "BufNewFile" }, -- Load when opening files
+        lazy = false,
+        event = { "VeryLazy" },
+        -- event = { "BufReadPost", "BufNewFile" },
         build = ":TSUpdate",
         config = function()
             local ok, ts = pcall(require, "nvim-treesitter.configs")
