@@ -262,6 +262,17 @@ return {
             end)
 
             -- Configure LSP servers
+            vim.lsp.config.jdtls = {
+                cmd = { 'jdtls' },
+                filetypes = { 'java' },
+                root_markers = {
+                    '.git', 'pom.xml', 'build.gradle',
+                    'build.gradle.kts', 'settings.gradle',
+                },
+                on_attach = on_attach,
+                capabilities = capabilities,
+            }
+
             vim.lsp.config.clangd = {
                 cmd = { 'clangd', '--background-index', '--clang-tidy' },
                 filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda' },
@@ -307,15 +318,23 @@ return {
             }
 
             vim.lsp.config.html = {
-                cmd = { 'vscode-html-language-server', '--stdio' },
-                filetypes = { 'html' },
-                root_markers = { '.git' },
+                cmd = { "vscode-html-language-server", "--stdio" },
+                filetypes = { "html" },
+                root_markers = { ".git" },
                 on_attach = on_attach,
                 capabilities = capabilities,
                 settings = {
-                    css = { validate = false },
+                    css  = { validate = false },
                     less = { validate = false },
                     scss = { validate = false },
+
+                    html = {
+                        format = {
+                            wrapLineLength = 0, -- disable wrapping/reflow
+                            unformatted = "",
+                            contentUnformatted = "",
+                        },
+                    },
                 },
             }
 
@@ -329,7 +348,7 @@ return {
 
             -- Setup mason-lspconfig
             require("mason-lspconfig").setup({
-                ensure_installed = { "clangd", "pyright", "lua_ls", "ts_ls", "html", "cssls" },
+                ensure_installed = { "jdtls", "clangd", "pyright", "lua_ls", "ts_ls", "html", "cssls" },
                 handlers = {
                     function(server_name)
                         vim.lsp.enable(server_name)
