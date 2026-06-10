@@ -274,7 +274,7 @@ return {
             }
 
             vim.lsp.config.clangd = {
-                cmd = { 'clangd', '--background-index', '--clang-tidy' },
+                cmd = { 'clangd', '--background-index', '--clang-tidy', "--query-driver=/usr/bin/arm-none-eabi-*" },
                 filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda' },
                 root_markers = { '.git', 'compile_commands.json' },
                 on_attach = on_attach,

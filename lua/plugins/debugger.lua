@@ -73,9 +73,8 @@ return {
                 },
             },
 
-            -- Controls are disabled (your preference).
             controls = {
-                enabled = false,
+                enabled = true,
                 element = 'repl',
                 icons = {
                     pause = '⏸',
@@ -124,7 +123,9 @@ return {
         -- Auto open/close UI
         -- ============================================================================
         dap.listeners.after.event_initialized['dapui_config'] = function()
-            dapui.open()
+            vim.defer_fn(function()
+                pcall(dapui.open)
+            end, 100)
         end
         dap.listeners.before.event_terminated['dapui_config'] = function()
             dapui.close()
@@ -210,7 +211,7 @@ return {
                 dapui_watches     = 'WATCHES',
                 dapui_console     = 'CONSOLE',
                 dapui_repl        = 'REPL',
-                ['dap-repl']      = 'REPL',
+                ['dapui-repl']    = 'REPL',
             }
 
             local base = titles[ft]
@@ -219,7 +220,7 @@ return {
             end
 
             local title = base
-            if ft == 'dapui_repl' or ft == 'dap-repl' then
+            if ft == 'dapui_repl' or ft == 'dapui-repl' then
                 local session = dap.session()
 
                 local prefix
@@ -236,7 +237,7 @@ return {
             vim.opt_local.winhighlight = 'WinBar:CursorLine,WinBarNC:CursorLine'
 
             -- UI-only cleanup (don't affect code buffers)
-            if ft:match('^dapui_') or ft == 'dap-repl' then
+            if ft:match('^dapui_') or ft == 'dapui-repl' then
                 vim.opt_local.cursorline = false
                 vim.opt_local.number = false
                 vim.opt_local.relativenumber = false
@@ -253,7 +254,7 @@ return {
                 for _, win in ipairs(vim.api.nvim_list_wins()) do
                     local buf = vim.api.nvim_win_get_buf(win)
                     local ft = vim.bo[buf].filetype
-                    if ft == 'dapui_repl' or ft == 'dap-repl' then
+                    if ft == 'dapui_repl' or ft == 'dapui-repl' then
                         vim.api.nvim_win_call(win, function()
                             style_dap_winbar()
                         end)
@@ -393,14 +394,12 @@ exit
             local flash_cmd = {
                 'JLinkExe',
                 '-device',
-                'STM32L071CZ',
+                'STM32L433CC',
                 '-if',
                 'SWD',
                 '-speed',
                 '4000',
                 '-autoconnect',
-                '1',
-                '-ExitOnError',
                 '1',
                 '-CommandFile',
                 script_path,
@@ -473,18 +472,19 @@ exit
             local cmd = {
                 'JLinkGDBServer',
                 '-device',
-                'STM32L071CZ',
+                'STM32L433CC',
                 '-if',
                 'SWD',
                 '-speed',
                 '4000',
-                '-port',
-                '2331',
-                '-swoport',
-                '2332',
-                '-telnetport',
-                '2333',
-                '-noir',
+                -- '-port',
+                -- '2331',
+                -- '-swoport',
+                -- '2332',
+                -- '-telnetport',
+                -- '2333',
+                -- '-log', '/tmp/jlink-gdb.log',
+                -- '-noir',
             }
 
             jlink_job_id = vim.fn.jobstart(cmd, {
@@ -572,7 +572,7 @@ exit
                     return nil
                 end,
                 cwd = '${workspaceFolder}',
-                stopAtEntry = false,
+                stopAtEntry = true,
                 MIMode = 'gdb',
                 targetArchitecture = 'arm',
                 miDebuggerPath = 'gdb-multiarch',
@@ -599,7 +599,7 @@ exit
                     },
                 },
 
-                launchCompleteCommand = 'exec-continue',
+                -- launchCompleteCommand = 'exec-continue',
             },
         }
 
@@ -629,7 +629,7 @@ exit
         end, { noremap = true, silent = true, desc = 'Continue/Start (deferred)' })
 
         vim.keymap.set('n', '<Leader>dtt', dap_terminate, { noremap = true, silent = true, desc = 'Terminate' })
-        vim.keymap.set('n', '<Leader>dR', dap_mark_running_and(dap.restart),
+        vim.keymap.set('n', '<Leader>dr', dap_mark_running_and(dap.restart),
             { noremap = true, silent = true, desc = 'Restart' })
         vim.keymap.set('n', '<Leader>dp', dap.pause, { noremap = true, silent = true, desc = 'Pause' })
 
@@ -781,7 +781,7 @@ exit
             for _, win in ipairs(vim.api.nvim_list_wins()) do
                 local buf = vim.api.nvim_win_get_buf(win)
                 local ft = vim.api.nvim_buf_get_option(buf, 'filetype')
-                if ft:match(filetype_pattern) then
+                if ft == filetype_pattern or ft:match(filetype_pattern) then
                     vim.api.nvim_set_current_win(win)
                     return
                 end
@@ -806,7 +806,7 @@ exit
         end, { noremap = true, silent = true, desc = 'Go to Breakpoints' })
 
         vim.keymap.set('n', '<Leader>dgr', function()
-            jump_to_dap_window('dapui_repl')
+            jump_to_dap_window('dapui-repl')
         end, { noremap = true, silent = true, desc = 'Go to REPL' })
 
         vim.keymap.set('n', '<Leader>dgc', function()
