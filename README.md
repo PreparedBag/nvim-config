@@ -292,7 +292,6 @@ cp ~/.config/nvim/mermaid-11.6.0.min.js ~/.local/share/nvim/lazy/markdown-previe
 The following language servers are automatically installed:
 - **C/C++**: clangd
 - **Python**: pyright
-- **Lua**: lua_ls
 - **JavaScript/TypeScript**: ts_ls
 - **HTML**: html
 - **CSS**: cssls

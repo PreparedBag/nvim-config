@@ -87,11 +87,11 @@ return {
             -- Table Mode
             { "<leader>t",   group = "Table",                        mode = "n" },
 
-            -- Ollama
-            { "<leader>o",   group = "Ollama",                       mode = "n" },
-
             -- Convert
-            { "<leader>c",   group = "Convert",                      mode = "n" },
+            { "<leader>c",   group = "Comment",                      mode = "n" },
+            { "<leader>cb",  desc = "Comment Box",                   mode = "n" },
+            { "<leader>cl",  desc = "Comment Line Sep",              mode = "n" },
+            { "<leader>ct",  desc = "Titled Line",                   mode = "v" },
 
             -- Table Mode
             { "<leader>dt",  group = "Target Actions",               mode = "n" },

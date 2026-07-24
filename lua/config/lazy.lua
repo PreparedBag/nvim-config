@@ -20,10 +20,10 @@ require("lazy").setup({
     spec = {
         { import = "plugins.blink" },
         { import = "plugins.bracey" },
-        { import = "plugins.claude" },
         { import = "plugins.colorschemes" },
         { import = "plugins.comment" },
         { import = "plugins.debugger" },
+        { import = "plugins.git" },
         { import = "plugins.harpoon" },
         { import = "plugins.lualine" },
         { import = "plugins.lsp-config" },
@@ -32,9 +32,6 @@ require("lazy").setup({
         { import = "plugins.nerdtree" },
         { import = "plugins.nibbler" },
         { import = "plugins.noice" },
-
-        { import = "plugins.ollama" },
-
         { import = "plugins.oil" },
         { import = "plugins.telescope" },
         { import = "plugins.toggle-term" },
