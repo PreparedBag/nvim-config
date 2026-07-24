@@ -1,3 +1,6 @@
+-- set false once SSH keys are working; then remote ops never prompt
+local ASK_PASSWORD = true
+
 local function notify(msg, level)
     if not msg or msg == "" then
         return
@@ -51,8 +54,8 @@ local function run(args, password)
         cwd = vim.fn.getcwd(),
         env = env,
     }, function(res)
-        cleanup()
         vim.schedule(function()
+            cleanup()
             local out = (res.stdout or "") .. (res.stderr or "")
             notify(out ~= "" and out or "ok",
                 res.code == 0 and vim.log.levels.INFO or vim.log.levels.ERROR)
@@ -65,7 +68,20 @@ end
 
 -- anything touching the remote goes through here
 local function run_auth(args)
-    local pw = vim.fn.inputsecret("SSH password (blank if using keys): ")
+    if not ASK_PASSWORD then
+        run(args)
+        return
+    end
+
+    -- pcall catches Ctrl-C; Esc comes back as ""
+    local ok, pw = pcall(vim.fn.inputsecret, "SSH password (Esc to cancel): ")
+    vim.cmd("redraw")
+
+    if not ok or pw == "" then
+        notify("cancelled", vim.log.levels.WARN)
+        return
+    end
+
     run(args, pw)
 end
 
