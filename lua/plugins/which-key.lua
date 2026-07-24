@@ -87,6 +87,9 @@ return {
             -- Table Mode
             { "<leader>t",   group = "Table",                        mode = "n" },
 
+            -- Git Integration
+            { "<leader>g",   group = "Git",                          mode = "n" },
+
             -- Convert
             { "<leader>c",   group = "Comment",                      mode = "n" },
             { "<leader>cb",  desc = "Comment Box",                   mode = "n" },

@@ -1,6 +1,109 @@
 -- set false once SSH keys are working; then remote ops never prompt
 local ASK_PASSWORD = true
 
+-- ---------------------------------------------------------------
+-- git log picker with colored refs
+-- ---------------------------------------------------------------
+
+local SEP = "\31" -- unit separator, safe inside commit messages
+local LOG_PRETTY = "--pretty=%h" .. SEP .. "%d" .. SEP .. "%s" .. SEP .. "%cr" .. SEP .. "%an"
+
+-- colors follow git's own convention: tags yellow, remotes red, local green
+local function define_log_hl()
+    local function fg(name)
+        local hl = vim.api.nvim_get_hl(0, { name = name, link = false })
+        return hl and hl.fg or nil
+    end
+
+    vim.api.nvim_set_hl(0, "GitLogHash", { fg = fg("Number") })
+    vim.api.nvim_set_hl(0, "GitLogHead", { fg = fg("Constant"), bold = true })
+    vim.api.nvim_set_hl(0, "GitLogTag", { fg = fg("WarningMsg"), bold = true })
+    vim.api.nvim_set_hl(0, "GitLogRemote", { fg = fg("ErrorMsg"), bold = true })
+    vim.api.nvim_set_hl(0, "GitLogBranch", { fg = fg("String"), bold = true })
+    vim.api.nvim_set_hl(0, "GitLogMeta", { fg = fg("Comment") })
+end
+
+define_log_hl()
+vim.api.nvim_create_autocmd("ColorScheme", { callback = define_log_hl })
+
+local function ref_hl(ref)
+    if ref:match("^HEAD") then
+        return "GitLogHead"
+    elseif ref:match("^tag:") then
+        return "GitLogTag"
+    elseif ref:match("^origin/") then
+        return "GitLogRemote"
+    end
+    return "GitLogBranch"
+end
+
+-- builds the row text plus byte-range highlights telescope expects
+local function log_display(entry)
+    local chunks, highlights, col = {}, {}, 0
+
+    local function add(text, group)
+        if text == "" then
+            return
+        end
+        table.insert(chunks, text)
+        if group then
+            table.insert(highlights, { { col, col + #text }, group })
+        end
+        col = col + #text
+    end
+
+    add(entry.hash, "GitLogHash")
+    add(" ")
+
+    for i, ref in ipairs(entry.refs) do
+        add(ref, ref_hl(ref))
+        add(i < #entry.refs and ", " or " ", "GitLogMeta")
+    end
+
+    add(entry.msg)
+    add(" (" .. entry.when .. ") <" .. entry.author .. ">", "GitLogMeta")
+
+    return table.concat(chunks), highlights
+end
+
+local function log_entry(line)
+    local parts = vim.split(line, SEP, { plain = true })
+
+    -- %d arrives as " (HEAD -> main, tag: v0.0.9)" or empty
+    local deco = (parts[2] or ""):gsub("^%s*%(", ""):gsub("%)%s*$", "")
+
+    local refs = {}
+    if deco ~= "" then
+        for _, ref in ipairs(vim.split(deco, ", ", { plain = true })) do
+            table.insert(refs, vim.trim(ref))
+        end
+    end
+
+    return {
+        value   = parts[1], -- hash: telescope's actions depend on this
+        hash    = parts[1],
+        refs    = refs,
+        msg     = parts[3] or "",
+        when    = parts[4] or "",
+        author  = parts[5] or "",
+        ordinal = table.concat(parts, " "),
+        display = log_display,
+    }
+end
+
+local function log_picker()
+    require("telescope.builtin").git_commits({
+        initial_mode = "normal",
+        entry_maker = log_entry,
+        git_command = {
+            "git", "log", LOG_PRETTY,
+            "--decorate=short",
+            "--abbrev-commit",
+            "--", ".",
+        },
+    })
+end
+
 local function notify(msg, level)
     if not msg or msg == "" then
         return
@@ -243,9 +346,9 @@ return {
         'nvim-telescope/telescope.nvim',
         keys = {
             -- status / browse
-            { "<leader>gs", status_picker,                                        desc = "Git status" },
-            { "<leader>gl", "<cmd>Telescope git_commits initial_mode=normal<cr>", desc = "Git log" },
-            { "<leader>gz", stash_picker,                                         desc = "Git stashes" },
+            { "<leader>gs", status_picker, desc = "Git status" },
+            { "<leader>gl", log_picker,    desc = "Git log" },
+            { "<leader>gz", stash_picker,  desc = "Git stashes" },
             {
                 "<leader>gZ",
                 function()
@@ -308,15 +411,6 @@ return {
             { "<leader>gu", function() run_auth({ "push", "--follow-tags" }) end,        desc = "Push + tags" },
             { "<leader>gU", function() run_auth({ "push", "-u", "origin", "HEAD" }) end, desc = "Push + set upstream" },
             { "<leader>gf", function() run_auth({ "fetch", "--prune", "--tags" }) end,   desc = "Fetch + prune" },
-        },
-    },
-
-    -- kept only for the multi-line commit message buffer
-    {
-        'tpope/vim-fugitive',
-        cmd = { "Git", "G" },
-        keys = {
-            { "<leader>gC", "<cmd>Git commit<cr>", desc = "Commit (message buffer)" },
         },
     },
 }
