@@ -51,7 +51,7 @@ return {
                 -- Refresh
                 vim.keymap.set(
                     "n",
-                    "<leader>r",
+                    "<leader>or",
                     actions.refresh.callback,
                     { buffer = event.buf, silent = true, desc = "Refresh Oil" }
                 )
@@ -59,7 +59,7 @@ return {
                 -- Toggle hidden files (additional shortcut besides g.)
                 vim.keymap.set(
                     "n",
-                    "<leader>h",
+                    "<leader>oh",
                     actions.toggle_hidden.callback,
                     { buffer = event.buf, silent = true, desc = "Toggle Hidden Files" }
                 )

@@ -34,7 +34,7 @@ require("lazy").setup({
         { import = "plugins.noice" },
         { import = "plugins.oil" },
         { import = "plugins.telescope" },
-        { import = "plugins.toggle-term" },
+        -- { import = "plugins.toggle-term" },
         { import = "plugins.treesitter" },
         { import = "plugins.undotree" },
         { import = "plugins.which-key" },

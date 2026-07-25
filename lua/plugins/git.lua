@@ -280,14 +280,32 @@ end
 
 
 -- ---------------------------------------------------------------
--- status picker
+-- status highlights
+-- ---------------------------------------------------------------
+
+local function define_status_hl()
+    local function fg(name)
+        local hl = vim.api.nvim_get_hl(0, { name = name, link = false })
+        return hl and hl.fg or nil
+    end
+
+    vim.api.nvim_set_hl(0, "GitStatusStaged", { fg = fg("String"), bold = true })
+    vim.api.nvim_set_hl(0, "GitStatusUnstaged", { fg = fg("WarningMsg"), bold = true })
+    vim.api.nvim_set_hl(0, "GitStatusNone", { fg = fg("Comment") })
+end
+
+define_status_hl()
+vim.api.nvim_create_autocmd("ColorScheme", { callback = define_status_hl })
+
+
+-- ---------------------------------------------------------------
+-- status entries
 --
--- porcelain gives two status columns per file: the first is the
--- index, the second the working tree. both are rendered so a
--- partially staged file is distinguishable from an unstaged one.
---
--- paths are stored twice: `rel` for git commands and display,
--- `path` absolute so the previewer resolves regardless of cwd.
+-- porcelain gives two columns per file: index (staged) then
+-- worktree (unstaged). leading whitespace is significant, so raw
+-- lines are read without trimming. each entry carries the repo
+-- root so git commands and the previewer resolve correctly
+-- regardless of nvim's cwd.
 -- ---------------------------------------------------------------
 
 local function status_display(entry)
@@ -314,6 +332,7 @@ local function status_entry(root)
             value = rel,
             rel = rel,
             path = root .. "/" .. rel,
+            root = root,
             x = x,
             y = y,
             ordinal = rel,
@@ -326,11 +345,69 @@ local function status_finder()
     local finders = require("telescope.finders")
     local root = capture({ "rev-parse", "--show-toplevel" })
 
+    local res = vim.system({ "git", "status", "--porcelain=v1" },
+        { text = true, cwd = root }):wait()
+
+    local out = (res.stdout or ""):gsub("\n$", "")
+    local lines = out ~= "" and vim.split(out, "\n", { plain = true }) or {}
+
     return finders.new_table({
-        results = capture_lines({ "status", "--porcelain=v1" }),
+        results = lines,
         entry_maker = status_entry(root),
     })
 end
+
+
+-- ---------------------------------------------------------------
+-- diff previewer
+--
+-- staged files show the cached diff, unstaged show the worktree
+-- diff, untracked show raw contents. all run at the repo root so
+-- git resolves the paths. filetype=diff gives red/green coloring.
+-- ---------------------------------------------------------------
+
+local previewers = require("telescope.previewers")
+
+local diff_previewer = previewers.new_buffer_previewer({
+    title = "Git Diff",
+    define_preview = function(self, entry)
+        local buf = self.state.bufnr
+
+        local cmd
+        if entry.x == "?" then
+            cmd = { "git", "show", ":" }
+        end
+
+        if entry.x ~= " " and entry.x ~= "?" then
+            cmd = { "git", "diff", "--cached", "--", entry.rel }
+        elseif entry.x == "?" then
+            cmd = { "cat", entry.path }
+        else
+            cmd = { "git", "diff", "--", entry.rel }
+        end
+
+        vim.system(cmd, { text = true, cwd = entry.root }, function(res)
+            local text = (res.stdout or "")
+            local lines = vim.split(text, "\n", { plain = true })
+
+            vim.schedule(function()
+                if vim.api.nvim_buf_is_valid(buf) then
+                    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+                    vim.bo[buf].filetype = "diff"
+                end
+            end)
+        end)
+    end,
+})
+
+
+-- ---------------------------------------------------------------
+-- status picker
+--
+-- t stages / unstages the file under the cursor. after the list
+-- refreshes, the cursor is re-placed on the same file by path,
+-- since staging can change its sort position.
+-- ---------------------------------------------------------------
 
 local function status_picker()
     local pickers = require("telescope.pickers")
@@ -347,7 +424,7 @@ local function status_picker()
     }, {
         finder = status_finder(),
         sorter = conf.generic_sorter({}),
-        previewer = conf.file_previewer({}),
+        previewer = diff_previewer,
 
         attach_mappings = function(_, map)
             map("n", "t", function(bufnr)
@@ -358,8 +435,6 @@ local function status_picker()
                     return
                 end
 
-                local row = picker:get_selection_row()
-
                 local is_staged = entry.x ~= " " and entry.x ~= "?"
 
                 if is_staged then
@@ -369,12 +444,6 @@ local function status_picker()
                 end
 
                 picker:refresh(status_finder(), { reset_prompt = false })
-
-                vim.schedule(function()
-                    pcall(function()
-                        picker:set_selection(row)
-                    end)
-                end)
             end)
             map({ "i", "n" }, "<C-a>", function(bufnr)
                 capture({ "add", "-A" })

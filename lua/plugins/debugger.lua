@@ -7,6 +7,14 @@ return {
         'nvim-telescope/telescope.nvim',
     },
 
+    keys = {
+        { '<Leader>db',  desc = 'Toggle Breakpoint' },
+        { '<Leader>dc',  desc = 'Continue/Start' },
+        { '<Leader>dte', desc = 'Set ELF' },
+        { '<Leader>dts', desc = 'Start Server' },
+        { '<Leader>du',  desc = 'Toggle UI' },
+    },
+
     config = function()
         local dap = require('dap')
         local dapui = require('dapui')

@@ -58,6 +58,8 @@ return {
 
             -- Debugger
             { "<leader>d",   group = "Debugger" },
+            { "<leader>dt",  group = "Target Actions",               mode = "n" },
+            { "<leader>dg",  group = "Go To Actions",                mode = "n" },
 
             -- Splits
             { "<leader>s",   group = "Split",                        mode = "n" },
@@ -96,13 +98,8 @@ return {
             { "<leader>cl",  desc = "Comment Line Sep",              mode = "n" },
             { "<leader>ct",  desc = "Titled Line",                   mode = "v" },
 
-            -- Table Mode
-            { "<leader>dt",  group = "Target Actions",               mode = "n" },
-            { "<leader>dg",  group = "Go To Actions",                mode = "n" },
-
             -- Harpoon
-            { "<leader>e",   desc = "Harpoon Quick Menu",            mode = "n" },
-            { "<leader>a",   desc = "Add to Harpoon",                mode = "n" },
+            { "<leader>h",   group = "Harpoon",                      mode = "n" },
             { "<leader>1",   hidden = true },
             { "<leader>2",   hidden = true },
             { "<leader>3",   hidden = true },
@@ -122,7 +119,7 @@ return {
             { "<leader>y",   desc = "Yank to Clipboard",             mode = { "n", "v" } },
 
             -- Terminal
-            { "<leader>,",   desc = "Toggle Terminal",               mode = "n" },
+            -- { "<leader>,",   desc = "Toggle Terminal",               mode = "n" },
 
             -- Undotree Toggle
             { "<leader>u",   desc = "Toggle Undotree",               mode = "n" },
@@ -141,7 +138,7 @@ return {
             { "<leader>bt",  desc = "Toggle Binary View",            mode = "n" },
 
             -- Oil
-            { "<leader>h",   desc = "Toggle Hidden Files (in Oil)",  mode = "n" },
+            { "<leader>o",   group = "Oil",                          mode = "n" },
         })
     end
 }
