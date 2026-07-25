@@ -1,0 +1,7 @@
+{
+    "diagnostics.globals": ["vim"],
+    "workspace.checkThirdParty": false,
+    "hint.enable": false,
+    "codeLens.enable": false,
+    "runtime.version": "LuaJIT"
+}

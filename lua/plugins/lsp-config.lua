@@ -130,14 +130,16 @@ return {
                 end, opts)
 
                 -- Enable formatting on save if supported
-                if client.server_capabilities.documentFormattingProvider then
-                    vim.api.nvim_create_autocmd("BufWritePre", {
-                        buffer = bufnr,
-                        callback = function()
-                            vim.lsp.buf.format({ bufnr = bufnr })
-                        end,
-                    })
-                end
+                -- if client.server_capabilities.documentFormattingProvider then
+                --     local group = vim.api.nvim_create_augroup("LspFormat_" .. bufnr, { clear = true })
+                --     vim.api.nvim_create_autocmd("BufWritePre", {
+                --         group = group,
+                --         buffer = bufnr,
+                --         callback = function()
+                --             vim.lsp.buf.format({ bufnr = bufnr })
+                --         end,
+                --     })
+                -- end
             end
 
             -- Track signature help window state
@@ -290,18 +292,19 @@ return {
             }
 
             vim.lsp.config.lua_ls = {
-                cmd = { 'lua-language-server' },
+                cmd = { vim.fn.stdpath('data') .. '/mason/bin/lua-language-server' },
                 filetypes = { 'lua' },
-                root_markers = { '.git', '.luarc.json' },
+                root_markers = { '.luarc.json', '.git' },
                 on_attach = on_attach,
                 capabilities = capabilities,
                 settings = {
                     Lua = {
-                        diagnostics = {
-                            globals = { 'vim' }
-                        },
+                        runtime = { version = 'LuaJIT' },
+                        diagnostics = { globals = { 'vim' } },
                         workspace = {
-                            library = vim.api.nvim_get_runtime_file("", true),
+                            library = {
+                                vim.env.VIMRUNTIME .. '/lua',
+                            },
                             checkThirdParty = false,
                         },
                         telemetry = { enable = false },
