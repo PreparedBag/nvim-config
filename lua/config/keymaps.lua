@@ -27,6 +27,10 @@ vim.keymap.set("n", "N", "Nzzzv", opts)
 vim.keymap.set('n', '<Esc>', ':nohlsearch<CR><Esc>', opts)
 -- Show netrw
 vim.keymap.set('n', '<leader>fe', ':Ex<CR>', opts)
+-- Next file in buffers
+vim.keymap.set("n", "<Tab>",   "<cmd>bnext<cr>",     { desc = "Next buffer" })
+-- Previous file in buffers
+vim.keymap.set("n", "<S-Tab>", "<cmd>bprevious<cr>", { desc = "Prev buffer" })
 
 -- Marks
 -- Add mark
