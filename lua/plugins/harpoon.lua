@@ -6,7 +6,42 @@ return {
         "nvim-telescope/telescope.nvim",
     },
     keys = {
-        { "<leader>ha", function() require("harpoon"):list():add() end, desc = "Add to Harpoon" },
+        { "<leader>ha", function() require("harpoon"):list():add() end,    desc = "Add to Harpoon" },
+        {
+            "<leader>hc",
+            function()
+                require("harpoon"):list():clear()
+                vim.notify("Harpoon list cleared", vim.log.levels.INFO)
+            end,
+            desc = "Clear Harpoon list",
+        },
+        {
+            "<leader>hA",
+            function()
+                local harpoon = require("harpoon")
+                local list = harpoon:list()
+                local added = 0
+
+                for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+                    -- Must be loaded and listed (skips scratch/unlisted buffers)
+                    if vim.api.nvim_buf_is_loaded(bufnr)
+                        and vim.bo[bufnr].buflisted
+                        and vim.bo[bufnr].buftype == ""     -- real file buffer, not oil/terminal/qf
+                        and vim.bo[bufnr].filetype ~= "oil" -- belt-and-suspenders on oil
+                    then
+                        local name = vim.api.nvim_buf_get_name(bufnr)
+                        -- Non-empty name that points at an actual file on disk
+                        if name ~= "" and vim.fn.filereadable(name) == 1 then
+                            harpoon:list():add({ value = name })
+                            added = added + 1
+                        end
+                    end
+                end
+
+                vim.notify(("Added %d buffer(s) to Harpoon"):format(added), vim.log.levels.INFO)
+            end,
+            desc = "Add all file buffers to Harpoon",
+        },
         {
             "<leader>he",
             function()
@@ -38,14 +73,14 @@ return {
             end,
             desc = "Harpoon Menu (Telescope)",
         },
-        { "<leader>1", function() require("harpoon"):list():select(1) end },
-        { "<leader>2", function() require("harpoon"):list():select(2) end },
-        { "<leader>3", function() require("harpoon"):list():select(3) end },
-        { "<leader>4", function() require("harpoon"):list():select(4) end },
-        { "<leader>5", function() require("harpoon"):list():select(5) end },
-        { "<leader>6", function() require("harpoon"):list():select(6) end },
-        { "<leader>7", function() require("harpoon"):list():select(7) end },
-        { "<leader>8", function() require("harpoon"):list():select(8) end },
+        { "<leader>1",  function() require("harpoon"):list():select(1) end },
+        { "<leader>2",  function() require("harpoon"):list():select(2) end },
+        { "<leader>3",  function() require("harpoon"):list():select(3) end },
+        { "<leader>4",  function() require("harpoon"):list():select(4) end },
+        { "<leader>5",  function() require("harpoon"):list():select(5) end },
+        { "<leader>6",  function() require("harpoon"):list():select(6) end },
+        { "<leader>7",  function() require("harpoon"):list():select(7) end },
+        { "<leader>8",  function() require("harpoon"):list():select(8) end },
     },
     config = function()
         vim.api.nvim_set_hl(0, "NormalFloat", { link = "Normal", bg = "none" })
