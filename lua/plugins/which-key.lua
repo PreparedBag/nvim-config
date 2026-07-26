@@ -125,8 +125,8 @@ return {
             { "<leader>u",   desc = "Toggle Undotree",               mode = "n" },
 
             -- NERDTree Commands
-            { "<leader>N",   desc = "Toggle NERDTree Focus",         mode = "n" },
-            { "<leader>n",   desc = "Toggle NERDTree",               mode = "n" },
+            -- { "<leader>N",   desc = "Toggle NERDTree Focus",         mode = "n" },
+            -- { "<leader>n",   desc = "Toggle NERDTree",               mode = "n" },
 
             -- Quit
             { "<leader>q",   desc = "Quit Without Saving",           mode = "n" },
