@@ -27,22 +27,25 @@ vim.keymap.set("n", "N", "Nzzzv", opts)
 vim.keymap.set('n', '<Esc>', ':nohlsearch<CR><Esc>', opts)
 -- Show netrw
 vim.keymap.set('n', '<leader>fe', ':Ex<CR>', opts)
+
 -- Next file in buffers
 -- vim.keymap.set("n", "<Tab>", "<cmd>bnext<cr>", { desc = "Next buffer" })
 -- Previous file in buffers
 -- vim.keymap.set("n", "<S-Tab>", "<cmd>bprevious<cr>", { desc = "Prev buffer" })
+
 -- Quickfix navigation (telescope/grep results land here)
 vim.keymap.set("n", "<leader>j", function()
     local ok = pcall(vim.cmd.cnext)
     if not ok then
-        vim.notify("End of quickfix list", vim.log.levels.INFO)
+        pcall(vim.cmd.cfirst)  -- past the end -> wrap to first
+        -- vim.notify("End of quickfix list", vim.log.levels.INFO)
     end
 end, opts)
-
 vim.keymap.set("n", "<leader>k", function()
     local ok = pcall(vim.cmd.cprev)
     if not ok then
-        vim.notify("Start of quickfix list", vim.log.levels.INFO)
+        pcall(vim.cmd.clast)   -- before the start -> wrap to last
+        -- vim.notify("Start of quickfix list", vim.log.levels.INFO)
     end
 end, opts)
 
