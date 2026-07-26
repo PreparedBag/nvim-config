@@ -2,16 +2,23 @@ return {
     "folke/noice.nvim",
     config = function()
         require("noice").setup({
-            -- routes = {
-            --     {
-            --         filter = {
-            --             event = "lsp",
-            --             kind = "progress",
-            --             find = "lua_ls",
-            --         },
-            --         opts = { skip = true },
-            --     },
-            -- },
+            routes = {
+                {
+                    filter = {
+                        event = "lsp",
+                        kind = "progress",
+                        find = "lua_ls",
+                    },
+                    opts = { skip = true },
+                },
+                {
+                    filter = {
+                        event = "notify",
+                        find = "position_encoding param is required",
+                    },
+                    opts = { skip = true },
+                },
+            },
             views = {
                 cmdline = {
                     enabled = false,

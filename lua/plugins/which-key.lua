@@ -19,42 +19,38 @@ return {
             { "K",           desc = "Hover Documentation",           mode = "n" },
             { "<C-h>",       desc = "Signature Help",                mode = { "n", "i" } },
 
-            -- Diagnostics Navigation
-            { "<leader>k",   desc = "Previous Diagnostic",           mode = "n" },
-            { "<leader>j",   desc = "Next Diagnostic",               mode = "n" },
+            -- Quickfix
+            { "<leader>j",   desc = "Next Quickfix Item",            mode = "n" },
+            { "<leader>k",   desc = "Previous Quickfix Item",        mode = "n" },
 
             -- LSP Group
-            { "<leader>l",   group = "LSP" },
-
-            -- LSP Actions
+            { "<leader>l",   group = "LSP",                          mode = { "n", "v" } },
             { "<leader>la",  desc = "Code Actions",                  mode = { "n", "v" } },
-            { "<leader>ln",  desc = "Rename Symbol",                 mode = "n" },
+            { "<leader>ln",  desc = "Refactor Symbol",               mode = "n" },
             { "<leader>lf",  desc = "Format Document",               mode = "n" },
             { "<leader>ld",  desc = "Show Diagnostics",              mode = "n" },
-
-            -- LSP References and Search
+            { "<leader>lk",  desc = "Prev Diagnostic",               mode = "n" },
+            { "<leader>lj",  desc = "Next Diagnostic",               mode = "n" },
             { "<leader>lr",  desc = "Show References",               mode = "n" },
-            { "<leader>lR",  desc = "Ripgrep Search (Bypass LSP)",   mode = "n" },
-
-            -- LSP Symbols
             { "<leader>lw",  desc = "Workspace Symbols",             mode = "n" },
             { "<leader>lo",  desc = "Document Outline/Symbols",      mode = "n" },
-
-            -- LSP Server Control
             { "<leader>ls",  desc = "Start LSP Server",              mode = "n" },
             { "<leader>lc",  desc = "Stop LSP Server",               mode = "n" },
 
             -- Find (Telescope)
-            { "<leader>f",   group = "Find" },
+            { "<leader>f",   group = "Find",                         mode = { "n", "v" } },
             { "<leader>ff",  desc = "Find Files (Fuzzy Finder)",     mode = "n" },
             { "<leader>fa",  desc = "Find All Files (Include All)",  mode = "n" },
             { "<leader>fp",  desc = "Find Phrase (Live Grep)",       mode = "n" },
             { "<leader>fs",  desc = "Find String (Include All)",     mode = "n" },
-            { "<leader>fh",  desc = "Find Help Tags",                mode = "n" },
             { "<leader>fb",  desc = "Find Buffers",                  mode = "n" },
             { "<leader>fd",  desc = "Set Telescope CWD Here",        mode = "n" },
             { "<leader>fo",  desc = "Set Telescope CWD to Original", mode = "n" },
+            { "<leader>fr",  desc = "Find References (Ripgrep)",     mode = { "n", "v" } },
             { "<leader>fe",  desc = "File Explorer",                 mode = "n" },
+            { "<leader>fq",  desc = "View Quickfix List",            mode = "n" },
+            { "<leader>fh",  desc = "View Quickfix History",         mode = "n" },
+            { "<leader>fH",  desc = "Find Help Tags",                mode = "n" },
 
             -- Debugger
             { "<leader>d",   group = "Debugger" },
@@ -87,16 +83,10 @@ return {
             { "<leader>if",  desc = "Insert Flowchart Template",     mode = "n" },
 
             -- Table Mode
-            { "<leader>t",   group = "Table",                        mode = "n" },
+            -- { "<leader>t",   group = "Table",                        mode = "n" },
 
             -- Git Integration
             { "<leader>g",   group = "Git",                          mode = "n" },
-
-            -- Convert
-            { "<leader>c",   group = "Comment",                      mode = "n" },
-            { "<leader>cb",  desc = "Comment Box",                   mode = "n" },
-            { "<leader>cl",  desc = "Comment Line Sep",              mode = "n" },
-            { "<leader>ct",  desc = "Titled Line",                   mode = "v" },
 
             -- Harpoon
             { "<leader>h",   group = "Harpoon",                      mode = "n" },
@@ -117,6 +107,7 @@ return {
             -- Clipboard and Paste
             { "<leader>p",   desc = "Paste without Yank",            mode = "x" },
             { "<leader>y",   desc = "Yank to Clipboard",             mode = { "n", "v" } },
+            { "<leader>Y",   desc = "Yank line to Clipboard",        mode = "n" },
 
             -- Terminal
             -- { "<leader>,",   desc = "Toggle Terminal",               mode = "n" },

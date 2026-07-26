@@ -33,11 +33,12 @@ return {
                 return true
             end
 
+            -- Track signature-help window state (used by the insert-mode <C-h> map)
+            local signature_active = true
+
             -- ============================================================================
             -- LSP ON_ATTACH - BUFFER-LOCAL KEYMAPS
             -- ============================================================================
-
-            local signature_active = true
 
             local on_attach = function(client, bufnr)
                 if not is_valid_lsp_buffer(bufnr) then
@@ -47,87 +48,100 @@ return {
 
                 local opts = { noremap = true, silent = true, buffer = bufnr }
 
+                -- Small helper so per-map descriptions stay tidy
+                local function map(mode, lhs, rhs, desc)
+                    vim.keymap.set(mode, lhs, rhs,
+                        vim.tbl_extend('force', opts, { desc = desc }))
+                end
+
                 -- Navigation
-                vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-                vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
-                vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
-                vim.keymap.set("n", "gt", vim.lsp.buf.type_definition, opts)
+                map("n", "gd", vim.lsp.buf.definition, "Go to definition")
+                map("n", "gD", vim.lsp.buf.declaration, "Go to declaration")
+                map("n", "gi", vim.lsp.buf.implementation, "Go to implementation")
+                map("n", "gt", vim.lsp.buf.type_definition, "Go to type definition")
 
                 -- Information
-                vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-                vim.keymap.set('n', '<C-h>', vim.lsp.buf.signature_help, opts)
-                vim.keymap.set('i', '<C-h>', function()
+                map("n", "K", vim.lsp.buf.hover, "Hover")
+                map("n", "<C-h>", vim.lsp.buf.signature_help, "Signature help")
+                map("i", "<C-h>", function()
                     if not signature_active then
                         vim.lsp.buf.signature_help()
                         signature_active = true
                     end
-                end, opts)
+                end, "Signature help (insert)")
 
                 -- Code actions and refactoring
-                vim.keymap.set('n', '<leader>la', vim.lsp.buf.code_action, opts)
-                vim.keymap.set('v', '<leader>la', vim.lsp.buf.code_action, opts)
-                vim.keymap.set('n', '<leader>ln', vim.lsp.buf.rename, opts)
-                vim.keymap.set('n', '<leader>lf', function()
+                map("n", "<leader>la", vim.lsp.buf.code_action, "Code actions")
+                map("v", "<leader>la", vim.lsp.buf.code_action, "Code actions")
+                map("n", "<leader>ln", vim.lsp.buf.rename, "Refactor Symbol")
+                map("n", "<leader>lf", function()
                     vim.lsp.buf.format({ async = true })
-                end, opts)
+                end, "Format")
 
                 -- Diagnostics
-                vim.keymap.set('n', '<leader>ld', vim.diagnostic.open_float, opts)
-                ---@diagnostic disable-next-line: deprecated
-                vim.keymap.set('n', '<leader>k', vim.diagnostic.goto_prev, opts)
-                ---@diagnostic disable-next-line: deprecated
-                vim.keymap.set('n', '<leader>j', vim.diagnostic.goto_next, opts)
+                map("n", "<leader>ld", vim.diagnostic.open_float, "Line diagnostics")
+                map("n", "<leader>lk", vim.diagnostic.goto_prev, "Prev diagnostic")
+                map("n", "<leader>lj", vim.diagnostic.goto_next, "Next diagnostic")
 
-                -- LSP references with Telescope
-                vim.keymap.set('n', '<leader>lr', function()
-                    -- First try LSP references
-                    vim.lsp.buf.references(nil, {
-                        on_list = function(options)
-                            if #options.items == 0 then
-                                -- No LSP results, fallback to ripgrep
-                                local word = vim.fn.expand("<cword>")
-                                vim.notify("No LSP references found, falling back to ripgrep", vim.log.levels.INFO)
-                                vim.schedule(function()
-                                    require('telescope.builtin').grep_string({
-                                        search = word,
-                                        initial_mode = "normal",
-                                        prompt_title = "Ripgrep: " .. word,
-                                    })
-                                end)
-                            else
-                                -- Show LSP results in Telescope
-                                vim.schedule(function()
-                                    require('telescope.builtin').lsp_references({
-                                        fname_width = 0,
-                                        trim_text = true,
-                                        show_line = true,
-                                        initial_mode = "normal",
-                                    })
-                                end)
+                -- References via LSP; falls back to ripgrep only if the LSP returns nothing.
+                map("n", "<leader>lr", function()
+                    local word = vim.fn.expand("<cword>")
+                    local bufnr = vim.api.nvim_get_current_buf()
+
+                    local function ripgrep()
+                        require("telescope.builtin").grep_string({
+                            search = word,
+                            initial_mode = "normal",
+                            prompt_title = "Ripgrep: " .. word,
+                        })
+                    end
+
+                    -- Clients on this buffer that actually support references
+                    local clients = vim.lsp.get_clients({ bufnr = bufnr, method = "textDocument/references" })
+                    if #clients == 0 then
+                        vim.notify("No LSP references support, using ripgrep", vim.log.levels.INFO)
+                        ripgrep()
+                        return
+                    end
+
+                    -- Pass encoding explicitly -> no more position_encoding warning
+                    local params = vim.lsp.util.make_position_params(0, clients[1].offset_encoding)
+                    params.context = { includeDeclaration = true }
+
+                    vim.lsp.buf_request_all(bufnr, "textDocument/references", params, function(results)
+                        local items = {}
+                        for _, res in pairs(results) do
+                            if res and res.result then
+                                vim.list_extend(items, res.result)
                             end
-                        end,
-                    })
-                end, { buffer = bufnr, desc = "Show References" })
+                        end
+
+                        if #items == 0 then
+                            vim.notify("No LSP references found, falling back to ripgrep", vim.log.levels.INFO)
+                            vim.schedule(ripgrep)
+                        else
+                            vim.schedule(function()
+                                require("telescope.builtin").lsp_references({
+                                    fname_width = 0,
+                                    trim_text = true,
+                                    show_line = true,
+                                    initial_mode = "normal",
+                                    prompt_title = "References: " .. word,
+                                })
+                            end)
+                        end
+                    end)
+                end, "Show references")
 
                 -- Workspace symbols
-                vim.keymap.set('n', '<leader>lw', function()
+                map("n", "<leader>lw", function()
                     require('telescope.builtin').lsp_dynamic_workspace_symbols()
-                end, opts)
+                end, "Workspace symbols")
 
                 -- Document symbols
-                vim.keymap.set('n', '<leader>lo', function()
+                map("n", "<leader>lo", function()
                     require('telescope.builtin').lsp_document_symbols()
-                end, opts)
-
-                -- Alternative ripgrep search (bypass LSP)
-                vim.keymap.set('n', '<leader>lR', function()
-                    local word = vim.fn.expand("<cword>")
-                    require('telescope.builtin').grep_string({
-                        search = word,
-                        initial_mode = "normal",
-                        prompt_title = "Ripgrep: " .. word,
-                    })
-                end, opts)
+                end, "Document symbols")
 
                 -- Enable formatting on save if supported
                 -- if client.server_capabilities.documentFormattingProvider then
@@ -142,7 +156,7 @@ return {
                 -- end
             end
 
-            -- Track signature help window state
+            -- Keep signature_active in sync with whether a signature float is open
             vim.api.nvim_create_autocmd({ "InsertCharPre", "CursorMoved" }, {
                 callback = function()
                     local active = false
@@ -163,12 +177,9 @@ return {
 
             local opts = { noremap = true, silent = true }
 
-            -- ============================================
-            -- AUTOCOMPLETE (blink.cmp) CONTROL
-            -- ============================================
-
+            -- Toggle blink.cmp autocomplete for the current buffer
             vim.keymap.set('n', '<leader>ba', function()
-                local ok, blink = pcall(require, 'blink.cmp')
+                local ok, _ = pcall(require, 'blink.cmp')
                 if not ok then
                     vim.notify("blink.cmp not installed", vim.log.levels.WARN)
                     return
@@ -178,22 +189,16 @@ return {
                 local current_state = vim.b[bufnr].blink_cmp_enabled
 
                 if current_state == false then
-                    vim.b[bufnr].blink_cmp_enabled = nil -- Set to nil to use default (enabled)
+                    vim.b[bufnr].blink_cmp_enabled = nil -- nil = use default (enabled)
                     vim.notify("Autocomplete enabled")
                 else
                     vim.b[bufnr].blink_cmp_enabled = false
                     vim.notify("Autocomplete disabled")
-                    -- Force close any open menu
-                    vim.api.nvim_input('<C-e>')
+                    vim.api.nvim_input('<C-e>') -- force-close any open menu
                 end
 
-                -- Trigger blink to re-evaluate enabled state
-                vim.cmd('doautocmd TextChanged')
+                vim.cmd('doautocmd TextChanged') -- re-evaluate enabled state
             end, vim.tbl_extend('force', opts, { desc = 'Toggle blink autocomplete' }))
-
-            -- ============================================
-            -- BUFFER-SPECIFIC LSP CONTROL
-            -- ============================================
 
             -- Detach LSP from current buffer only
             vim.keymap.set('n', '<leader>lc', function()
@@ -205,7 +210,6 @@ return {
                     return
                 end
 
-                -- Detach from buffer instead of stopping client entirely
                 for _, client in ipairs(clients) do
                     vim.lsp.buf_detach_client(bufnr, client.id)
                 end
@@ -214,7 +218,7 @@ return {
                 vim.notify("LSP detached from buffer")
             end, vim.tbl_extend('force', opts, { desc = 'Detach LSP from buffer' }))
 
-            -- Attach LSP to current buffer
+            -- Attach a suitable LSP to the current buffer
             vim.keymap.set('n', '<leader>ls', function()
                 local bufnr = vim.api.nvim_get_current_buf()
                 local filetype = vim.bo[bufnr].filetype
@@ -224,20 +228,15 @@ return {
                     return
                 end
 
-                -- Get all available clients for this filetype
                 local all_clients = vim.lsp.get_clients()
                 local attached = 0
 
                 for _, client in ipairs(all_clients) do
-                    -- Check if client supports this filetype
                     if client.config.filetypes then
                         for _, ft in ipairs(client.config.filetypes) do
                             if ft == filetype then
-                                -- Attach client to buffer
                                 vim.lsp.buf_attach_client(bufnr, client.id)
-                                if on_attach then
-                                    on_attach(client, bufnr)
-                                end
+                                on_attach(client, bufnr)
                                 attached = attached + 1
                                 break
                             end
@@ -263,7 +262,6 @@ return {
                 capabilities = require('blink.cmp').get_lsp_capabilities(capabilities)
             end)
 
-            -- Configure LSP servers
             vim.lsp.config.jdtls = {
                 cmd = { 'jdtls' },
                 filetypes = { 'java' },
@@ -330,7 +328,6 @@ return {
                     css  = { validate = false },
                     less = { validate = false },
                     scss = { validate = false },
-
                     html = {
                         format = {
                             wrapLineLength = 0, -- disable wrapping/reflow
@@ -349,7 +346,6 @@ return {
                 capabilities = capabilities,
             }
 
-            -- Setup mason-lspconfig
             require("mason-lspconfig").setup({
                 ensure_installed = { "jdtls", "clangd", "pyright", "lua_ls", "ts_ls", "html", "cssls" },
                 handlers = {

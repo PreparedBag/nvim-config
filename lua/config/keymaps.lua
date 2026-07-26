@@ -28,9 +28,31 @@ vim.keymap.set('n', '<Esc>', ':nohlsearch<CR><Esc>', opts)
 -- Show netrw
 vim.keymap.set('n', '<leader>fe', ':Ex<CR>', opts)
 -- Next file in buffers
-vim.keymap.set("n", "<Tab>",   "<cmd>bnext<cr>",     { desc = "Next buffer" })
+-- vim.keymap.set("n", "<Tab>", "<cmd>bnext<cr>", { desc = "Next buffer" })
 -- Previous file in buffers
-vim.keymap.set("n", "<S-Tab>", "<cmd>bprevious<cr>", { desc = "Prev buffer" })
+-- vim.keymap.set("n", "<S-Tab>", "<cmd>bprevious<cr>", { desc = "Prev buffer" })
+-- Quickfix navigation (telescope/grep results land here)
+vim.keymap.set("n", "<leader>j", function()
+    local ok = pcall(vim.cmd.cnext)
+    if not ok then
+        vim.notify("End of quickfix list", vim.log.levels.INFO)
+    end
+end, opts)
+
+vim.keymap.set("n", "<leader>k", function()
+    local ok = pcall(vim.cmd.cprev)
+    if not ok then
+        vim.notify("Start of quickfix list", vim.log.levels.INFO)
+    end
+end, opts)
+
+vim.api.nvim_create_autocmd("QuickFixCmdPost", {
+    pattern = "*",
+    command = "cwindow",  -- opens qf window only if the list is non-empty
+})
+-- Keep `*` / `#` centered
+vim.keymap.set("n", "*", "*zzzv", opts)
+vim.keymap.set("n", "#", "#zzzv", opts)
 
 -- Marks
 -- Add mark
@@ -58,6 +80,11 @@ vim.keymap.set('n', '<leader>wl', '<C-w>l', opts)
 vim.keymap.set('n', '<leader>wj', '<C-w>j', opts)
 -- Focus above window
 vim.keymap.set('n', '<leader>wk', '<C-w>k', opts)
+-- Resize windows (you have focus/split but no resize)
+vim.keymap.set("n", "<C-Up>",    "<cmd>resize +2<cr>", opts)
+vim.keymap.set("n", "<C-Down>",  "<cmd>resize -2<cr>", opts)
+vim.keymap.set("n", "<C-Left>",  "<cmd>vertical resize -2<cr>", opts)
+vim.keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<cr>", opts)
 
 -- Clipboard
 -- Paste over selection without overwriting default register
@@ -65,10 +92,14 @@ vim.keymap.set("x", "<leader>p", [["_dP]], opts)
 -- Yank to system clipboard
 vim.keymap.set("n", "<leader>y", [["+y]], opts)
 vim.keymap.set("v", "<leader>y", [["+y]], opts)
+-- Yank whole line to system clipboard
+vim.keymap.set("n", "<leader>Y", [["+Y]], opts)
 
 -- Miscellaneous
 -- Quit
 vim.keymap.set("n", "<leader>q", ":q<CR>", opts)
+-- Save file
+vim.keymap.set("n", "<C-s>", "<cmd>w<cr>", opts)
 -- Close buffer
 vim.keymap.set("n", "<leader>bd", ":bd<CR>", opts)
 -- Open buffer list with Telescope
@@ -144,9 +175,16 @@ vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", opts)
 -- Replace word under cursor globally
 -- vim.keymap.set("n", "<leader>rw", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], opts)
 
-vim.keymap.set('n', '<leader>lr', function()
-    vim.notify("LSP not attached")
-end, opts)
+-- References fallback: plain ripgrep. Overridden per-buffer by LSP when attached.
+vim.keymap.set("n", "<leader>lr", function()
+    local word = vim.fn.expand("<cword>")
+    require("telescope.builtin").grep_string({
+        search = word,
+        initial_mode = "normal",
+        prompt_title = "Ripgrep: " .. word,
+    })
+end, { noremap = true, silent = true, desc = "Ripgrep word under cursor" })
+
 vim.keymap.set('n', '<leader>ld', function()
     vim.notify("LSP not attached")
 end, opts)
@@ -159,10 +197,19 @@ end, opts)
 vim.keymap.set('n', '<leader>lw', function()
     vim.notify("LSP not attached")
 end, opts)
+vim.keymap.set('n', '<leader>lf', function()
+    vim.notify("LSP not attached")
+end, opts)
 vim.keymap.set('n', '<leader>lo', function()
     vim.notify("LSP not attached")
 end, opts)
 vim.keymap.set('n', '<leader>ln', function()
+    vim.notify("LSP not attached")
+end, opts)
+vim.keymap.set('n', '<leader>lj', function()
+    vim.notify("LSP not attached")
+end, opts)
+vim.keymap.set('n', '<leader>lk', function()
     vim.notify("LSP not attached")
 end, opts)
 

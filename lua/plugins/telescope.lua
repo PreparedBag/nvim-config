@@ -11,6 +11,7 @@ return {
         },
         config = function()
             local telescope = require('telescope')
+            local actions = require('telescope.actions')
 
             -- Function to set the working directory to the original one
             local set_telescope_cwd_to_original = function()
@@ -51,37 +52,36 @@ return {
                         horizontal = { preview_width = 0.5 },
                         vertical = { preview_height = 0.5 },
                     },
-                    preview = { treesitter = false },
+                    preview = { treesitter = true },
+                    -- Send Tab-marked items (or all if none marked) to the quickfix list.
+                    -- Does NOT auto-open anything; view it later with <leader>fq.
+                    mappings = {
+                        i = {
+                            ["<C-y>"] = actions.smart_send_to_qflist,
+                        },
+                        n = {
+                            ["<C-y>"] = actions.smart_send_to_qflist,
+                        },
+                    },
+                },
+                extensions = {
+                    -- fzf-native is an extension, so its config belongs HERE, not
+                    -- under defaults (where it was silently ignored before).
                     fzf = {
-                        fuzzy = true, -- keep fuzzy
+                        fuzzy = true,
                         override_generic_sorter = true,
                         override_file_sorter = true,
                         case_mode = "smart_case",
                     },
-                    -- file_ignore_patterns = {
-                    --     "%.jpg", "%.jpeg", "%.png", "%.gif", "%.bmp", "%.tiff",
-                    --     "%.o", "%.out", "%.exe", "%.a", "%.so", "%.dll",
-                    --     "%.zip", "%.tar", "%.gz", "%.rar", "%.7z", "%.bz2",
-                    --     "%.pdf", "%.docx", "%.xlsx", "%.pptx", "%.doc", "%.xls",
-                    --     "%.mp4", "%.mkv", "%.mp3", "%.avi", "%.flv", "%.mov",
-                    --     "%.class", "%.jar", "%.war",
-                    --     "%.bin", "%.iso",
-                    --     "%.dmg", "%.pkg",
-                    --     "%.lock", "%.log",
-                    --     "%.xcf",
-                    -- },
-                },
-                extensions = {
                     ["ui-select"] = {
                         require("telescope.themes").get_dropdown({})
-                    }
-                }
+                    },
+                },
             })
 
             telescope.load_extension("ui-select")
             telescope.load_extension('fzf')
 
-            -- Load media files extension
             local builtin = require('telescope.builtin')
             local opts = { noremap = true, silent = true }
 
@@ -152,7 +152,74 @@ return {
                 })
             end, opts)
 
-            vim.keymap.set("n", "<leader>fh", builtin.help_tags, opts)
+            vim.keymap.set("n", "<leader>fH", builtin.help_tags, opts)
+
+            -- Grep the word under the cursor
+            vim.keymap.set("n", "<leader>fr", function()
+                local word = vim.fn.expand("<cword>")
+                require('telescope.builtin').grep_string({
+                    search = word,
+                    initial_mode = "normal",
+                    prompt_title = "Ripgrep: " .. word,
+                })
+            end, opts)
+
+            -- Grep the visual selection
+            vim.keymap.set("v", "<leader>fr", function()
+                local save = vim.fn.getreg("v")
+                vim.cmd('noautocmd normal! "vy')
+                local text = vim.fn.getreg("v")
+                vim.fn.setreg("v", save)
+
+                text = text:gsub("\n", " ")
+                text = text:gsub("^%s+", ""):gsub("%s+$", "")
+                if text == "" then return end
+
+                require("telescope.builtin").grep_string({
+                    search = text,
+                    initial_mode = "normal",
+                    prompt_title = "Ripgrep: " .. text,
+                })
+            end, opts)
+
+            -- Quickfix list viewer: list on the left, preview on the right.
+            -- Enter jumps to the item and closes; Esc dismisses.
+            vim.keymap.set("n", "<leader>fq", function()
+                builtin.quickfix({ initial_mode = "normal" })
+            end, opts)
+            vim.keymap.set("n", "<leader>fh", function()
+                local actions = require("telescope.actions")
+                local action_state = require("telescope.actions.state")
+
+                require("telescope.builtin").quickfixhistory({
+                    initial_mode = "normal",
+                    attach_mappings = function(_, map_fn)
+                        actions.select_default:replace(function(prompt_bufnr)
+                            local entry = action_state.get_selected_entry()
+                            actions.close(prompt_bufnr)
+                            if not entry then return end
+
+                            -- The history entry carries the stack number; field name varies
+                            -- by version, so check the common spots.
+                            local target = entry.nr or (entry.value and entry.value.nr)
+                            if not target then
+                                vim.notify("Couldn't determine quickfix list number", vim.log.levels.WARN)
+                                return
+                            end
+
+                            -- Move the stack pointer to `target` via :colder / :cnewer
+                            local current = vim.fn.getqflist({ nr = 0 }).nr
+                            local delta = target - current
+                            if delta < 0 then
+                                vim.cmd(math.abs(delta) .. "colder")
+                            elseif delta > 0 then
+                                vim.cmd(delta .. "cnewer")
+                            end
+                        end)
+                        return true
+                    end,
+                })
+            end, opts)
 
             vim.keymap.set("n", "<leader>fe", ":Oil<CR>", opts)
             vim.keymap.set("n", "<leader>fd", function() set_telescope_cwd_to_updated() end, opts)
