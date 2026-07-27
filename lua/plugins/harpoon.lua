@@ -33,7 +33,7 @@ return {
                         -- Non-empty name that points at an actual file on disk
                         if name ~= "" and vim.fn.filereadable(name) == 1 then
                             harpoon:list():add({
-                                value = name,
+                                value = vim.fn.fnamemodify(name, ":."),
                                 context = { row = 1, col = 0 },
                             })
                             added = added + 1
