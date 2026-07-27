@@ -10,7 +10,6 @@ A modern, optimized Neovim configuration with LSP support, fuzzy finding, file m
 - **Syntax Highlighting**: Treesitter-based highlighting and code understanding
 - **Git Integration**: Built-in git support through various plugins
 - **Markdown Support**: Live preview with custom styling and Mermaid diagram support
-- **Terminal Integration**: Floating terminal with toggleterm
 - **Optimized Loading**: Lazy-loaded plugins for fast startup times
 
 ## INSTALLATION

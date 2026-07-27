@@ -65,6 +65,9 @@ vim.opt.wrap = true
 -- Highlight the current line
 vim.opt.cursorline = true
 
+-- vim.opt.timeout = true
+-- vim.opt.timeoutlen = 300
+
 -- Completion Settings
 -- Configure completion menu behavior
 vim.opt.completeopt = { "menu", "menuone", "noselect" }

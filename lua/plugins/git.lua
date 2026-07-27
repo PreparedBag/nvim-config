@@ -712,7 +712,7 @@ return {
             { "<leader>gx", discard_file,                                                desc = "Discard changes to file" },
 
             { "<leader>gp", function() run_auth({ "push" }) end,                         desc = "Push" },
-            { "<leader>gP", function() run_auth({ "pull" }) end,            desc = "Pull" },
+            { "<leader>gP", function() run_auth({ "pull" }) end,                         desc = "Pull" },
             { "<leader>gu", function() run_auth({ "push", "--follow-tags" }) end,        desc = "Push + tags" },
             { "<leader>gU", function() run_auth({ "push", "-u", "origin", "HEAD" }) end, desc = "Push + set upstream" },
             { "<leader>gf", function() run_auth({ "fetch", "--prune", "--tags" }) end,   desc = "Fetch + prune" },
