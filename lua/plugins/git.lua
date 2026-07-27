@@ -666,7 +666,7 @@ return {
                 desc = "Stash changes",
             },
 
-            { "<leader>gh", checkout_head,                                               desc = "Checkout branch tip" },
+            { "<leader>gr", checkout_head,                                               desc = "Checkout branch tip" },
 
             {
                 "<leader>gn",

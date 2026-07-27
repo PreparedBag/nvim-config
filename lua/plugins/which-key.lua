@@ -92,7 +92,8 @@ return {
             -- { "<leader>t",   group = "Table",                        mode = "n" },
 
             -- Git Integration
-            { "<leader>g",   group = "Git",                          mode = "n" },
+            { "<leader>g",   group = "Git",                          mode = { "n", "v" } },
+            { "<leader>gh",  group = "Hunks",                        mode = { "n", "v" } },
 
             -- Harpoon
             { "<leader>h",   group = "Harpoon",                      mode = "n" },
