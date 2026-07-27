@@ -77,19 +77,3 @@ vim.opt.splitright = true
 
 -- Enable mouse support in all modes
 vim.opt.mouse = "a"
-
--- Folding Settings
--- Set maximum fold level
-vim.opt.foldlevel = 99
--- Start with all folds open
-vim.opt.foldlevelstart = 99
--- Enable folding
-vim.opt.foldenable = true
--- Set fold to syntax
-vim.opt.foldmethod = "syntax"
--- Set the fold column width to 0 (hide fold column)
--- vim.opt.foldcolumn = "0"
--- Set maximum nested folds
-vim.opt.foldnestmax = 5
--- Set empty fold text (fold summary)
--- vim.opt.foldtext = ""

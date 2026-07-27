@@ -72,7 +72,6 @@ return {
 
                 -- Code actions and refactoring
                 map("n", "<leader>la", vim.lsp.buf.code_action, "Code actions")
-                map("v", "<leader>la", vim.lsp.buf.code_action, "Code actions")
                 map("n", "<leader>ln", vim.lsp.buf.rename, "Refactor Symbol")
                 map("n", "<leader>lf", function()
                     vim.lsp.buf.format({ async = true })

@@ -155,7 +155,7 @@ return {
             vim.keymap.set("n", "<leader>fH", builtin.help_tags, opts)
 
             -- Grep the word under the cursor
-            vim.keymap.set("n", "<leader>fr", function()
+            vim.keymap.set("n", "<leader>fw", function()
                 local word = vim.fn.expand("<cword>")
                 require('telescope.builtin').grep_string({
                     search = word,
@@ -165,7 +165,7 @@ return {
             end, opts)
 
             -- Grep the visual selection
-            vim.keymap.set("v", "<leader>fr", function()
+            vim.keymap.set("v", "<leader>fw", function()
                 local save = vim.fn.getreg("v")
                 vim.cmd('noautocmd normal! "vy')
                 local text = vim.fn.getreg("v")

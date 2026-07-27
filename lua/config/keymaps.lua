@@ -83,11 +83,13 @@ vim.keymap.set('n', '<leader>wl', '<C-w>l', opts)
 vim.keymap.set('n', '<leader>wj', '<C-w>j', opts)
 -- Focus above window
 vim.keymap.set('n', '<leader>wk', '<C-w>k', opts)
--- Resize windows (you have focus/split but no resize)
+-- Resize windows
 vim.keymap.set("n", "<C-Up>",    "<cmd>resize +2<cr>", opts)
 vim.keymap.set("n", "<C-Down>",  "<cmd>resize -2<cr>", opts)
 vim.keymap.set("n", "<C-Left>",  "<cmd>vertical resize -2<cr>", opts)
 vim.keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<cr>", opts)
+-- Equalize all window sizes
+vim.keymap.set("n", "<leader>we", "<C-w>=", opts)
 
 -- Clipboard
 -- Paste over selection without overwriting default register
@@ -194,9 +196,6 @@ end, opts)
 vim.keymap.set('n', '<leader>la', function()
     vim.notify("LSP not attached")
 end, opts)
-vim.keymap.set('v', '<leader>la', function()
-    vim.notify("LSP not attached")
-end, opts)
 vim.keymap.set('n', '<leader>lw', function()
     vim.notify("LSP not attached")
 end, opts)
@@ -235,3 +234,27 @@ vim.keymap.set('i', 'jk', '<Esc>', opts)
 vim.keymap.set('n', 'gcc', '<Plug>(comment_toggle_linewise_current)', opts)
 -- Comment selection in visual mode
 vim.keymap.set('x', 'gc', '<Plug>(comment_toggle_linewise_visual)', opts)
+
+vim.keymap.set("n", "zt", function()
+    vim.opt.foldenable = not vim.opt.foldenable:get()
+    vim.notify("Folding " .. (vim.opt.foldenable:get() and "enabled" or "disabled"))
+end, opts)
+
+vim.keymap.set("n", "ze", function()
+    vim.opt.foldenable = true
+    vim.cmd("normal! zR")
+end, opts)
+
+vim.keymap.set("n", "zc", function()
+    vim.opt.foldenable = true
+    vim.cmd("normal! zM")
+end, opts)
+
+vim.keymap.set("n", "zj", function()
+    vim.opt.foldenable = true
+    if vim.wo.foldlevel > 0 then
+        vim.cmd("normal! zM")
+    else
+        vim.cmd("normal! zR")
+    end
+end, opts)

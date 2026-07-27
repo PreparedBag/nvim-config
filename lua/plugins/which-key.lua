@@ -23,9 +23,15 @@ return {
             { "<leader>j",   desc = "Next Quickfix Item",            mode = "n" },
             { "<leader>k",   desc = "Previous Quickfix Item",        mode = "n" },
 
-            -- LSP Group
-            { "<leader>l",   group = "LSP",                          mode = { "n", "v" } },
-            { "<leader>la",  desc = "Code Actions",                  mode = { "n", "v" } },
+            -- Fold
+            { "<leader>z",   group = "Fold",                         mode = "n" },
+            { "<leader>zt",  desc = "Toggle Enable",                 mode = "n" },
+            { "<leader>ze",  desc = "Expand All",                    mode = "n" },
+            { "<leader>zc",  desc = "Collapse All",                  mode = "n" },
+
+            -- LSP
+            { "<leader>l",   group = "LSP",                          mode = "n" },
+            { "<leader>la",  desc = "Code Actions",                  mode = "n" },
             { "<leader>ln",  desc = "Refactor Symbol",               mode = "n" },
             { "<leader>lf",  desc = "Format Document",               mode = "n" },
             { "<leader>ld",  desc = "Show Diagnostics",              mode = "n" },
@@ -46,7 +52,7 @@ return {
             { "<leader>fb",  desc = "Find Buffers",                  mode = "n" },
             { "<leader>fd",  desc = "Set Telescope CWD Here",        mode = "n" },
             { "<leader>fo",  desc = "Set Telescope CWD to Original", mode = "n" },
-            { "<leader>fr",  desc = "Find References (Ripgrep)",     mode = { "n", "v" } },
+            { "<leader>fw",  desc = "Find Word (Ripgrep)",           mode = { "n", "v" } },
             { "<leader>fe",  desc = "File Explorer",                 mode = "n" },
             { "<leader>fq",  desc = "View Quickfix List",            mode = "n" },
             { "<leader>fh",  desc = "View Quickfix History",         mode = "n" },

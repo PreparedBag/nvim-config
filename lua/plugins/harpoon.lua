@@ -32,7 +32,10 @@ return {
                         local name = vim.api.nvim_buf_get_name(bufnr)
                         -- Non-empty name that points at an actual file on disk
                         if name ~= "" and vim.fn.filereadable(name) == 1 then
-                            harpoon:list():add({ value = name })
+                            harpoon:list():add({
+                                value = name,
+                                context = { row = 1, col = 0 },
+                            })
                             added = added + 1
                         end
                     end
