@@ -96,6 +96,8 @@ return {
             -- Git Integration
             { "<leader>g",   group = "Git",                          mode = { "n", "v" } },
             { "<leader>gh",  group = "Hunks",                        mode = { "n", "v" } },
+            { "<leader>gb",  group = "Branch",                       mode = "n" },
+            { "<leader>gz",  group = "Stash",                        mode = "n" },
 
             -- Harpoon
             { "<leader>h",   group = "Harpoon",                      mode = "n" },

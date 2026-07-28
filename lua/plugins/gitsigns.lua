@@ -32,7 +32,7 @@ return {
                 end
 
                 -- Hunk navigation
-                map("n", "<leader>ghj", function()
+                map("n", "<leader>gj", function()
                     if vim.wo.diff then
                         vim.cmd.normal({ "]c", bang = true })
                     else
@@ -40,7 +40,7 @@ return {
                     end
                 end, "Next hunk")
 
-                map("n", "<leader>ghk", function()
+                map("n", "<leader>gk", function()
                     if vim.wo.diff then
                         vim.cmd.normal({ "[c", bang = true })
                     else
@@ -76,7 +76,7 @@ return {
                 end, "Blame line")
 
                 -- All project hunks into the quickfix list
-                map("n", "<leader>ghq", function()
+                map("n", "<leader>gq", function()
                     gs.setqflist("all", { open = false })
                 end, "All hunks to quickfix")
             end,
