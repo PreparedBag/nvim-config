@@ -49,10 +49,6 @@ vim.keymap.set("n", "<leader>k", function()
     end
 end, opts)
 
-vim.api.nvim_create_autocmd("QuickFixCmdPost", {
-    pattern = "*",
-    command = "cwindow",  -- opens qf window only if the list is non-empty
-})
 -- Keep `*` / `#` centered
 vim.keymap.set("n", "*", "*zzzv", opts)
 vim.keymap.set("n", "#", "#zzzv", opts)

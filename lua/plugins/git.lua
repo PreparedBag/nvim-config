@@ -533,7 +533,7 @@ local function branch_picker()
                 end
             end
 
-            map({ "i", "n" }, "<C-y>", on(function(branch)
+            map({ "i", "n" }, "<C-m>", on(function(branch)
                 run({ "merge", branch })
             end))
 
