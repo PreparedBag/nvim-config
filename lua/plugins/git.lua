@@ -19,6 +19,25 @@ local function notify(msg, level)
     vim.notify(vim.trim(msg), level or vim.log.levels.INFO, { title = "git" })
 end
 
+-- ---------------------------------------------------------------
+-- Guard against no git repository
+-- ---------------------------------------------------------------
+
+
+local function in_git_repo()
+    return vim.fs.root(0, ".git") ~= nil
+end
+
+local function git_guard(fn)
+    return function()
+        if not in_git_repo() then
+            vim.notify("Not a git repository", vim.log.levels.INFO)
+            return
+        end
+        fn()
+    end
+end
+
 
 -- ---------------------------------------------------------------
 -- synchronous git
@@ -159,36 +178,6 @@ end
 local function confirm(question)
     return vim.fn.confirm(question, "&Yes\n&No", 2) == 1
 end
-
-
--- ---------------------------------------------------------------
--- highlight groups
---
--- log colors follow git's own convention: tags yellow, remotes
--- red, local branches green. redefined on colorscheme change so
--- they track the active theme.
--- ---------------------------------------------------------------
-
-local function theme_fg(name)
-    local hl = vim.api.nvim_get_hl(0, { name = name, link = false })
-    return hl and hl.fg or nil
-end
-
-local function define_highlights()
-    vim.api.nvim_set_hl(0, "GitLogHash", { fg = theme_fg("Number") })
-    vim.api.nvim_set_hl(0, "GitLogHead", { fg = theme_fg("Constant"), bold = true })
-    vim.api.nvim_set_hl(0, "GitLogTag", { fg = theme_fg("WarningMsg"), bold = true })
-    vim.api.nvim_set_hl(0, "GitLogRemote", { fg = theme_fg("ErrorMsg"), bold = true })
-    vim.api.nvim_set_hl(0, "GitLogBranch", { fg = theme_fg("String"), bold = true })
-    vim.api.nvim_set_hl(0, "GitLogMeta", { fg = theme_fg("Comment") })
-
-    vim.api.nvim_set_hl(0, "GitStatusStaged", { fg = theme_fg("String"), bold = true })
-    vim.api.nvim_set_hl(0, "GitStatusUnstaged", { fg = theme_fg("WarningMsg"), bold = true })
-    vim.api.nvim_set_hl(0, "GitStatusNone", { fg = theme_fg("Comment") })
-end
-
-define_highlights()
-vim.api.nvim_create_autocmd("ColorScheme", { callback = define_highlights })
 
 
 -- ---------------------------------------------------------------
@@ -651,71 +640,67 @@ return {
     {
         'nvim-telescope/telescope.nvim',
         keys = {
-            { "<leader>gs", status_picker, desc = "Git status" },
-            { "<leader>gl", log_picker,    desc = "Git log" },
-            { "<leader>gb", branch_picker, desc = "Git branches" },
-            { "<leader>gz", stash_picker,  desc = "Git stashes" },
-
-            {
-                "<leader>gZ",
-                function()
-                    prompt("Stash message: ", function(msg)
-                        run({ "stash", "push", "-m", msg })
-                    end)
-                end,
-                desc = "Stash changes",
-            },
-
-            { "<leader>gr", checkout_head,                                               desc = "Checkout branch tip" },
-
-            {
-                "<leader>gn",
-                function()
-                    prompt("New branch: ", function(name)
-                        run({ "checkout", "-b", name })
-                    end)
-                end,
-                desc = "New branch",
-            },
-
+            { "<leader>gs", git_guard(status_picker),                                               desc = "Git status" },
+            { "<leader>gl", git_guard(log_picker),                                                  desc = "Git log" },
+            { "<leader>gx", git_guard(discard_file),                                                desc = "Discard changes to file" },
+            { "<leader>gp", git_guard(function() run_auth({ "push" }) end),                         desc = "Push" },
+            { "<leader>gP", git_guard(function() run_auth({ "pull" }) end),                         desc = "Pull" },
+            { "<leader>gu", git_guard(function() run_auth({ "push", "--follow-tags" }) end),        desc = "Push + tags" },
+            { "<leader>gU", git_guard(function() run_auth({ "push", "-u", "origin", "HEAD" }) end), desc = "Push + set upstream" },
+            { "<leader>gf", git_guard(function() run_auth({ "fetch", "--prune", "--tags" }) end),   desc = "Fetch + prune" },
             {
                 "<leader>gc",
-                function()
+                git_guard(function()
                     prompt("Commit message: ", function(msg)
                         run({ "commit", "-m", msg })
                     end)
-                end,
+                end),
                 desc = "Commit staged",
             },
-
             {
-                "<leader>ga",
-                function()
+                "<leader>gA",
+                git_guard(function()
                     prompt("Commit message (all files): ", function(msg)
                         capture({ "add", "-A" })
                         run({ "commit", "-m", msg })
                     end)
-                end,
+                end),
                 desc = "Add all + commit",
             },
-
             {
                 "<leader>gt",
-                function()
+                git_guard(function()
                     prompt("New tag: ", function(tag)
                         run({ "tag", "-a", tag, "-m", tag })
                     end)
-                end,
+                end),
                 desc = "New tag",
             },
 
-            { "<leader>gx", discard_file,                                                desc = "Discard changes to file" },
+            -- Stashes
+            { "<leader>gzs", git_guard(stash_picker),  desc = "Select" },
+            {
+                "<leader>gzc",
+                git_guard(function()
+                    prompt("Stash message: ", function(msg)
+                        run({ "stash", "push", "-m", msg })
+                    end)
+                end),
+                desc = "Stash changes",
+            },
 
-            { "<leader>gp", function() run_auth({ "push" }) end,                         desc = "Push" },
-            { "<leader>gP", function() run_auth({ "pull" }) end,                         desc = "Pull" },
-            { "<leader>gu", function() run_auth({ "push", "--follow-tags" }) end,        desc = "Push + tags" },
-            { "<leader>gU", function() run_auth({ "push", "-u", "origin", "HEAD" }) end, desc = "Push + set upstream" },
-            { "<leader>gf", function() run_auth({ "fetch", "--prune", "--tags" }) end,   desc = "Fetch + prune" },
+            -- Branches
+            { "<leader>gbs", git_guard(branch_picker), desc = "Select" },
+            { "<leader>gbr", git_guard(checkout_head), desc = "Checkout tip" },
+            {
+                "<leader>gbn",
+                git_guard(function()
+                    prompt("New branch: ", function(name)
+                        run({ "checkout", "-b", name })
+                    end)
+                end),
+                desc = "New",
+            },
         },
     },
 }
