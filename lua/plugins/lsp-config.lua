@@ -60,6 +60,12 @@ return {
                 map("n", "gi", vim.lsp.buf.implementation, "Go to implementation")
                 map("n", "gt", vim.lsp.buf.type_definition, "Go to type definition")
 
+                map("n", "<leader>lq", function() vim.diagnostic.setqflist({ open = false }) end,
+                    "Diagnostics to quickfix");
+                map("n", "<leader>lD",
+                    function() require("telescope.builtin").diagnostics({ initial_mode = "normal" }) end,
+                    "Project diagnostics (Telescope)")
+
                 -- Information
                 map("n", "K", vim.lsp.buf.hover, "Hover")
                 map("n", "<C-h>", vim.lsp.buf.signature_help, "Signature help")
@@ -273,7 +279,7 @@ return {
             }
 
             vim.lsp.config.clangd = {
-                cmd = { 'clangd', '--background-index', '--clang-tidy', "--query-driver=/usr/bin/arm-none-eabi-*" },
+                cmd = { 'clangd', '--background-index', '-j=4', "--query-driver=/usr/bin/arm-none-eabi-*" },
                 filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda' },
                 root_markers = { '.git', 'compile_commands.json' },
                 on_attach = on_attach,

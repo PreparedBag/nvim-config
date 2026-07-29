@@ -222,6 +222,10 @@ return {
                 })
             end, opts)
 
+            vim.keymap.set('n', '<leader>fc', function()
+                local config_path = vim.fn.expand('~/.config/nvim')
+                vim.cmd.ex(config_path)
+            end, { desc = 'Open nvim config folder' })
             vim.keymap.set("n", "<leader>fe", ":Oil<CR>", opts)
             vim.keymap.set("n", "<leader>fd", function() set_telescope_cwd_to_updated() end, opts)
             vim.keymap.set("n", "<leader>fo", function() set_telescope_cwd_to_original() end, opts)

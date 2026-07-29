@@ -210,8 +210,3 @@ vim.keymap.set('n', '<leader>ii1', ':lua insert_image_link()<CR>',
     { noremap = true, silent = true, desc = "Insert Image" })
 vim.keymap.set('n', '<leader>ii2', ':lua insert_two_image_links()<CR>',
     { noremap = true, silent = true, desc = "Insert 2 Images" })
-
-vim.keymap.set('n', '<leader>fc', function()
-    local config_path = vim.fn.expand('~/.config/nvim')
-    vim.cmd.ex(config_path)
-end, { desc = 'Open nvim config folder' })

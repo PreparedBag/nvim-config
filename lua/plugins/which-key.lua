@@ -51,7 +51,6 @@ return {
             { "<leader>fa",  desc = "Find All Files (Include All)",  mode = "n" },
             { "<leader>fp",  desc = "Find Phrase (Live Grep)",       mode = "n" },
             { "<leader>fs",  desc = "Find String (Include All)",     mode = "n" },
-            { "<leader>fb",  desc = "Find Buffers",                  mode = "n" },
             { "<leader>fd",  desc = "Set Telescope CWD Here",        mode = "n" },
             { "<leader>fo",  desc = "Set Telescope CWD to Original", mode = "n" },
             { "<leader>fw",  desc = "Find Word (Ripgrep)",           mode = { "n", "v" } },
