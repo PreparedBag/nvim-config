@@ -76,7 +76,7 @@ return {
                         vim.lsp.buf.signature_help()
                         signature_active = true
                     end
-                end, "Signature help")
+                end, "Signature Help")
 
                 -- Code actions and refactoring
                 map("n", "<leader>la", vim.lsp.buf.code_action, "Code Actions")

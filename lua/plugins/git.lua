@@ -403,47 +403,58 @@ local function status_picker()
     local state = require("telescope.actions.state")
     local conf = require("telescope.config").values
 
+    -- Build a title line with branch + tracking info
+    local head = vim.fn.system("git symbolic-ref --short HEAD 2>/dev/null"):gsub("%s+", "")
+    local title
+    if head == "" then
+        title = "⚠ DETACHED HEAD  (t: stage/unstage)"
+    else
+        -- ahead/behind counts vs upstream, if an upstream exists
+        local ab = vim.fn.system("git rev-list --left-right --count HEAD...@{u} 2>/dev/null"):gsub("%s+$", "")
+        local tracking = ""
+        local ahead, behind = ab:match("(%d+)%s+(%d+)")
+        if ahead then
+            local parts = {}
+            if tonumber(ahead) > 0 then table.insert(parts, "↑" .. ahead) end
+            if tonumber(behind) > 0 then table.insert(parts, "↓" .. behind) end
+            if #parts > 0 then tracking = " " .. table.concat(parts, " ") end
+        end
+        title = string.format("Git: %s%s (t: stage/unstage)", head, tracking)
+    end
+
     local function refresh(bufnr)
         state.get_current_picker(bufnr):refresh(status_finder(), { reset_prompt = false })
     end
-
     pickers.new({
         initial_mode = "normal",
-        prompt_title = "Git Status  (t: stage/unstage)",
+        prompt_title = title,
     }, {
         finder = status_finder(),
         sorter = conf.generic_sorter({}),
         previewer = diff_previewer,
-
         attach_mappings = function(_, map)
             map("n", "t", function(bufnr)
                 local picker = state.get_current_picker(bufnr)
                 local entry = state.get_selected_entry()
-
                 if not entry then
                     return
                 end
-
                 local is_staged = entry.x ~= " " and entry.x ~= "?"
-
                 if is_staged then
                     capture({ "restore", "--staged", "--", entry.path })
                 else
                     capture({ "add", "--", entry.path })
                 end
-
                 picker:refresh(status_finder(), { reset_prompt = false })
             end)
             map({ "i", "n" }, "<C-a>", function(bufnr)
                 capture({ "add", "-A" })
                 refresh(bufnr)
             end)
-
             map({ "i", "n" }, "<C-u>", function(bufnr)
                 capture({ "reset" })
                 refresh(bufnr)
             end)
-
             return true
         end,
     }):find()
@@ -675,19 +686,6 @@ return {
                     end)
                 end),
                 desc = "New Tag",
-            },
-            {
-                "<leader>gi",
-                git_guard(function()
-                    local head = vim.fn.system("git symbolic-ref --short HEAD 2>/dev/null"):gsub("%s+", "")
-                    if head == "" then
-                        vim.notify("⚠ DETACHED HEAD — not on a branch!", vim.log.levels.WARN)
-                    else
-                        local status = vim.fn.system("git status -sb")
-                        vim.notify("On branch: " .. head .. "\n" .. status, vim.log.levels.INFO)
-                    end
-                end),
-                desc = "Git Info / Health Check",
             },
 
             -- Stashes
