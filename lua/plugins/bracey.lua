@@ -1,7 +1,7 @@
 return {
     'turbio/bracey.vim',
     enabled = _G.DEV_ENABLED,
-    build = 'npm install --prefix server',
+    build = 'npm ci --prefix server',
     ft = { 'html', 'css', 'javascript' },
     config = function()
         vim.g.bracey_server_port = 3000
