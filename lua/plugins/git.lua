@@ -676,6 +676,19 @@ return {
                 end),
                 desc = "New Tag",
             },
+            {
+                "<leader>gi",
+                git_guard(function()
+                    local head = vim.fn.system("git symbolic-ref --short HEAD 2>/dev/null"):gsub("%s+", "")
+                    if head == "" then
+                        vim.notify("⚠ DETACHED HEAD — not on a branch!", vim.log.levels.WARN)
+                    else
+                        local status = vim.fn.system("git status -sb")
+                        vim.notify("On branch: " .. head .. "\n" .. status, vim.log.levels.INFO)
+                    end
+                end),
+                desc = "Git Info / Health Check",
+            },
 
             -- Stashes
             { "<leader>gzs", git_guard(stash_picker),  desc = "Select" },
