@@ -2,7 +2,6 @@ return {
     {
         'nvim-treesitter/nvim-treesitter',
         lazy = false,
-        event = { "VeryLazy" },
         -- event = { "BufReadPost", "BufNewFile" },
         build = ":TSUpdate",
         config = function()
@@ -13,7 +12,7 @@ return {
 
             if ok then
                 ts.setup({
-                    ensure_installed = { "c", "lua", "vim", "vimdoc", "html", "css", "javascript", "mermaid", "yaml", "markdown", "go", "gomod", "gowork", "gosum" },
+                    ensure_installed = { "c", "lua", "vim", "vimdoc", "html", "css", "javascript", "mermaid", "yaml", "markdown", "go", "gomod", "gowork", "gosum", "rust" },
                     auto_install = true,
                     sync_install = false,
                     highlight = { enable = true },

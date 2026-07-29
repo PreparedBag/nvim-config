@@ -192,8 +192,6 @@ return {
             -- GLOBAL LSP KEYMAPS
             -- ============================================================================
 
-            local opts = { noremap = true, silent = true }
-
             -- Toggle blink.cmp autocomplete for the current buffer
             vim.keymap.set('n', '<leader>lA', function()
                 local ok, _ = pcall(require, 'blink.cmp')
@@ -291,6 +289,7 @@ return {
             }
 
             vim.lsp.config.clangd = {
+                -- NOTE: dropped --clang-tidy to reduce CPU load. add back in if needed.
                 cmd = { 'clangd', '--background-index', '-j=4', "--query-driver=/usr/bin/arm-none-eabi-*" },
                 filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda' },
                 root_markers = { '.git', 'compile_commands.json' },
@@ -301,6 +300,7 @@ return {
             vim.lsp.config.pyright = {
                 cmd = { 'pyright-langserver', '--stdio' },
                 filetypes = { 'python' },
+                -- HACK: webui.py and setup.py used for project specific markers.
                 root_markers = { '.git', 'pyproject.toml', 'setup.py', 'webui.py', 'main.py', 'index.py' },
                 on_attach = on_attach,
                 capabilities = capabilities,
@@ -363,7 +363,38 @@ return {
                 capabilities = capabilities,
             }
 
+            vim.lsp.config.gopls = {
+                cmd = { 'gopls' },
+                filetypes = { 'go', 'gomod', 'gowork', 'gotmpl' },
+                root_markers = { 'go.mod', '.git', 'go.work' },
+                on_attach = on_attach,
+                capabilities = capabilities,
+                settings = {
+                    gopls = {
+                        analyses = {
+                            unusedparams = true,
+                            shadow = true,
+                        },
+                        staticcheck = true,
+                    },
+                },
+            }
+            vim.lsp.config.rust_analyzer = {
+                cmd = { 'rust-analyzer' },
+                filetypes = { 'rust' },
+                root_markers = { '.git', 'Cargo.toml', 'Cargo.lock' },
+                on_attach = on_attach,
+                capabilities = capabilities,
+                settings = {
+                    ['rust-analyzer'] = {
+                        cargo = { allFeatures = true },
+                        checkOnSave = { command = 'clippy' },
+                    },
+                },
+            }
+
             require("mason-lspconfig").setup({
+                -- NOTE: gopls, rust_analyzer installed manually via :MasonInstall when needed
                 ensure_installed = { "jdtls", "clangd", "pyright", "lua_ls", "ts_ls", "html", "cssls" },
                 handlers = {
                     function(server_name)

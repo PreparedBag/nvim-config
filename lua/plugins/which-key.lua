@@ -16,6 +16,9 @@ return {
             -- Buffers
             { "<leader>b",  group = "Buffers",           mode = "n" },
 
+            -- Comment
+            { "<leader>c",  group = "Comment",           mode = { "n", "v" } },
+
             -- Debugger
             { "<leader>d",  group = "Debugger" },
             { "<leader>dt", group = "Target Actions",    mode = "n" },
