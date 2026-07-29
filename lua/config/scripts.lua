@@ -63,7 +63,7 @@ function insert_flowchart_template()
     vim.api.nvim_buf_set_lines(0, row, row, false, vim.split(template, "\n"))
 end
 
-vim.keymap.set('n', '<leader>if', ':lua insert_flowchart_template()<CR>', { noremap = true, silent = true })
+vim.keymap.set('n', '<leader>if', ':lua insert_flowchart_template()<CR>', { noremap = true, silent = true, desc = "Insert Flowchart Template" })
 
 -- Insert Gantt chart template
 function insert_gantt_template()
@@ -92,7 +92,7 @@ gantt
     vim.api.nvim_buf_set_lines(0, row, row, false, vim.split(template, "\n"))
 end
 
-vim.keymap.set('n', '<leader>ig', ':lua insert_gantt_template()<CR>', { noremap = true, silent = true })
+vim.keymap.set('n', '<leader>ig', ':lua insert_gantt_template()<CR>', { noremap = true, silent = true, desc = "Insert Gantt Chart Template" })
 
 -- Open Telescope to select an image file
 function select_image(callback, prompt_title)
@@ -205,7 +205,7 @@ function insert_table()
 end
 
 -- Keymaps
-vim.keymap.set('n', '<leader>it', ':lua insert_table()<CR>', { noremap = true, silent = true, desc = "Insert Table" })
+vim.keymap.set('n', '<leader>it', ':lua insert_table()<CR>', { noremap = true, silent = true, desc = "Insert Table Template" })
 vim.keymap.set('n', '<leader>ii1', ':lua insert_image_link()<CR>',
     { noremap = true, silent = true, desc = "Insert Image" })
 vim.keymap.set('n', '<leader>ii2', ':lua insert_two_image_links()<CR>',

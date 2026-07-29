@@ -25,8 +25,6 @@ vim.keymap.set("n", "n", "nzzzv", opts)
 vim.keymap.set("n", "N", "Nzzzv", opts)
 -- Clear search highlight
 vim.keymap.set('n', '<Esc>', ':nohlsearch<CR><Esc>', opts)
--- Show netrw
-vim.keymap.set('n', '<leader>fe', ':Ex<CR>', opts)
 
 -- Next file in buffers
 -- vim.keymap.set("n", "<Tab>", "<cmd>bnext<cr>", { desc = "Next buffer" })
@@ -37,17 +35,17 @@ vim.keymap.set('n', '<leader>fe', ':Ex<CR>', opts)
 vim.keymap.set("n", "<leader>j", function()
     local ok = pcall(vim.cmd.cnext)
     if not ok then
-        pcall(vim.cmd.cfirst)  -- past the end -> wrap to first
+        pcall(vim.cmd.cfirst) -- past the end -> wrap to first
         -- vim.notify("End of quickfix list", vim.log.levels.INFO)
     end
-end, opts)
+end, { noremap = true, silent = true, desc = "Next Quickfix Item" })
 vim.keymap.set("n", "<leader>k", function()
     local ok = pcall(vim.cmd.cprev)
     if not ok then
-        pcall(vim.cmd.clast)   -- before the start -> wrap to last
+        pcall(vim.cmd.clast) -- before the start -> wrap to last
         -- vim.notify("Start of quickfix list", vim.log.levels.INFO)
     end
-end, opts)
+end, { noremap = true, silent = true, desc = "Previous Quickfix Item" })
 
 -- Keep `*` / `#` centered
 vim.keymap.set("n", "*", "*zzzv", opts)
@@ -65,46 +63,39 @@ vim.keymap.set("n", "#", "#zzzv", opts)
 -- vim.keymap.set('n', '<leader>ml', '`l', opts)
 
 -- Window Management
--- Split window horizontally
-vim.keymap.set('n', '<leader>sh', ':split<CR>', opts)
--- Split window vertically
-vim.keymap.set('n', '<leader>sv', ':vsplit<CR>', opts)
--- Switch to the next window
-vim.keymap.set('n', '<leader>ww', '<C-w><C-w>', opts)
--- Focus left window
-vim.keymap.set('n', '<leader>wh', '<C-w>h', opts)
--- Focus right window
-vim.keymap.set('n', '<leader>wl', '<C-w>l', opts)
--- Focus below window
-vim.keymap.set('n', '<leader>wj', '<C-w>j', opts)
--- Focus above window
-vim.keymap.set('n', '<leader>wk', '<C-w>k', opts)
+vim.keymap.set('n', '<leader>sh', ':split<CR>', { noremap = true, silent = true, desc = "Horizontal Split" })
+vim.keymap.set('n', '<leader>sv', ':vsplit<CR>', { noremap = true, silent = true, desc = "Vertical Split" })
+vim.keymap.set('n', '<leader>ww', '<C-w><C-w>', { noremap = true, silent = true, desc = "Toggle Window Focus" })
+vim.keymap.set('n', '<leader>wh', '<C-w>h', { noremap = true, silent = true, desc = "Focus Left" })
+vim.keymap.set('n', '<leader>wl', '<C-w>l', { noremap = true, silent = true, desc = "Focus Right" })
+vim.keymap.set('n', '<leader>wj', '<C-w>j', { noremap = true, silent = true, desc = "Focus Down" })
+vim.keymap.set('n', '<leader>wk', '<C-w>k', { noremap = true, silent = true, desc = "Focus Up" })
 -- Resize windows
-vim.keymap.set("n", "<C-Up>",    "<cmd>resize +2<cr>", opts)
-vim.keymap.set("n", "<C-Down>",  "<cmd>resize -2<cr>", opts)
-vim.keymap.set("n", "<C-Left>",  "<cmd>vertical resize -2<cr>", opts)
+vim.keymap.set("n", "<C-Up>", "<cmd>resize +2<cr>", opts)
+vim.keymap.set("n", "<C-Down>", "<cmd>resize -2<cr>", opts)
+vim.keymap.set("n", "<C-Left>", "<cmd>vertical resize -2<cr>", opts)
 vim.keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<cr>", opts)
 -- Equalize all window sizes
-vim.keymap.set("n", "<leader>we", "<C-w>=", opts)
+vim.keymap.set("n", "<leader>we", "<C-w>=", { noremap = true, silent = true, desc = "Equalize All" })
 
 -- Clipboard
 -- Paste over selection without overwriting default register
-vim.keymap.set("x", "<leader>p", [["_dP]], opts)
+vim.keymap.set("x", "<leader>p", [["_dP]], { noremap = true, silent = true, desc = "Paste Without Yank" })
 -- Yank to system clipboard
-vim.keymap.set("n", "<leader>y", [["+y]], opts)
-vim.keymap.set("v", "<leader>y", [["+y]], opts)
+vim.keymap.set("n", "<leader>y", [["+y]], { noremap = true, silent = true, desc = "Yank to Clipboard" })
+vim.keymap.set("v", "<leader>y", [["+y]], { noremap = true, silent = true, desc = "Yank to Clipboard" })
 -- Yank whole line to system clipboard
-vim.keymap.set("n", "<leader>Y", [["+Y]], opts)
+vim.keymap.set("n", "<leader>Y", [["+Y]], { noremap = true, silent = true, desc = "Yank Line to Clipboard" })
 
 -- Miscellaneous
 -- Quit
-vim.keymap.set("n", "<leader>q", ":q<CR>", opts)
+vim.keymap.set("n", "<leader>q", ":q<CR>", { noremap = true, silent = true, desc = "Quit Without Saving" })
 -- Save file
 vim.keymap.set("n", "<C-s>", "<cmd>w<cr>", opts)
 -- Close buffer
-vim.keymap.set("n", "<leader>bd", ":bd<CR>", opts)
+vim.keymap.set("n", "<leader>bd", ":bd<CR>", { noremap = true, silent = true, desc = "Delete Current" })
 -- Open buffer list with Telescope
-vim.keymap.set("n", "<leader>bb", ":Telescope buffers<CR><ESC>", opts)
+vim.keymap.set("n", "<leader>bb", ":Telescope buffers<CR><ESC>", { noremap = true, silent = true, desc = "Show All" })
 
 -- Toggle binary mode
 vim.keymap.set("n", "<leader>bt", function()
@@ -169,10 +160,10 @@ vim.keymap.set("n", "<leader>bt", function()
     -- Store the window and buffer IDs for toggling
     vim.g.binary_preview_winid = preview_win
     vim.g.binary_preview_bufnr = preview_buf
-end, { desc = "Toggle Binary Preview" })
+end, { noremap = true, silent = true, desc = "Toggle Binary Preview" })
 
 -- Make file executable
-vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", opts)
+vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { noremap = true, silent = true, desc = "Make File Executable" })
 -- Replace word under cursor globally
 -- vim.keymap.set("n", "<leader>rw", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], opts)
 
@@ -184,32 +175,32 @@ vim.keymap.set("n", "<leader>lr", function()
         initial_mode = "normal",
         prompt_title = "Ripgrep: " .. word,
     })
-end, { noremap = true, silent = true, desc = "Ripgrep word under cursor" })
+end, { silent = true, desc = "Ripgrep Word Under Cursor" })
 
 vim.keymap.set('n', '<leader>ld', function()
-    vim.notify("LSP not attached")
-end, opts)
+    vim.notify("LSP not Attached")
+end, { silent = true, desc = "" })
 vim.keymap.set('n', '<leader>la', function()
-    vim.notify("LSP not attached")
-end, opts)
+    vim.notify("LSP not Attached")
+end, { silent = true, desc = "" })
 vim.keymap.set('n', '<leader>lw', function()
-    vim.notify("LSP not attached")
-end, opts)
+    vim.notify("LSP not Attached")
+end, { silent = true, desc = "" })
 vim.keymap.set('n', '<leader>lf', function()
-    vim.notify("LSP not attached")
-end, opts)
+    vim.notify("LSP not Attached")
+end, { silent = true, desc = "" })
 vim.keymap.set('n', '<leader>lo', function()
-    vim.notify("LSP not attached")
-end, opts)
+    vim.notify("LSP not Attached")
+end, { silent = true, desc = "" })
 vim.keymap.set('n', '<leader>ln', function()
-    vim.notify("LSP not attached")
-end, opts)
+    vim.notify("LSP not Attached")
+end, { silent = true, desc = "" })
 vim.keymap.set('n', '<leader>lj', function()
-    vim.notify("LSP not attached")
-end, opts)
+    vim.notify("LSP not Attached")
+end, { silent = true, desc = "" })
 vim.keymap.set('n', '<leader>lk', function()
-    vim.notify("LSP not attached")
-end, opts)
+    vim.notify("LSP not Attached")
+end, { silent = true, desc = "" })
 
 -- Terminal
 -- Exit terminal mode
@@ -234,17 +225,17 @@ vim.keymap.set('x', 'gc', '<Plug>(comment_toggle_linewise_visual)', opts)
 vim.keymap.set("n", "zt", function()
     vim.opt.foldenable = not vim.opt.foldenable:get()
     vim.notify("Folding " .. (vim.opt.foldenable:get() and "enabled" or "disabled"))
-end, opts)
+end, { noremap = true, silent = true, desc = "Toggle Enable" })
 
 vim.keymap.set("n", "ze", function()
     vim.opt.foldenable = true
     vim.cmd("normal! zR")
-end, opts)
+end, { noremap = true, silent = true, desc = "Expand All" })
 
 vim.keymap.set("n", "zc", function()
     vim.opt.foldenable = true
     vim.cmd("normal! zM")
-end, opts)
+end, { noremap = true, silent = true, desc = "Collapse All" })
 
 vim.keymap.set("n", "zj", function()
     vim.opt.foldenable = true
@@ -253,4 +244,4 @@ vim.keymap.set("n", "zj", function()
     else
         vim.cmd("normal! zR")
     end
-end, opts)
+end, { noremap = true, silent = true, desc = "Toggle All" })

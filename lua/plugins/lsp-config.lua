@@ -74,7 +74,7 @@ return {
                         vim.lsp.buf.signature_help()
                         signature_active = true
                     end
-                end, "Signature help (insert)")
+                end, "Signature help")
 
                 -- Code actions and refactoring
                 map("n", "<leader>la", vim.lsp.buf.code_action, "Code actions")
@@ -126,13 +126,25 @@ return {
                             vim.schedule(ripgrep)
                         else
                             vim.schedule(function()
-                                require("telescope.builtin").lsp_references({
-                                    fname_width = 0,
-                                    trim_text = true,
-                                    show_line = true,
-                                    initial_mode = "normal",
+                                local pickers = require("telescope.pickers")
+                                local finders = require("telescope.finders")
+                                local conf = require("telescope.config").values
+                                local make_entry = require("telescope.make_entry")
+
+                                local locations = vim.lsp.util.locations_to_items(
+                                    items, clients[1].offset_encoding
+                                )
+
+                                pickers.new({}, {
                                     prompt_title = "References: " .. word,
-                                })
+                                    initial_mode = "normal",
+                                    finder = finders.new_table({
+                                        results = locations,
+                                        entry_maker = make_entry.gen_from_quickfix({}),
+                                    }),
+                                    previewer = conf.qflist_previewer({}),
+                                    sorter = conf.generic_sorter({}),
+                                }):find()
                             end)
                         end
                     end)
@@ -183,7 +195,7 @@ return {
             local opts = { noremap = true, silent = true }
 
             -- Toggle blink.cmp autocomplete for the current buffer
-            vim.keymap.set('n', '<leader>ba', function()
+            vim.keymap.set('n', '<leader>lA', function()
                 local ok, _ = pcall(require, 'blink.cmp')
                 if not ok then
                     vim.notify("blink.cmp not installed", vim.log.levels.WARN)
@@ -203,7 +215,7 @@ return {
                 end
 
                 vim.cmd('doautocmd TextChanged') -- re-evaluate enabled state
-            end, vim.tbl_extend('force', opts, { desc = 'Toggle blink autocomplete' }))
+            end, { noremap = true, silent = true, desc = 'Toggle blink autocomplete' })
 
             -- Detach LSP from current buffer only
             vim.keymap.set('n', '<leader>lc', function()
@@ -221,7 +233,7 @@ return {
 
                 vim.api.nvim_input('<Esc>')
                 vim.notify("LSP detached from buffer")
-            end, vim.tbl_extend('force', opts, { desc = 'Detach LSP from buffer' }))
+            end, { noremap = true, silent = true, desc = 'Detach LSP from buffer' })
 
             -- Attach a suitable LSP to the current buffer
             vim.keymap.set('n', '<leader>ls', function()
@@ -254,7 +266,7 @@ return {
                 else
                     vim.notify("No suitable LSP clients found for " .. filetype, vim.log.levels.WARN)
                 end
-            end, vim.tbl_extend('force', opts, { desc = 'Attach LSP to buffer' }))
+            end, { noremap = true, silent = true, desc = 'Attach LSP to buffer' })
 
             -- ============================================================================
             -- LSP SERVER SETUP

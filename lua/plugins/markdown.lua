@@ -61,8 +61,9 @@ return {
             vim.g.mkdp_page_title = '${name}'
 
             local opts = { noremap = true, silent = true }
-            vim.keymap.set("n", "<leader>mp", ":MarkdownPreviewToggle<CR>", opts)
+            vim.keymap.set("n", "<leader>mp", ":MarkdownPreviewToggle<CR>", { noremap = true, silent = true, desc = "Toggle Markdown Preview" })
         end
     },
+    -- NOTE: uncomment if needed
     -- { 'dhruvasagar/vim-table-mode' },
 }

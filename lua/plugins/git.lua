@@ -640,14 +640,14 @@ return {
     {
         'nvim-telescope/telescope.nvim',
         keys = {
-            { "<leader>gs", git_guard(status_picker),                                               desc = "Git status" },
-            { "<leader>gl", git_guard(log_picker),                                                  desc = "Git log" },
-            { "<leader>gx", git_guard(discard_file),                                                desc = "Discard changes to file" },
+            { "<leader>gs", git_guard(status_picker),                                               desc = "Git Status" },
+            { "<leader>gl", git_guard(log_picker),                                                  desc = "Git Log" },
+            { "<leader>gx", git_guard(discard_file),                                                desc = "Discard Changes to File" },
             { "<leader>gp", git_guard(function() run_auth({ "push" }) end),                         desc = "Push" },
             { "<leader>gP", git_guard(function() run_auth({ "pull" }) end),                         desc = "Pull" },
-            { "<leader>gu", git_guard(function() run_auth({ "push", "--follow-tags" }) end),        desc = "Push + tags" },
-            { "<leader>gU", git_guard(function() run_auth({ "push", "-u", "origin", "HEAD" }) end), desc = "Push + set upstream" },
-            { "<leader>gf", git_guard(function() run_auth({ "fetch", "--prune", "--tags" }) end),   desc = "Fetch + prune" },
+            { "<leader>gu", git_guard(function() run_auth({ "push", "--follow-tags" }) end),        desc = "Push + Tags" },
+            { "<leader>gU", git_guard(function() run_auth({ "push", "-u", "origin", "HEAD" }) end), desc = "Push + Set Upstream" },
+            { "<leader>gf", git_guard(function() run_auth({ "fetch", "--prune", "--tags" }) end),   desc = "Fetch + Prune" },
             {
                 "<leader>gc",
                 git_guard(function()
@@ -655,7 +655,7 @@ return {
                         run({ "commit", "-m", msg })
                     end)
                 end),
-                desc = "Commit staged",
+                desc = "Commit Staged",
             },
             {
                 "<leader>gA",
@@ -665,7 +665,7 @@ return {
                         run({ "commit", "-m", msg })
                     end)
                 end),
-                desc = "Add all + commit",
+                desc = "Add All + Commit",
             },
             {
                 "<leader>gt",
@@ -674,7 +674,7 @@ return {
                         run({ "tag", "-a", tag, "-m", tag })
                     end)
                 end),
-                desc = "New tag",
+                desc = "New Tag",
             },
 
             -- Stashes
@@ -686,12 +686,12 @@ return {
                         run({ "stash", "push", "-m", msg })
                     end)
                 end),
-                desc = "Stash changes",
+                desc = "Stash Changes",
             },
 
             -- Branches
             { "<leader>gbs", git_guard(branch_picker), desc = "Select" },
-            { "<leader>gbr", git_guard(checkout_head), desc = "Checkout tip" },
+            { "<leader>gbr", git_guard(checkout_head), desc = "Checkout Tip" },
             {
                 "<leader>gbn",
                 git_guard(function()

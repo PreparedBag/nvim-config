@@ -30,6 +30,8 @@ require("lazy").setup({
         { import = "plugins.lualine" },
         { import = "plugins.lsp-config" },
         { import = "plugins.markdown" },
+        -- NOTE: uncomment for nerdtree support
+        -- { import = "plugins.nerdtree" },
         { import = "plugins.nibbler" },
         { import = "plugins.noice" },
         { import = "plugins.oil" },

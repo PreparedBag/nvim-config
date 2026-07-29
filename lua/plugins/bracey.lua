@@ -43,6 +43,6 @@ return {
                 vim.cmd('Bracey')
                 vim.fn.jobstart({ 'xdg-open', 'http://localhost:3000' }, { detach = true })
             end
-        end, { noremap = true, silent = true })
+        end, { noremap = true, silent = true, desc = "Start HTML Server" })
     end,
 }

@@ -84,7 +84,6 @@ return {
             telescope.load_extension('fzf')
 
             local builtin = require('telescope.builtin')
-            local opts = { noremap = true, silent = true }
 
             vim.keymap.set("n", "<leader>ff", function()
                 builtin.find_files({
@@ -95,7 +94,7 @@ return {
                         '!.git/*'
                     }
                 })
-            end, opts)
+            end, { noremap = true, silent = true, desc = "Find Files (Fuzzy Finder)" })
 
             vim.keymap.set("n", "<leader>fa", function()
                 builtin.find_files({
@@ -109,7 +108,7 @@ return {
                         '!.git/*'
                     }
                 })
-            end, opts)
+            end, { noremap = true, silent = true, desc = "Find All Files (Include All)" })
 
             vim.keymap.set("n", "<leader>fs", function()
                 builtin.live_grep({
@@ -131,7 +130,7 @@ return {
                         '!*.min.js'
                     }
                 })
-            end, opts)
+            end, { noremap = true, silent = true, desc = "Find String (Include All)"})
 
             vim.keymap.set("n", "<leader>fp", function()
                 builtin.live_grep({
@@ -151,9 +150,9 @@ return {
                         '!*.min.js'
                     }
                 })
-            end, opts)
+            end, { noremap = true, silent = true, desc = "Find Phrase (Live Grep)"})
 
-            vim.keymap.set("n", "<leader>fH", builtin.help_tags, opts)
+            vim.keymap.set("n", "<leader>fH", builtin.help_tags, { noremap = true, silent = true, desc = "Help Tags"})
 
             -- Grep the word under the cursor
             vim.keymap.set("n", "<leader>fw", function()
@@ -163,7 +162,7 @@ return {
                     initial_mode = "normal",
                     prompt_title = "Ripgrep: " .. word,
                 })
-            end, opts)
+            end, { noremap = true, silent = true, desc = "Find Word (Ripgrep)"})
 
             -- Grep the visual selection
             vim.keymap.set("v", "<leader>fw", function()
@@ -181,13 +180,13 @@ return {
                     initial_mode = "normal",
                     prompt_title = "Ripgrep: " .. text,
                 })
-            end, opts)
+            end, { noremap = true, silent = true, desc = "Find Word (Ripgrep)"})
 
             -- Quickfix list viewer: list on the left, preview on the right.
             -- Enter jumps to the item and closes; Esc dismisses.
             vim.keymap.set("n", "<leader>fq", function()
                 builtin.quickfix({ initial_mode = "normal" })
-            end, opts)
+            end, { noremap = true, silent = true, desc = "View Quickfix List"})
             vim.keymap.set("n", "<leader>fh", function()
                 local actions = require("telescope.actions")
                 local action_state = require("telescope.actions.state")
@@ -220,15 +219,14 @@ return {
                         return true
                     end,
                 })
-            end, opts)
+            end, { noremap = true, silent = true, desc = "View Quickfix History"})
 
             vim.keymap.set('n', '<leader>fc', function()
                 local config_path = vim.fn.expand('~/.config/nvim')
                 vim.cmd.ex(config_path)
-            end, { desc = 'Open nvim config folder' })
-            vim.keymap.set("n", "<leader>fe", ":Oil<CR>", opts)
-            vim.keymap.set("n", "<leader>fd", function() set_telescope_cwd_to_updated() end, opts)
-            vim.keymap.set("n", "<leader>fo", function() set_telescope_cwd_to_original() end, opts)
+            end, { noremap = true, silent = true, desc = 'Open Nvim Config Folder' })
+            vim.keymap.set("n", "<leader>fd", function() set_telescope_cwd_to_updated() end, { noremap = true, silent = true, desc = "Set Telescope CWD Here"})
+            vim.keymap.set("n", "<leader>fo", function() set_telescope_cwd_to_original() end, { noremap = true, silent = true, desc = "Set Telescope CWD to Original"})
         end
     },
     {

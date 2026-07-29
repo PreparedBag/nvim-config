@@ -13,7 +13,7 @@ return {
                 require("harpoon"):list():clear()
                 vim.notify("Harpoon list cleared", vim.log.levels.INFO)
             end,
-            desc = "Clear Harpoon list",
+            desc = "Clear Harpoon List",
         },
         {
             "<leader>hA",
@@ -43,7 +43,7 @@ return {
 
                 vim.notify(("Added %d buffer(s) to Harpoon"):format(added), vim.log.levels.INFO)
             end,
-            desc = "Add all file buffers to Harpoon",
+            desc = "Add Buffers to Harpoon",
         },
         {
             "<leader>he",
@@ -51,7 +51,7 @@ return {
                 local harpoon = require("harpoon")
                 harpoon.ui:toggle_quick_menu(harpoon:list(), { title = "", title_pos = "center" })
             end,
-            desc = "Harpoon Edit (native)",
+            desc = "Harpoon Edit (Native)",
         },
         {
             "<leader>hm",

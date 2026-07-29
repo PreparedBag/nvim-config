@@ -2,10 +2,10 @@ return {
     {
         'numToStr/Comment.nvim',
         keys = {
-            { "gcc", mode = "n", desc = "Comment line" },
-            { "gbc", mode = "n", desc = "Block comment line" },
-            { "gc",  mode = "v", desc = "Comment selection" },
-            { "gb",  mode = "v", desc = "Block comment selection" },
+            { "gcc", mode = "n", desc = "Comment Line" },
+            { "gbc", mode = "n", desc = "Block Comment Line" },
+            { "gc",  mode = "v", desc = "Comment Selection" },
+            { "gb",  mode = "v", desc = "Block Comment Selection" },
         },
         config = function()
             require('Comment').setup()
@@ -24,11 +24,11 @@ return {
                 "<leader>ft",
                 function()
                     require("telescope").extensions["todo-comments"].todo({
-                        keywords = "TODO,FIXME",
+                        keywords = "TODO,FIXME,HACK",
                         initial_mode = "normal",
                     })
                 end,
-                desc = "Find TODO",
+                desc = "Pending Tasks",
             },
             {
                 "<leader>fT",
@@ -37,7 +37,7 @@ return {
                         initial_mode = "normal",
                     })
                 end,
-                desc = "Find all TODO/FIXME/etc",
+                desc = "All Annotations",
             },
         },
         config = function()

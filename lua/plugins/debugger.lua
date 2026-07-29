@@ -8,11 +8,30 @@ return {
     },
 
     keys = {
-        { '<Leader>db',  desc = 'Toggle Breakpoint' },
+        -- { '<Leader>db',  desc = 'Toggle Breakpoint' },
+        -- { '<Leader>dB',  desc = 'Conditional Breakpoint' },
         { '<Leader>dc',  desc = 'Continue/Start' },
-        { '<Leader>dte', desc = 'Set ELF' },
+        -- { '<Leader>dC',  desc = 'Run to Cursor' },
+        -- { '<Leader>dr',  desc = 'Restart' },
+        -- { '<Leader>dp',  desc = 'Pause' },
+        -- { '<Leader>di',  desc = 'Step Into' },
+        -- { '<Leader>do',  desc = 'Step Over' },
+        -- { '<Leader>dO',  desc = 'Step Out' },
+        -- { '<Leader>dx',  desc = 'Clear Breakpoints' },
+        -- { '<Leader>du',  desc = 'Toggle UI' },
+        -- { '<Leader>de',  desc = 'Eval', mode = { 'n', 'v' } },
+        -- { '<Leader>dw',  desc = 'Add to Watches' },
+        -- { '<Leader>dW',  desc = 'Print Variable' },
+        -- { '<Leader>dk',  desc = 'Stack Up' },
+        -- { '<Leader>dj',  desc = 'Stack Down' },
+        -- { '<Leader>dv',  desc = 'Verbose Logging' },
+        -- { '<Leader>dg',  desc = 'Toggle Watches' },
+        --
+        -- { '<Leader>dte', desc = 'Set ELF' },
+        { '<Leader>dtf', desc = 'Flash ELF' },
         { '<Leader>dts', desc = 'Start Server' },
-        { '<Leader>du',  desc = 'Toggle UI' },
+        -- { '<Leader>dtc', desc = 'Stop Server' },
+        -- { '<Leader>dtt', desc = 'Terminate' },
     },
 
     config = function()
@@ -73,8 +92,7 @@ return {
                 },
                 {
                     elements = {
-                        { id = 'repl',     size = 0.5 },
-                        { id = 'terminal', size = 0.5 },
+                        { id = 'repl', size = 1.0 },
                     },
                     size = 15,
                     position = 'bottom',
@@ -636,6 +654,20 @@ exit
             end, 200)
         end, { noremap = true, silent = true, desc = 'Continue/Start (deferred)' })
 
+        vim.keymap.set('n', '<Leader>dq', function()
+            pcall(function() dap.terminate() end)
+            pcall(function() dap.close() end)
+            pcall(function() dapui.close() end)
+            if jlink_job_id and jlink_job_id > 0 then
+                pcall(vim.fn.jobstop, jlink_job_id)
+                jlink_job_id = nil
+            end
+            dap.repl.close()
+            vim.cmd('sign unplace *')
+            set_dap_state('disconnected')
+            vim.notify('DAP session torn down', vim.log.levels.INFO)
+        end, { noremap = true, silent = true, desc = 'Quit/Teardown DAP' })
+
         vim.keymap.set('n', '<Leader>dtt', dap_terminate, { noremap = true, silent = true, desc = 'Terminate' })
         vim.keymap.set('n', '<Leader>dr', dap_mark_running_and(dap.restart),
             { noremap = true, silent = true, desc = 'Restart' })
@@ -797,29 +829,19 @@ exit
             vim.notify('DAP window not found: ' .. filetype_pattern, vim.log.levels.WARN)
         end
 
-        vim.keymap.set('n', '<Leader>dgs', function()
-            jump_to_dap_window('dapui_scopes')
-        end, { noremap = true, silent = true, desc = 'Go to Scopes' })
+        vim.keymap.set('n', '<Leader>dg', function()
+            -- Already in a dapui watches window? go back
+            if vim.bo.filetype == 'dapui_watches' then
+                if vim.g.dap_return_win and vim.api.nvim_win_is_valid(vim.g.dap_return_win) then
+                    vim.api.nvim_set_current_win(vim.g.dap_return_win)
+                    vim.g.dap_return_win = nil
+                end
+                return
+            end
 
-        vim.keymap.set('n', '<Leader>dgw', function()
+            vim.g.dap_return_win = vim.api.nvim_get_current_win()
             jump_to_dap_window('dapui_watches')
-        end, { noremap = true, silent = true, desc = 'Go to Watches' })
-
-        vim.keymap.set('n', '<Leader>dgt', function()
-            jump_to_dap_window('dapui_stacks')
-        end, { noremap = true, silent = true, desc = 'Go to Stacks' })
-
-        vim.keymap.set('n', '<Leader>dgb', function()
-            jump_to_dap_window('dapui_breakpoints')
-        end, { noremap = true, silent = true, desc = 'Go to Breakpoints' })
-
-        vim.keymap.set('n', '<Leader>dgr', function()
-            jump_to_dap_window('dapui-repl')
-        end, { noremap = true, silent = true, desc = 'Go to REPL' })
-
-        vim.keymap.set('n', '<Leader>dgc', function()
-            jump_to_dap_window('dapui_console')
-        end, { noremap = true, silent = true, desc = 'Go to Console' })
+        end, { noremap = true, silent = true, desc = 'Toggle Watches' })
 
         vim.notify('DAP configured successfully!', vim.log.levels.INFO)
     end,

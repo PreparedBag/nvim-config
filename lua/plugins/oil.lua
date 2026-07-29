@@ -40,7 +40,7 @@ return {
         })
 
         -- Open Oil with <leader>fe
-        vim.keymap.set("n", "<leader>fe", ":Oil<CR>", { noremap = true, silent = true, desc = "File Explorer" })
+        vim.keymap.set("n", "<leader>fe", ":Oil<CR>", { noremap = true, silent = true, desc = "File Explorer (Oil)" })
 
         -- In Oil buffers, make <leader>r refresh and add toggle hidden shortcut
         vim.api.nvim_create_autocmd("FileType", {
