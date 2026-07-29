@@ -1,5 +1,6 @@
 return {
     'turbio/bracey.vim',
+    enabled = _G.DEV_ENABLED,
     build = 'npm install --prefix server',
     ft = { 'html', 'css', 'javascript' },
     config = function()

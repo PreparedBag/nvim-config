@@ -12,16 +12,12 @@ return {
             },
         })
 
-        wk.add({
+        local mappings = {
             -- Buffers
             { "<leader>b",  group = "Buffers",           mode = "n" },
 
             -- Comment
             { "<leader>c",  group = "Comment",           mode = { "n", "v" } },
-
-            -- Debugger
-            { "<leader>d",  group = "Debugger" },
-            { "<leader>dt", group = "Target Actions",    mode = "n" },
 
             -- Find (Telescope)
             { "<leader>f",  group = "Find",              mode = { "n", "v" } },
@@ -50,12 +46,6 @@ return {
             { "<leader>i",  group = "Insert",            mode = "n" },
             { "<leader>ii", group = "Image",             mode = "n" },
 
-            -- LSP
-            { "<leader>l",  group = "LSP",               mode = "n" },
-
-            -- Markdown & HTML
-            { "<leader>m",  group = "Markdown & HTML",   mode = "n" },
-
             -- Oil
             { "<leader>o",  group = "Oil",               mode = "n" },
 
@@ -71,7 +61,24 @@ return {
             -- NERDTree Commands
             -- { "<leader>N",   desc = "Toggle NERDTree Focus",         mode = "n" },
             -- { "<leader>n",   desc = "Toggle NERDTree",               mode = "n" },
+        }
 
-        })
+        -- Dev-only groups (LSP, debugger, markdown/html) — only shown when the
+        -- heavy plugins are actually loaded, so no dead keymaps appear.
+        if _G.DEV_ENABLED then
+            vim.list_extend(mappings, {
+                -- Debugger
+                { "<leader>d",  group = "Debugger" },
+                { "<leader>dt", group = "Target Actions",  mode = "n" },
+
+                -- LSP
+                { "<leader>l",  group = "LSP",             mode = "n" },
+
+                -- Markdown & HTML
+                { "<leader>m",  group = "Markdown & HTML", mode = "n" },
+            })
+        end
+
+        wk.add(mappings)
     end
 }

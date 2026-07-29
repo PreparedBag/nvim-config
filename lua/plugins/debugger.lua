@@ -1,5 +1,6 @@
 return {
     'mfussenegger/nvim-dap',
+    enabled = _G.DEV_ENABLED,
     dependencies = {
         'rcarriga/nvim-dap-ui',
         'nvim-neotest/nvim-nio',
@@ -8,30 +9,32 @@ return {
     },
 
     keys = {
-        -- { '<Leader>db',  desc = 'Toggle Breakpoint' },
-        -- { '<Leader>dB',  desc = 'Conditional Breakpoint' },
         { '<Leader>dc',  desc = 'Continue/Start' },
-        -- { '<Leader>dC',  desc = 'Run to Cursor' },
-        -- { '<Leader>dr',  desc = 'Restart' },
-        -- { '<Leader>dp',  desc = 'Pause' },
-        -- { '<Leader>di',  desc = 'Step Into' },
-        -- { '<Leader>do',  desc = 'Step Over' },
-        -- { '<Leader>dO',  desc = 'Step Out' },
-        -- { '<Leader>dx',  desc = 'Clear Breakpoints' },
-        -- { '<Leader>du',  desc = 'Toggle UI' },
-        -- { '<Leader>de',  desc = 'Eval', mode = { 'n', 'v' } },
-        -- { '<Leader>dw',  desc = 'Add to Watches' },
-        -- { '<Leader>dW',  desc = 'Print Variable' },
-        -- { '<Leader>dk',  desc = 'Stack Up' },
-        -- { '<Leader>dj',  desc = 'Stack Down' },
-        -- { '<Leader>dv',  desc = 'Verbose Logging' },
-        -- { '<Leader>dg',  desc = 'Toggle Watches' },
-        --
-        -- { '<Leader>dte', desc = 'Set ELF' },
         { '<Leader>dtf', desc = 'Flash ELF' },
         { '<Leader>dts', desc = 'Start Server' },
-        -- { '<Leader>dtc', desc = 'Stop Server' },
-        -- { '<Leader>dtt', desc = 'Terminate' },
+
+        -- NOTE: comment/uncomment for UI preference
+        { '<Leader>db',  desc = 'Toggle Breakpoint' },
+        { '<Leader>dB',  desc = 'Conditional Breakpoint' },
+        { '<Leader>dC',  desc = 'Run to Cursor' },
+        { '<Leader>dr',  desc = 'Restart' },
+        { '<Leader>dp',  desc = 'Pause' },
+        { '<Leader>di',  desc = 'Step Into' },
+        { '<Leader>do',  desc = 'Step Over' },
+        { '<Leader>dO',  desc = 'Step Out' },
+        { '<Leader>dx',  desc = 'Clear Breakpoints' },
+        { '<Leader>du',  desc = 'Toggle UI' },
+        { '<Leader>de',  desc = 'Eval', mode = { 'n', 'v' } },
+        { '<Leader>dw',  desc = 'Add to Watches' },
+        { '<Leader>dW',  desc = 'Print Variable' },
+        { '<Leader>dk',  desc = 'Stack Up' },
+        { '<Leader>dj',  desc = 'Stack Down' },
+        { '<Leader>dv',  desc = 'Verbose Logging' },
+        { '<Leader>dg',  desc = 'Toggle Watches' },
+
+        { '<Leader>dte', desc = 'Set ELF' },
+        { '<Leader>dtc', desc = 'Stop Server' },
+        { '<Leader>dtt', desc = 'Terminate' },
     },
 
     config = function()
@@ -645,6 +648,7 @@ exit
         vim.keymap.set('n', '<Leader>dtf', flash_elf, { noremap = true, silent = true, desc = 'Flash ELF' })
         vim.keymap.set('n', '<Leader>dts', start_jlink_gdb_server,
             { noremap = true, silent = true, desc = 'Start Server' })
+
         vim.keymap.set('n', '<Leader>dtc', stop_jlink_gdb_server, { noremap = true, silent = true, desc = 'Stop Server' })
 
         -- Session control

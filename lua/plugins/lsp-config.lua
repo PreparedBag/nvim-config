@@ -2,6 +2,7 @@ return {
     {
         "williamboman/mason.nvim",
         cmd = "Mason",
+        enabled = _G.DEV_ENABLED,
         build = ":MasonUpdate",
         config = function()
             require("mason").setup()
@@ -9,6 +10,7 @@ return {
     },
     {
         "williamboman/mason-lspconfig.nvim",
+        enabled = _G.DEV_ENABLED,
         event = { "BufReadPost", "BufNewFile" },
         dependencies = { "neovim/nvim-lspconfig" },
         config = function()
@@ -55,10 +57,10 @@ return {
                 end
 
                 -- Navigation
-                map("n", "gd", vim.lsp.buf.definition, "Go to definition")
-                map("n", "gD", vim.lsp.buf.declaration, "Go to declaration")
-                map("n", "gi", vim.lsp.buf.implementation, "Go to implementation")
-                map("n", "gt", vim.lsp.buf.type_definition, "Go to type definition")
+                map("n", "gd", vim.lsp.buf.definition, "Go to Definition")
+                map("n", "gD", vim.lsp.buf.declaration, "Go to Declaration")
+                map("n", "gi", vim.lsp.buf.implementation, "Go to Implementation")
+                map("n", "gt", vim.lsp.buf.type_definition, "Go to Type Definition")
 
                 map("n", "<leader>lq", function() vim.diagnostic.setqflist({ open = false }) end,
                     "Diagnostics to quickfix");
@@ -68,7 +70,7 @@ return {
 
                 -- Information
                 map("n", "K", vim.lsp.buf.hover, "Hover")
-                map("n", "<C-h>", vim.lsp.buf.signature_help, "Signature help")
+                map("n", "<C-h>", vim.lsp.buf.signature_help, "Signature Help")
                 map("i", "<C-h>", function()
                     if not signature_active then
                         vim.lsp.buf.signature_help()
@@ -77,16 +79,16 @@ return {
                 end, "Signature help")
 
                 -- Code actions and refactoring
-                map("n", "<leader>la", vim.lsp.buf.code_action, "Code actions")
+                map("n", "<leader>la", vim.lsp.buf.code_action, "Code Actions")
                 map("n", "<leader>ln", vim.lsp.buf.rename, "Refactor Symbol")
                 map("n", "<leader>lf", function()
                     vim.lsp.buf.format({ async = true })
                 end, "Format")
 
                 -- Diagnostics
-                map("n", "<leader>ld", vim.diagnostic.open_float, "Line diagnostics")
-                map("n", "<leader>lk", vim.diagnostic.goto_prev, "Prev diagnostic")
-                map("n", "<leader>lj", vim.diagnostic.goto_next, "Next diagnostic")
+                map("n", "<leader>ld", vim.diagnostic.open_float, "Line Diagnostics")
+                map("n", "<leader>lk", vim.diagnostic.goto_prev, "Prev Diagnostic")
+                map("n", "<leader>lj", vim.diagnostic.goto_next, "Next Diagnostic")
 
                 -- References via LSP; falls back to ripgrep only if the LSP returns nothing.
                 map("n", "<leader>lr", function()
@@ -148,17 +150,17 @@ return {
                             end)
                         end
                     end)
-                end, "Show references")
+                end, "Show References")
 
                 -- Workspace symbols
                 map("n", "<leader>lw", function()
                     require('telescope.builtin').lsp_dynamic_workspace_symbols()
-                end, "Workspace symbols")
+                end, "Workspace Symbols")
 
                 -- Document symbols
                 map("n", "<leader>lo", function()
                     require('telescope.builtin').lsp_document_symbols()
-                end, "Document symbols")
+                end, "Document Symbols")
 
                 -- Enable formatting on save if supported
                 -- if client.server_capabilities.documentFormattingProvider then
@@ -213,7 +215,7 @@ return {
                 end
 
                 vim.cmd('doautocmd TextChanged') -- re-evaluate enabled state
-            end, { noremap = true, silent = true, desc = 'Toggle blink autocomplete' })
+            end, { noremap = true, silent = true, desc = 'Toggle Blink Autocomplete' })
 
             -- Detach LSP from current buffer only
             vim.keymap.set('n', '<leader>lc', function()
@@ -231,7 +233,7 @@ return {
 
                 vim.api.nvim_input('<Esc>')
                 vim.notify("LSP detached from buffer")
-            end, { noremap = true, silent = true, desc = 'Detach LSP from buffer' })
+            end, { noremap = true, silent = true, desc = 'Detach LSP from Buffer' })
 
             -- Attach a suitable LSP to the current buffer
             vim.keymap.set('n', '<leader>ls', function()
@@ -264,7 +266,7 @@ return {
                 else
                     vim.notify("No suitable LSP clients found for " .. filetype, vim.log.levels.WARN)
                 end
-            end, { noremap = true, silent = true, desc = 'Attach LSP to buffer' })
+            end, { noremap = true, silent = true, desc = 'Attach LSP to Buffer' })
 
             -- ============================================================================
             -- LSP SERVER SETUP

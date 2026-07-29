@@ -1,3 +1,16 @@
+-- Dev mode marker: default minimal (no marker), marker file with "true" enables dev
+local marker = vim.fn.stdpath("data") .. "/nvim-dev"
+
+_G.DEV_ENABLED = false
+if vim.fn.filereadable(marker) == 1 then
+    local lines = vim.fn.readfile(marker)
+    local content = vim.trim(lines[1] or "")
+    _G.DEV_ENABLED = (content == "true")
+end
+
+-- Uncomment to debug what the marker resolves to:
+vim.notify("DEV_ENABLED = " .. tostring(_G.DEV_ENABLED) .. " (marker: " .. marker .. ")")
+
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
     local lazyrepo = "https://github.com/folke/lazy.nvim.git"

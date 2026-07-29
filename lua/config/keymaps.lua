@@ -1,6 +1,20 @@
 -- Store options for reuse
 local opts = { noremap = true, silent = true }
 
+-- Store configuration (minimal vs full dev)
+vim.keymap.set("n", "<leader>M", function()
+    local marker = vim.fn.stdpath("data") .. "/nvim-dev"
+    local now_dev = vim.fn.filereadable(marker) == 1
+        and vim.trim(vim.fn.readfile(marker)[1] or "") == "true"
+    local next_dev = not now_dev
+    vim.fn.writefile({ tostring(next_dev) }, marker)
+    vim.notify(
+        ("Dev mode %s — restart nvim to apply")
+            :format(next_dev and "ON" or "OFF"),
+        vim.log.levels.INFO
+    )
+end, { desc = "Toggle Dev Mode (Restart to Apply)" })
+
 -- Moving Lines
 -- Move selected text down
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", opts)
@@ -168,39 +182,35 @@ vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { noremap = true, silen
 -- vim.keymap.set("n", "<leader>rw", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], opts)
 
 -- References fallback: plain ripgrep. Overridden per-buffer by LSP when attached.
-vim.keymap.set("n", "<leader>lr", function()
-    local word = vim.fn.expand("<cword>")
-    require("telescope.builtin").grep_string({
-        search = word,
-        initial_mode = "normal",
-        prompt_title = "Ripgrep: " .. word,
-    })
-end, { silent = true, desc = "Ripgrep Word Under Cursor" })
+-- vim.keymap.set("n", "<leader>lr", function()
+--     local word = vim.fn.expand("<cword>")
+--     require("telescope.builtin").grep_string({
+--         search = word,
+--         initial_mode = "normal",
+--         prompt_title = "Ripgrep: " .. word,
+--     })
+-- end, { silent = true, desc = "Ripgrep Word Under Cursor" })
 
-vim.keymap.set('n', '<leader>ld', function()
-    vim.notify("LSP not Attached")
-end, { silent = true, desc = "" })
-vim.keymap.set('n', '<leader>la', function()
-    vim.notify("LSP not Attached")
-end, { silent = true, desc = "" })
-vim.keymap.set('n', '<leader>lw', function()
-    vim.notify("LSP not Attached")
-end, { silent = true, desc = "" })
-vim.keymap.set('n', '<leader>lf', function()
-    vim.notify("LSP not Attached")
-end, { silent = true, desc = "" })
-vim.keymap.set('n', '<leader>lo', function()
-    vim.notify("LSP not Attached")
-end, { silent = true, desc = "" })
-vim.keymap.set('n', '<leader>ln', function()
-    vim.notify("LSP not Attached")
-end, { silent = true, desc = "" })
-vim.keymap.set('n', '<leader>lj', function()
-    vim.notify("LSP not Attached")
-end, { silent = true, desc = "" })
-vim.keymap.set('n', '<leader>lk', function()
-    vim.notify("LSP not Attached")
-end, { silent = true, desc = "" })
+if _G.DEV_ENABLED then
+    vim.keymap.set('n', '<leader>ld', function() vim.notify("LSP not Attached") end,
+        { silent = true, desc = "Line Diagnostics" })
+    vim.keymap.set('n', '<leader>lr', function() vim.notify("LSP not Attached") end,
+        { silent = true, desc = "References" })
+    vim.keymap.set('n', '<leader>la', function() vim.notify("LSP not Attached") end,
+        { silent = true, desc = "Code Actions" })
+    vim.keymap.set('n', '<leader>lw', function() vim.notify("LSP not Attached") end,
+        { silent = true, desc = "Workspace Symbols" })
+    vim.keymap.set('n', '<leader>lf', function() vim.notify("LSP not Attached") end,
+        { silent = true, desc = "Format Document" })
+    vim.keymap.set('n', '<leader>lo', function() vim.notify("LSP not Attached") end,
+        { silent = true, desc = "Document Symbols" })
+    vim.keymap.set('n', '<leader>ln', function() vim.notify("LSP not Attached") end,
+        { silent = true, desc = "Refactor Symbol" })
+    vim.keymap.set('n', '<leader>lj', function() vim.notify("LSP not Attached") end,
+        { silent = true, desc = "Next Diagnostic" })
+    vim.keymap.set('n', '<leader>lk', function() vim.notify("LSP not Attached") end,
+        { silent = true, desc = "Prev Diagnostic" })
+end
 
 -- Terminal
 -- Exit terminal mode

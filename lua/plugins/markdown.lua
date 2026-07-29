@@ -1,6 +1,7 @@
 return {
     {
         "iamcco/markdown-preview.nvim",
+        enabled = _G.DEV_ENABLED,
         cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
         build = "cd app && yarn install",
         ft = { "markdown" },
@@ -60,7 +61,6 @@ return {
             vim.g.mkdp_theme = 'light'
             vim.g.mkdp_page_title = '${name}'
 
-            local opts = { noremap = true, silent = true }
             vim.keymap.set("n", "<leader>mp", ":MarkdownPreviewToggle<CR>", { noremap = true, silent = true, desc = "Toggle Markdown Preview" })
         end
     },
