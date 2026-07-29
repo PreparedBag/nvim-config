@@ -61,7 +61,13 @@ return {
             vim.g.mkdp_theme = 'light'
             vim.g.mkdp_page_title = '${name}'
 
-            vim.keymap.set("n", "<leader>mp", ":MarkdownPreviewToggle<CR>", { noremap = true, silent = true, desc = "Toggle Markdown Preview" })
+            vim.api.nvim_create_autocmd("FileType", {
+                pattern = { "markdown" },
+                callback = function(ev)
+                    vim.keymap.set("n", "<leader>mp", ":MarkdownPreviewToggle<CR>",
+                        { buffer = ev.buf, noremap = true, silent = true, desc = "Toggle Markdown Preview" })
+                end,
+            })
         end
     },
     -- NOTE: uncomment if needed
