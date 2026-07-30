@@ -389,10 +389,20 @@ local diff_previewer = previewers.new_buffer_previewer({
 -- ---------------------------------------------------------------
 -- status picker
 --
--- t stages / unstages the file under the cursor. after the list
--- refreshes, the cursor is re-placed on the same file by path,
--- since staging can change its sort position. root is pinned when
--- the picker opens and reused by every refresh and staging call.
+-- Unlike the branch and stash pickers (verb chosen by keymap, one
+-- action on <CR>), staging is iterative: you stay in the list,
+-- toggle several files against the live diff preview, then leave
+-- to commit. So the actions live inside the picker rather than as
+-- separate verb keymaps.
+--
+-- In-picker keys:
+--   t        stage / unstage the file under the cursor
+--   <C-a>    stage everything (git add -A)
+--   <C-u>    unstage everything (git reset)
+--
+-- The list re-runs status after each action (reset_prompt = false
+-- keeps the filter). root is pinned when the picker opens and
+-- reused by every refresh and staging call.
 -- ---------------------------------------------------------------
 
 local function status_picker(root)
@@ -460,114 +470,147 @@ end
 
 
 -- ---------------------------------------------------------------
--- stash picker
+-- stash pickers
 --
--- stash refs are positional, so the picker closes after every
--- action to force a fresh list on the next invocation. root is
--- captured at open and reused by the deferred actions.
+-- the verb is chosen by keymap; the picker is then scoped to that
+-- one action, which fires on <CR>. stash refs are positional, so
+-- opening a fresh picker per invocation keeps the list current.
+-- root is captured at open and reused by the deferred action.
+--
+-- stash_action_picker wires <CR> to `action`, overriding the
+-- builtin apply-on-enter. stash_apply keeps that default.
 -- ---------------------------------------------------------------
 
-local function stash_picker(root)
-    local builtin = require("telescope.builtin")
+local function stash_action_picker(root, action)
     local actions = require("telescope.actions")
     local state = require("telescope.actions.state")
 
-    builtin.git_stash({
+    require("telescope.builtin").git_stash({
         cwd = root,
         initial_mode = "normal",
 
         attach_mappings = function(_, map)
-            local function on(fn)
-                return function(bufnr)
-                    local entry = state.get_selected_entry()
+            map({ "i", "n" }, "<CR>", function(bufnr)
+                local entry = state.get_selected_entry()
 
-                    if not entry then
-                        return
-                    end
-
-                    actions.close(bufnr)
-                    fn(entry.value)
+                if not entry then
+                    return
                 end
-            end
 
-            map({ "i", "n" }, "<C-p>", on(function(ref)
-                run({ "stash", "pop", ref }, root)
-            end))
-
-            map({ "i", "n" }, "<C-d>", on(function(ref)
-                if confirm("Drop " .. ref .. "?") then
-                    run({ "stash", "drop", ref }, root)
-                end
-            end))
-
-            map({ "i", "n" }, "<C-b>", on(function(ref)
-                prompt("Branch from " .. ref .. ": ", function(name)
-                    run({ "stash", "branch", name, ref }, root)
-                end)
-            end))
+                actions.close(bufnr)
+                action(entry.value)
+            end)
 
             return true
         end,
     })
 end
 
+local function stash_apply(root)
+    require("telescope.builtin").git_stash({
+        cwd = root,
+        initial_mode = "normal",
+    })
+end
+
+local function stash_pop(root)
+    stash_action_picker(root, function(ref)
+        run({ "stash", "pop", ref }, root)
+    end)
+end
+
+local function stash_drop(root)
+    stash_action_picker(root, function(ref)
+        if confirm("Drop " .. ref .. "?") then
+            run({ "stash", "drop", ref }, root)
+        end
+    end)
+end
+
+local function stash_branch(root)
+    stash_action_picker(root, function(ref)
+        prompt("Branch from " .. ref .. ": ", function(name)
+            run({ "stash", "branch", name, ref }, root)
+        end)
+    end)
+end
+
 
 -- ---------------------------------------------------------------
--- branch picker
+-- branch pickers
 --
--- remote entries are normalised to a bare branch name, so the
--- same action works whether a local or remote row is selected.
+-- the verb is chosen by keymap; the picker is then scoped to that
+-- one action, which fires on <CR>. remote entries are normalised
+-- to a bare branch name, so the same action works whether a local
+-- or remote row is selected.
+--
+-- branch_action_picker wires <CR> to `action`, overriding the
+-- builtin checkout-on-enter. branch_checkout keeps that default
+-- for the plain select case.
 -- ---------------------------------------------------------------
 
-local function branch_picker(root)
-    local builtin = require("telescope.builtin")
+local function branch_action_picker(root, action)
     local actions = require("telescope.actions")
     local state = require("telescope.actions.state")
 
-    builtin.git_branches({
+    require("telescope.builtin").git_branches({
         cwd = root,
         initial_mode = "normal",
         show_remote_tracking_branches = true,
 
         attach_mappings = function(_, map)
-            local function on(fn)
-                return function(bufnr)
-                    local entry = state.get_selected_entry()
+            map({ "i", "n" }, "<CR>", function(bufnr)
+                local entry = state.get_selected_entry()
 
-                    if not entry then
-                        return
-                    end
-
-                    actions.close(bufnr)
-
-                    local name = entry.value:gsub("^remotes/", ""):gsub("^origin/", "")
-                    fn(name)
+                if not entry then
+                    return
                 end
-            end
 
-            map({ "i", "n" }, "<C-g>", on(function(branch)
-                run({ "merge", branch }, root)
-            end))
+                actions.close(bufnr)
 
-            map({ "i", "n" }, "<C-d>", on(function(branch)
-                run({ "branch", "-d", branch }, root)
-            end))
-
-            map({ "i", "n" }, "<C-x>", on(function(branch)
-                if confirm("Force delete local branch '" .. branch .. "'?") then
-                    run({ "branch", "-D", branch }, root)
-                end
-            end))
-
-            map({ "i", "n" }, "<C-o>", on(function(branch)
-                if confirm("Delete '" .. branch .. "' on origin?") then
-                    run_auth({ "push", "origin", "--delete", branch }, root)
-                end
-            end))
+                local name = entry.value:gsub("^remotes/", ""):gsub("^origin/", "")
+                action(name)
+            end)
 
             return true
         end,
     })
+end
+
+local function branch_checkout(root)
+    require("telescope.builtin").git_branches({
+        cwd = root,
+        initial_mode = "normal",
+        show_remote_tracking_branches = true,
+    })
+end
+
+local function branch_merge(root)
+    branch_action_picker(root, function(branch)
+        run({ "merge", branch }, root)
+    end)
+end
+
+local function branch_delete(root)
+    branch_action_picker(root, function(branch)
+        run({ "branch", "-d", branch }, root)
+    end)
+end
+
+local function branch_force_delete(root)
+    branch_action_picker(root, function(branch)
+        if confirm("Force delete local branch '" .. branch .. "'?") then
+            run({ "branch", "-D", branch }, root)
+        end
+    end)
+end
+
+local function branch_delete_origin(root)
+    branch_action_picker(root, function(branch)
+        if confirm("Delete '" .. branch .. "' on origin?") then
+            run_auth({ "push", "origin", "--delete", branch }, root)
+        end
+    end)
 end
 
 
@@ -694,7 +737,10 @@ return {
             },
 
             -- Stashes
-            { "<leader>gzs", git_guard(stash_picker),  desc = "Select" },
+            { "<leader>gzs", git_guard(stash_apply),  desc = "Select / Apply" },
+            { "<leader>gzp", git_guard(stash_pop),    desc = "Pop" },
+            { "<leader>gzd", git_guard(stash_drop),   desc = "Drop" },
+            { "<leader>gzb", git_guard(stash_branch), desc = "Branch from Stash" },
             {
                 "<leader>gzc",
                 git_guard(function(root)
@@ -706,8 +752,12 @@ return {
             },
 
             -- Branches
-            { "<leader>gbs", git_guard(branch_picker), desc = "Select" },
-            { "<leader>gbr", git_guard(checkout_head), desc = "Checkout Tip" },
+            { "<leader>gbs", git_guard(branch_checkout),      desc = "Select / Checkout" },
+            { "<leader>gbm", git_guard(branch_merge),         desc = "Merge" },
+            { "<leader>gbd", git_guard(branch_delete),        desc = "Delete (local)" },
+            { "<leader>gbD", git_guard(branch_force_delete),  desc = "Force Delete (local)" },
+            { "<leader>gbo", git_guard(branch_delete_origin), desc = "Delete on Origin" },
+            { "<leader>gbr", git_guard(checkout_head),        desc = "Checkout Tip" },
             {
                 "<leader>gbn",
                 git_guard(function(root)
