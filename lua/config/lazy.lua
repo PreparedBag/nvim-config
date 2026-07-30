@@ -32,6 +32,7 @@ require("lazy").setup({
     -- Include plugins from the lua/plugins/ folder
     spec = {
         { import = "plugins.blink" },
+        { import = "plugins.bqf" },
         { import = "plugins.bracey" },
         { import = "plugins.colorschemes" },
         { import = "plugins.comment" },
@@ -48,6 +49,9 @@ require("lazy").setup({
         { import = "plugins.nibbler" },
         { import = "plugins.noice" },
         { import = "plugins.oil" },
+        { import = "plugins.project" },
+        { import = "plugins.persistence" },
+        { import = "plugins.surround" },
         { import = "plugins.telescope" },
         { import = "plugins.treesitter" },
         { import = "plugins.undotree" },

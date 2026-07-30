@@ -49,6 +49,9 @@ return {
             -- Oil
             { "<leader>o",  group = "Oil",               mode = "n" },
 
+            -- Oil
+            { "<leader>p",  group = "Project",           mode = "n" },
+
             -- Splits
             { "<leader>s",  group = "Split",             mode = "n" },
 
