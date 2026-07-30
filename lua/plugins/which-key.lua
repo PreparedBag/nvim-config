@@ -43,16 +43,13 @@ return {
             { "<leader>8",  hidden = true },
 
             -- Insert
-            { "<leader>q",  group = "Quit",              mode = "n" },
-
-            -- Insert
             { "<leader>i",  group = "Insert",            mode = "n" },
             { "<leader>ii", group = "Image",             mode = "n" },
 
             -- Oil
             { "<leader>o",  group = "Oil",               mode = "n" },
 
-            -- Oil
+            -- Persistence
             { "<leader>p",  group = "Project",           mode = "n" },
 
             -- Splits
