@@ -16,6 +16,17 @@ return {
         config = function()
             local telescope = require('telescope')
             local actions = require('telescope.actions')
+            local state = require("telescope.state")
+            local action_set = require("telescope.actions.set")
+
+            -- move the *selection* through the results by a fraction of the window
+            local function page_results(dir, frac) -- dir: 1 down / -1 up
+                return function(prompt_bufnr)
+                    local win = state.get_status(prompt_bufnr).results_win
+                    local height = vim.api.nvim_win_get_height(win)
+                    action_set.shift_selection(prompt_bufnr, math.floor(height * frac) * dir)
+                end
+            end
 
             -- Function to set the working directory to the original one
             local set_telescope_cwd_to_original = function()
@@ -48,6 +59,12 @@ return {
                 end
             end
 
+            local shared = {
+                ["<C-y>"] = { actions.smart_send_to_qflist, type = "action", opts = { desc = "Send to quickfix" } },
+                ["<C-j>"] = { page_results(1, 0.5), type = "action", opts = { desc = "Results: half-page down" } },
+                ["<C-k>"] = { page_results(-1, 0.5), type = "action", opts = { desc = "Results: half-page up" } },
+            }
+
             -- Telescope setup
             telescope.setup({
                 defaults = {
@@ -59,14 +76,7 @@ return {
                     preview = { treesitter = true },
                     -- Send Tab-marked items (or all if none marked) to the quickfix list.
                     -- Does NOT auto-open anything; view it later with <leader>fq.
-                    mappings = {
-                        i = {
-                            ["<C-y>"] = actions.smart_send_to_qflist,
-                        },
-                        n = {
-                            ["<C-y>"] = actions.smart_send_to_qflist,
-                        },
-                    },
+                    mappings = { i = shared, n = shared },
                 },
                 extensions = {
                     -- fzf-native is an extension, so its config belongs HERE, not
@@ -133,7 +143,7 @@ return {
                         '!*.min.js'
                     }
                 })
-            end, { noremap = true, silent = true, desc = "Find String (Include All)"})
+            end, { noremap = true, silent = true, desc = "Find String (Include All)" })
 
             vim.keymap.set("n", "<leader>fp", function()
                 builtin.live_grep({
@@ -153,9 +163,9 @@ return {
                         '!*.min.js'
                     }
                 })
-            end, { noremap = true, silent = true, desc = "Find Phrase (Live Grep)"})
+            end, { noremap = true, silent = true, desc = "Find Phrase (Live Grep)" })
 
-            vim.keymap.set("n", "<leader>fH", builtin.help_tags, { noremap = true, silent = true, desc = "Help Tags"})
+            vim.keymap.set("n", "<leader>fH", builtin.help_tags, { noremap = true, silent = true, desc = "Help Tags" })
 
             -- Grep the word under the cursor
             vim.keymap.set("n", "<leader>fw", function()
@@ -165,7 +175,7 @@ return {
                     initial_mode = "normal",
                     prompt_title = "Ripgrep: " .. word,
                 })
-            end, { noremap = true, silent = true, desc = "Find Word (Ripgrep)"})
+            end, { noremap = true, silent = true, desc = "Find Word (Ripgrep)" })
 
             -- Grep the visual selection
             vim.keymap.set("v", "<leader>fw", function()
@@ -183,13 +193,13 @@ return {
                     initial_mode = "normal",
                     prompt_title = "Ripgrep: " .. text,
                 })
-            end, { noremap = true, silent = true, desc = "Find Word (Ripgrep)"})
+            end, { noremap = true, silent = true, desc = "Find Word (Ripgrep)" })
 
             -- Quickfix list viewer: list on the left, preview on the right.
             -- Enter jumps to the item and closes; Esc dismisses.
             vim.keymap.set("n", "<leader>fq", function()
                 builtin.quickfix({ initial_mode = "normal" })
-            end, { noremap = true, silent = true, desc = "View Quickfix List"})
+            end, { noremap = true, silent = true, desc = "View Quickfix List" })
             vim.keymap.set("n", "<leader>fh", function()
                 local actions = require("telescope.actions")
                 local action_state = require("telescope.actions.state")
@@ -222,14 +232,16 @@ return {
                         return true
                     end,
                 })
-            end, { noremap = true, silent = true, desc = "View Quickfix History"})
+            end, { noremap = true, silent = true, desc = "View Quickfix History" })
 
             vim.keymap.set('n', '<leader>fc', function()
                 local config_path = vim.fn.expand('~/.config/nvim')
                 vim.cmd.ex(config_path)
             end, { noremap = true, silent = true, desc = 'Open Nvim Config Folder' })
-            vim.keymap.set("n", "<leader>fd", function() set_telescope_cwd_to_updated() end, { noremap = true, silent = true, desc = "Set Telescope CWD Here"})
-            vim.keymap.set("n", "<leader>fo", function() set_telescope_cwd_to_original() end, { noremap = true, silent = true, desc = "Set Telescope CWD to Original"})
+            vim.keymap.set("n", "<leader>fd", function() set_telescope_cwd_to_updated() end,
+                { noremap = true, silent = true, desc = "Set Telescope CWD Here" })
+            vim.keymap.set("n", "<leader>fo", function() set_telescope_cwd_to_original() end,
+                { noremap = true, silent = true, desc = "Set Telescope CWD to Original" })
         end
     },
     {

@@ -454,15 +454,15 @@ local function status_picker(root)
                     capture({ "add", "--", entry.path }, root)
                 end
                 picker:refresh(status_finder(root), { reset_prompt = false })
-            end, { desc = "Stage/Unstage"})
+            end, { desc = "Stage/unstage"})
             map({ "i", "n" }, "<C-a>", function(bufnr)
                 capture({ "add", "-A" }, root)
                 refresh(bufnr)
-            end, {desc = "Stage All"})
+            end, {desc = "Stage all"})
             map({ "i", "n" }, "<C-u>", function(bufnr)
                 capture({ "reset" }, root)
                 refresh(bufnr)
-            end, { desc = "Unstage All (Reset)"})
+            end, { desc = "Unstage all (reset)"})
             return true
         end,
     }):find()
