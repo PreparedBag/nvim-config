@@ -43,6 +43,9 @@ return {
             { "<leader>8",  hidden = true },
 
             -- Insert
+            { "<leader>q",  group = "Quit",              mode = "n" },
+
+            -- Insert
             { "<leader>i",  group = "Insert",            mode = "n" },
             { "<leader>ii", group = "Image",             mode = "n" },
 

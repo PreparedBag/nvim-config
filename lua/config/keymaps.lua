@@ -102,8 +102,10 @@ vim.keymap.set("v", "<leader>y", [["+y]], { noremap = true, silent = true, desc 
 vim.keymap.set("n", "<leader>Y", [["+Y]], { noremap = true, silent = true, desc = "Yank Line to Clipboard" })
 
 -- Miscellaneous
--- Quit
-vim.keymap.set("n", "<leader>q", ":q<CR>", { noremap = true, silent = true, desc = "Quit Without Saving" })
+-- Quit current buffer without saving
+vim.keymap.set("n", "<leader>qq", ":q<CR>", { noremap = true, silent = true, desc = "Quit Without Saving" })
+-- Quit all
+vim.keymap.set("n", "<leader>qa", ":qa<CR>", { noremap = true, silent = true, desc = "Quit All Without Saving" })
 -- Save file
 vim.keymap.set("n", "<C-s>", "<cmd>w<cr>", opts)
 -- Close buffer
