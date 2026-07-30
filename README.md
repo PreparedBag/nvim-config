@@ -1,3 +1,7 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300..900;1,300..900&display=swap');
+</style>
+    
 # NVIM-CONFIG
 
 A modern, optimized Neovim configuration with LSP support, fuzzy finding, file management, and more.
@@ -379,7 +383,6 @@ Add your keybindings to `lua/config/keymaps.lua` or within specific plugin confi
 │   ├── config/
 │   │   ├── setup.lua          # Neovim options
 │   │   ├── keymaps.lua        # Global keymaps
-│   │   ├── scripts.lua        # Custom functions
 │   │   ├── lazy.lua           # Plugin manager setup
 │   │   └── autocmds.lua       # Auto commands
 │   └── plugins/               # Plugin configurations

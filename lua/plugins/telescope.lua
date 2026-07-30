@@ -1,3 +1,6 @@
+-- Store the original working directory when Neovim starts
+_G.original_working_directory = vim.fn.getcwd()
+
 return {
     {
         'nvim-telescope/telescope.nvim',
