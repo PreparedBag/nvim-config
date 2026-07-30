@@ -19,22 +19,29 @@ local function notify(msg, level)
     vim.notify(vim.trim(msg), level or vim.log.levels.INFO, { title = "git" })
 end
 
+
 -- ---------------------------------------------------------------
--- Guard against no git repository
+-- repo root
+--
+-- resolved relative to the current buffer, never cwd, so a session
+-- restore or :cd can't move it out from under us. git_guard pins
+-- this at invocation and hands it to the action, which threads it
+-- as `cwd` through every git call — including ones that later fire
+-- from a picker's prompt buffer, which has no path of its own.
 -- ---------------------------------------------------------------
 
-
-local function in_git_repo()
-    return vim.fs.root(0, ".git") ~= nil
+local function buf_root()
+    return vim.fs.root(0, ".git")
 end
 
 local function git_guard(fn)
     return function()
-        if not in_git_repo() then
+        local root = buf_root()
+        if not root then
             vim.notify("Not a git repository", vim.log.levels.INFO)
             return
         end
-        fn()
+        fn(root)
     end
 end
 
@@ -42,28 +49,16 @@ end
 -- ---------------------------------------------------------------
 -- synchronous git
 --
--- capture       trimmed stdout, for single-value queries
--- capture_lines raw lines, for porcelain output where leading
---               whitespace is significant
+-- trimmed stdout, for single-value queries. cwd falls back to
+-- buf_root() for direct calls; pickers pass the pinned root.
 -- ---------------------------------------------------------------
 
-local function capture(args)
+local function capture(args, cwd)
     local res = vim.system(vim.list_extend({ "git" }, args), {
         text = true,
-        cwd = vim.fn.getcwd(),
+        cwd = cwd or buf_root(),
     }):wait()
     return vim.trim(res.stdout or ""), res.code
-end
-
-local function capture_lines(args)
-    local res = vim.system(vim.list_extend({ "git" }, args), { text = true }):wait()
-    local out = (res.stdout or ""):gsub("\n$", "")
-
-    if out == "" then
-        return {}
-    end
-
-    return vim.split(out, "\n", { plain = true })
 end
 
 
@@ -99,11 +94,13 @@ end
 --
 -- output lands in notifications. every vim.fn / vim.cmd call must
 -- stay inside vim.schedule, since on_exit is a fast event context.
+-- cwd is captured here, at call time, before the async part runs.
 -- ---------------------------------------------------------------
 
-local function run(args, password)
+local function run(args, cwd, password)
     local env = { GIT_TERMINAL_PROMPT = "0" }
     local cleanup = function() end
+    cwd = cwd or buf_root()
 
     if password and password ~= "" then
         local script, rm = make_askpass(password)
@@ -117,7 +114,7 @@ local function run(args, password)
 
     vim.system(vim.list_extend({ "git" }, args), {
         text = true,
-        cwd = vim.fn.getcwd(),
+        cwd = cwd,
         env = env,
     }, function(res)
         vim.schedule(function()
@@ -145,9 +142,9 @@ end
 -- before git runs, so a blank password never reaches the server.
 -- ---------------------------------------------------------------
 
-local function run_auth(args)
+local function run_auth(args, root)
     if not ASK_PASSWORD then
-        run(args)
+        run(args, root)
         return
     end
 
@@ -159,7 +156,7 @@ local function run_auth(args)
         return
     end
 
-    run(args, pw)
+    run(args, root, pw)
 end
 
 
@@ -254,8 +251,9 @@ local function log_entry(line)
     }
 end
 
-local function log_picker()
+local function log_picker(root)
     require("telescope.builtin").git_commits({
+        cwd = root,
         initial_mode = "normal",
         entry_maker = log_entry,
         git_command = {
@@ -292,8 +290,8 @@ vim.api.nvim_create_autocmd("ColorScheme", { callback = define_status_hl })
 --
 -- porcelain gives two columns per file: index (staged) then
 -- worktree (unstaged). leading whitespace is significant, so raw
--- lines are read without trimming. each entry carries the repo
--- root so git commands and the previewer resolve correctly
+-- lines are read without trimming. each entry carries the pinned
+-- repo root so git commands and the previewer resolve correctly
 -- regardless of nvim's cwd.
 -- ---------------------------------------------------------------
 
@@ -330,9 +328,11 @@ local function status_entry(root)
     end
 end
 
-local function status_finder()
+-- root is the pinned worktree root; it doubles as the cwd for the
+-- status query and the path prefix in status_entry, replacing the
+-- old rev-parse that ran at nvim's cwd.
+local function status_finder(root)
     local finders = require("telescope.finders")
-    local root = capture({ "rev-parse", "--show-toplevel" })
 
     local res = vim.system({ "git", "status", "--porcelain=v1" },
         { text = true, cwd = root }):wait()
@@ -363,10 +363,6 @@ local diff_previewer = previewers.new_buffer_previewer({
         local buf = self.state.bufnr
 
         local cmd
-        if entry.x == "?" then
-            cmd = { "git", "show", ":" }
-        end
-
         if entry.x ~= " " and entry.x ~= "?" then
             cmd = { "git", "diff", "--cached", "--", entry.rel }
         elseif entry.x == "?" then
@@ -395,22 +391,23 @@ local diff_previewer = previewers.new_buffer_previewer({
 --
 -- t stages / unstages the file under the cursor. after the list
 -- refreshes, the cursor is re-placed on the same file by path,
--- since staging can change its sort position.
+-- since staging can change its sort position. root is pinned when
+-- the picker opens and reused by every refresh and staging call.
 -- ---------------------------------------------------------------
 
-local function status_picker()
+local function status_picker(root)
     local pickers = require("telescope.pickers")
     local state = require("telescope.actions.state")
     local conf = require("telescope.config").values
 
     -- Build a title line with branch + tracking info
-    local head = vim.fn.system("git symbolic-ref --short HEAD 2>/dev/null"):gsub("%s+", "")
+    local head = capture({ "symbolic-ref", "--short", "HEAD" }, root)
     local title
     if head == "" then
         title = "⚠ DETACHED HEAD  (t: stage/unstage)"
     else
         -- ahead/behind counts vs upstream, if an upstream exists
-        local ab = vim.fn.system("git rev-list --left-right --count HEAD...@{u} 2>/dev/null"):gsub("%s+$", "")
+        local ab = capture({ "rev-list", "--left-right", "--count", "HEAD...@{u}" }, root)
         local tracking = ""
         local ahead, behind = ab:match("(%d+)%s+(%d+)")
         if ahead then
@@ -423,13 +420,14 @@ local function status_picker()
     end
 
     local function refresh(bufnr)
-        state.get_current_picker(bufnr):refresh(status_finder(), { reset_prompt = false })
+        state.get_current_picker(bufnr):refresh(status_finder(root), { reset_prompt = false })
     end
+
     pickers.new({
         initial_mode = "normal",
         prompt_title = title,
     }, {
-        finder = status_finder(),
+        finder = status_finder(root),
         sorter = conf.generic_sorter({}),
         previewer = diff_previewer,
         attach_mappings = function(_, map)
@@ -441,18 +439,18 @@ local function status_picker()
                 end
                 local is_staged = entry.x ~= " " and entry.x ~= "?"
                 if is_staged then
-                    capture({ "restore", "--staged", "--", entry.path })
+                    capture({ "restore", "--staged", "--", entry.path }, root)
                 else
-                    capture({ "add", "--", entry.path })
+                    capture({ "add", "--", entry.path }, root)
                 end
-                picker:refresh(status_finder(), { reset_prompt = false })
+                picker:refresh(status_finder(root), { reset_prompt = false })
             end)
             map({ "i", "n" }, "<C-a>", function(bufnr)
-                capture({ "add", "-A" })
+                capture({ "add", "-A" }, root)
                 refresh(bufnr)
             end)
             map({ "i", "n" }, "<C-u>", function(bufnr)
-                capture({ "reset" })
+                capture({ "reset" }, root)
                 refresh(bufnr)
             end)
             return true
@@ -465,15 +463,17 @@ end
 -- stash picker
 --
 -- stash refs are positional, so the picker closes after every
--- action to force a fresh list on the next invocation.
+-- action to force a fresh list on the next invocation. root is
+-- captured at open and reused by the deferred actions.
 -- ---------------------------------------------------------------
 
-local function stash_picker()
+local function stash_picker(root)
     local builtin = require("telescope.builtin")
     local actions = require("telescope.actions")
     local state = require("telescope.actions.state")
 
     builtin.git_stash({
+        cwd = root,
         initial_mode = "normal",
 
         attach_mappings = function(_, map)
@@ -491,18 +491,18 @@ local function stash_picker()
             end
 
             map({ "i", "n" }, "<C-p>", on(function(ref)
-                run({ "stash", "pop", ref })
+                run({ "stash", "pop", ref }, root)
             end))
 
             map({ "i", "n" }, "<C-d>", on(function(ref)
                 if confirm("Drop " .. ref .. "?") then
-                    run({ "stash", "drop", ref })
+                    run({ "stash", "drop", ref }, root)
                 end
             end))
 
             map({ "i", "n" }, "<C-b>", on(function(ref)
                 prompt("Branch from " .. ref .. ": ", function(name)
-                    run({ "stash", "branch", name, ref })
+                    run({ "stash", "branch", name, ref }, root)
                 end)
             end))
 
@@ -519,12 +519,13 @@ end
 -- same action works whether a local or remote row is selected.
 -- ---------------------------------------------------------------
 
-local function branch_picker()
+local function branch_picker(root)
     local builtin = require("telescope.builtin")
     local actions = require("telescope.actions")
     local state = require("telescope.actions.state")
 
     builtin.git_branches({
+        cwd = root,
         initial_mode = "normal",
         show_remote_tracking_branches = true,
 
@@ -545,22 +546,22 @@ local function branch_picker()
             end
 
             map({ "i", "n" }, "<C-g>", on(function(branch)
-                run({ "merge", branch })
+                run({ "merge", branch }, root)
             end))
 
             map({ "i", "n" }, "<C-d>", on(function(branch)
-                run({ "branch", "-d", branch })
+                run({ "branch", "-d", branch }, root)
             end))
 
             map({ "i", "n" }, "<C-x>", on(function(branch)
                 if confirm("Force delete local branch '" .. branch .. "'?") then
-                    run({ "branch", "-D", branch })
+                    run({ "branch", "-D", branch }, root)
                 end
             end))
 
             map({ "i", "n" }, "<C-o>", on(function(branch)
                 if confirm("Delete '" .. branch .. "' on origin?") then
-                    run_auth({ "push", "origin", "--delete", branch })
+                    run_auth({ "push", "origin", "--delete", branch }, root)
                 end
             end))
 
@@ -578,15 +579,15 @@ end
 -- origin/HEAD and falling back to main or master.
 -- ---------------------------------------------------------------
 
-local function default_branch()
-    local out = capture({ "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD" })
+local function default_branch(root)
+    local out = capture({ "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD" }, root)
 
     if out ~= "" then
         return (out:gsub("^origin/", ""))
     end
 
     for _, name in ipairs({ "main", "master" }) do
-        local _, code = capture({ "show-ref", "--verify", "--quiet", "refs/heads/" .. name })
+        local _, code = capture({ "show-ref", "--verify", "--quiet", "refs/heads/" .. name }, root)
 
         if code == 0 then
             return name
@@ -596,22 +597,22 @@ local function default_branch()
     return nil
 end
 
-local function checkout_head()
-    local current = capture({ "branch", "--show-current" })
+local function checkout_head(root)
+    local current = capture({ "branch", "--show-current" }, root)
 
     if current ~= "" then
-        run({ "merge", "--ff-only", "@{u}" })
+        run({ "merge", "--ff-only", "@{u}" }, root)
         return
     end
 
-    local target = default_branch()
+    local target = default_branch(root)
 
     if not target then
         notify("no default branch found", vim.log.levels.ERROR)
         return
     end
 
-    run({ "checkout", target })
+    run({ "checkout", target }, root)
 end
 
 
@@ -621,7 +622,7 @@ end
 -- unrecoverable: working tree changes leave no reflog entry.
 -- ---------------------------------------------------------------
 
-local function discard_file()
+local function discard_file(root)
     local file = vim.fn.expand("%:p")
 
     if file == "" then
@@ -635,7 +636,7 @@ local function discard_file()
         return
     end
 
-    run({ "restore", "--staged", "--worktree", "--", file })
+    run({ "restore", "--staged", "--worktree", "--", file }, root)
 
     vim.schedule(function()
         vim.cmd("edit!")
@@ -645,44 +646,48 @@ end
 
 -- ---------------------------------------------------------------
 -- keymaps
+--
+-- git_guard resolves the buffer's repo root once and passes it in,
+-- so each action (and any prompt callback that fires later) runs
+-- against the root that was current at keypress.
 -- ---------------------------------------------------------------
 
 return {
     {
         'nvim-telescope/telescope.nvim',
         keys = {
-            { "<leader>gs", git_guard(status_picker),                                               desc = "Git Status" },
-            { "<leader>gl", git_guard(log_picker),                                                  desc = "Git Log" },
-            { "<leader>gx", git_guard(discard_file),                                                desc = "Discard Changes to File" },
-            { "<leader>gp", git_guard(function() run_auth({ "push" }) end),                         desc = "Push" },
-            { "<leader>gP", git_guard(function() run_auth({ "pull" }) end),                         desc = "Pull" },
-            { "<leader>gu", git_guard(function() run_auth({ "push", "--follow-tags" }) end),        desc = "Push + Tags" },
-            { "<leader>gU", git_guard(function() run_auth({ "push", "-u", "origin", "HEAD" }) end), desc = "Push + Set Upstream" },
-            { "<leader>gf", git_guard(function() run_auth({ "fetch", "--prune", "--tags" }) end),   desc = "Fetch + Prune" },
+            { "<leader>gs", git_guard(status_picker),                                                     desc = "Git Status" },
+            { "<leader>gl", git_guard(log_picker),                                                        desc = "Git Log" },
+            { "<leader>gx", git_guard(discard_file),                                                      desc = "Discard Changes to File" },
+            { "<leader>gp", git_guard(function(root) run_auth({ "push" }, root) end),                     desc = "Push" },
+            { "<leader>gP", git_guard(function(root) run_auth({ "pull" }, root) end),                     desc = "Pull" },
+            { "<leader>gu", git_guard(function(root) run_auth({ "push", "--follow-tags" }, root) end),    desc = "Push + Tags" },
+            { "<leader>gU", git_guard(function(root) run_auth({ "push", "-u", "origin", "HEAD" }, root) end), desc = "Push + Set Upstream" },
+            { "<leader>gf", git_guard(function(root) run_auth({ "fetch", "--prune", "--tags" }, root) end), desc = "Fetch + Prune" },
             {
                 "<leader>gc",
-                git_guard(function()
+                git_guard(function(root)
                     prompt("Commit message: ", function(msg)
-                        run({ "commit", "-m", msg })
+                        run({ "commit", "-m", msg }, root)
                     end)
                 end),
                 desc = "Commit Staged",
             },
             {
                 "<leader>gA",
-                git_guard(function()
+                git_guard(function(root)
                     prompt("Commit message (all files): ", function(msg)
-                        capture({ "add", "-A" })
-                        run({ "commit", "-m", msg })
+                        capture({ "add", "-A" }, root)
+                        run({ "commit", "-m", msg }, root)
                     end)
                 end),
                 desc = "Add All + Commit",
             },
             {
                 "<leader>gt",
-                git_guard(function()
+                git_guard(function(root)
                     prompt("New tag: ", function(tag)
-                        run({ "tag", "-a", tag, "-m", tag })
+                        run({ "tag", "-a", tag, "-m", tag }, root)
                     end)
                 end),
                 desc = "New Tag",
@@ -692,9 +697,9 @@ return {
             { "<leader>gzs", git_guard(stash_picker),  desc = "Select" },
             {
                 "<leader>gzc",
-                git_guard(function()
+                git_guard(function(root)
                     prompt("Stash message: ", function(msg)
-                        run({ "stash", "push", "-m", msg })
+                        run({ "stash", "push", "-m", msg }, root)
                     end)
                 end),
                 desc = "Stash Changes",
@@ -705,9 +710,9 @@ return {
             { "<leader>gbr", git_guard(checkout_head), desc = "Checkout Tip" },
             {
                 "<leader>gbn",
-                git_guard(function()
+                git_guard(function(root)
                     prompt("New branch: ", function(name)
-                        run({ "checkout", "-b", name })
+                        run({ "checkout", "-b", name }, root)
                     end)
                 end),
                 desc = "New",
