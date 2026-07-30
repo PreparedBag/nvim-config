@@ -6,8 +6,9 @@ return {
     config = function()
         require("notify").setup({
             top_down = true,
-            render = "minimal",  -- fuller dialog style (vs "minimal" / "compact")
-            stages = "static",     -- animation; "fade"/"slide"/"static"
+            -- NOTE: update to preferred dialog style
+            render = "default", -- fuller dialog style (vs "minimal" / "compact")
+            stages = "static", -- animation; "fade"/"slide"/"static"
             timeout = 3000,
         })
         require("noice").setup({
