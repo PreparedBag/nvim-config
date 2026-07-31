@@ -46,6 +46,9 @@ return {
             { "<leader>i",  group = "Insert",            mode = "n" },
             { "<leader>ii", group = "Image",             mode = "n" },
 
+            -- Nibbler
+            { "<leader>n",  group = "Nibbler",           mode = "n" },
+
             -- Oil
             { "<leader>o",  group = "Oil",               mode = "n" },
 
