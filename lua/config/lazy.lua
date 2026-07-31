@@ -8,8 +8,8 @@ if vim.fn.filereadable(marker) == 1 then
     _G.DEV_ENABLED = (content == "true")
 end
 
--- Uncomment to debug what the marker resolves to:
-vim.notify("DEV_ENABLED = " .. tostring(_G.DEV_ENABLED) .. " (marker: " .. marker .. ")")
+-- NOTE: Uncomment to debug what the marker resolves to:
+-- vim.notify("DEV_ENABLED = " .. tostring(_G.DEV_ENABLED) .. " (marker: " .. marker .. ")")
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
@@ -45,7 +45,7 @@ require("lazy").setup({
         { import = "plugins.markdown" },
         -- NOTE: uncomment for nerdtree support
         -- { import = "plugins.nerdtree" },
-        { import = "plugins.nibbler" },
+        { import = "plugins.conversions" },
         { import = "plugins.noice" },
         { import = "plugins.oil" },
         { import = "plugins.persistence" },

@@ -19,6 +19,9 @@ return {
             -- Comment
             { "<leader>c",  group = "Comment",           mode = { "n", "v" } },
 
+            -- Conversions
+            { "<leader>n",  group = "Conversions",       mode = "n" },
+
             -- Find (Telescope)
             { "<leader>f",  group = "Find",              mode = { "n", "v" } },
 
@@ -46,9 +49,6 @@ return {
             { "<leader>i",  group = "Insert",            mode = "n" },
             { "<leader>ii", group = "Image",             mode = "n" },
 
-            -- Nibbler
-            { "<leader>n",  group = "Nibbler",           mode = "n" },
-
             -- Oil
             { "<leader>o",  group = "Oil",               mode = "n" },
 
@@ -74,7 +74,7 @@ return {
         if _G.DEV_ENABLED then
             vim.list_extend(mappings, {
                 -- Debugger
-                { "<leader>d",  group = "Debugger" },
+                { "<leader>d",  group = "Debugger",        mode = { "n", "v" } },
                 { "<leader>dt", group = "Target Actions",  mode = "n" },
 
                 -- LSP
