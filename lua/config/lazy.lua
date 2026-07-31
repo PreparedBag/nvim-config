@@ -49,6 +49,7 @@ require("lazy").setup({
         { import = "plugins.noice" },
         { import = "plugins.oil" },
         { import = "plugins.persistence" },
+        { import = "plugins.snippets" },
         { import = "plugins.surround" },
         { import = "plugins.telescope" },
         { import = "plugins.treesitter" },

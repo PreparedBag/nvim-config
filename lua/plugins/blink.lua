@@ -61,6 +61,7 @@ return {
         keymap = {
             preset = 'none',
             ['<C-space>'] = { 'show', 'hide' },
+            ['<C-s>'] = { function(cmp) cmp.show({ providers = { 'snippets' } }) end },
             ['<C-j>'] = { 'select_next', 'fallback' },
             ['<C-k>'] = { 'select_prev', 'fallback' },
             ['<CR>'] = { 'accept', 'fallback' },
@@ -70,6 +71,8 @@ return {
             ['<Tab>'] = { 'snippet_forward', 'fallback' },
             ['<S-Tab>'] = { 'snippet_backward', 'fallback' },
         },
+
+        snippets = { preset = 'luasnip' },
 
         appearance = {
             nerd_font_variant = 'mono'
