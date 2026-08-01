@@ -1,10 +1,10 @@
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
 
+vim.o.sessionoptions = "buffers,curdir,folds,globals,help,tabpages,winsize,winpos,localoptions"
+
 -- Leader keys
--- Set space as the leader key
 vim.g.mapleader = " "
--- Set space as the local leader key
 vim.g.maplocalleader = " "
 
 vim.opt.nrformats = { "alpha", "hex", "bin" }

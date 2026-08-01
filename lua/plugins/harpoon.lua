@@ -6,7 +6,7 @@ return {
         "nvim-telescope/telescope.nvim",
     },
     keys = {
-        { "<leader>ha", function() require("harpoon"):list():add() end,    desc = "Add to Harpoon" },
+        { "<leader>ha", function() require("harpoon"):list():add() end,    desc = "Add Current Buffer to Harpoon" },
         {
             "<leader>hc",
             function()
@@ -43,7 +43,7 @@ return {
 
                 vim.notify(("Added %d buffer(s) to Harpoon"):format(added), vim.log.levels.INFO)
             end,
-            desc = "Add Buffers to Harpoon",
+            desc = "Add Open Buffers to Harpoon",
         },
         {
             "<leader>he",
@@ -51,30 +51,7 @@ return {
                 local harpoon = require("harpoon")
                 harpoon.ui:toggle_quick_menu(harpoon:list(), { title = "", title_pos = "center" })
             end,
-            desc = "Harpoon Edit (Native)",
-        },
-        {
-            "<leader>hm",
-            function()
-                local harpoon = require("harpoon")
-                local conf = require("telescope.config").values
-
-                local file_paths = {}
-                for _, item in ipairs(harpoon:list().items) do
-                    table.insert(file_paths, item.value)
-                end
-
-                require("telescope.pickers").new({}, {
-                    prompt_title = "Harpoon",
-                    initial_mode = "normal",
-                    finder = require("telescope.finders").new_table({
-                        results = file_paths,
-                    }),
-                    previewer = conf.file_previewer({}),
-                    sorter = conf.generic_sorter({}),
-                }):find()
-            end,
-            desc = "Harpoon Menu (Telescope)",
+            desc = "Harpoon Edit",
         },
         { "<leader>1",  function() require("harpoon"):list():select(1) end },
         { "<leader>2",  function() require("harpoon"):list():select(2) end },

@@ -11,6 +11,29 @@ local function confirm(question)
     return vim.fn.confirm(question, "&Yes\n&No", 2) == 1
 end
 
+-- Close transient plugin UIs before saving a session, but only if they're
+-- already loaded — never force-load them here (that triggers the config
+-- chain and can hit a circular require).
+local function clean_for_session()
+    if package.loaded["dapui"] then
+        pcall(function() require("dapui").close() end)
+    end
+    if package.loaded["dap"] then
+        pcall(function() require("dap").repl.close() end)
+    end
+end
+
+local function save_session()
+    clean_for_session()
+    require("persistence").save()
+end
+
+local function save_and_quit()
+    clean_for_session()
+    require("persistence").save()
+    vim.schedule(function() vim.cmd("confirm qa") end)
+end
+
 -- Read the saved sessions off disk, decoding the %-encoded path for display.
 local function session_entries()
     local dir = require("persistence.config").options.dir
@@ -83,34 +106,19 @@ return {
     event = "BufReadPre",
     dependencies = { "nvim-telescope/telescope.nvim" },
     opts = {},
+    config = function(_, opts)
+        require("persistence").setup(opts)
+        -- Disable auto-save-on-exit. Sessions are only written when you
+        -- explicitly call save() via <leader>ps or <leader>pq.
+        require("persistence").stop()
+    end,
     keys = {
-        {
-            "<leader>pl",
-            function() require("persistence").load() end,
-            desc = "Restore Session (CWD)",
-        },
+        { "<leader>ps", save_session,  desc = "Save Session" },
+        { "<leader>pq", save_and_quit, desc = "Save Session and Quit" },
         {
             "<leader>pr",
-            function() require("persistence").load({ last = true }) end,
-            desc = "Restore Last Session",
-        },
-        {
-            "<leader>ps",
-            function() require("persistence").save() end,
-            desc = "Save Session",
-        },
-        {
-            "<leader>pd",
-            function() require("persistence").stop() end,
-            desc = "Stop Saving Session",
-        },
-        {
-            "<leader>pq",
-            function()
-                require("persistence").save()
-                vim.cmd("qa")
-            end,
-            desc = "Save Session and Quit",
+            function() require("persistence").load() end,
+            desc = "Restore Session (CWD)",
         },
         {
             "<leader>pp",
