@@ -19,9 +19,6 @@ return {
             -- Comment
             { "<leader>c",  group = "Comment",           mode = { "n", "v" } },
 
-            -- Conversions
-            { "<leader>n",  group = "Conversions",       mode = "n" },
-
             -- Find (Telescope)
             { "<leader>f",  group = "Find",              mode = { "n", "v" } },
 
@@ -48,6 +45,9 @@ return {
             -- Insert
             { "<leader>i",  group = "Insert",            mode = "n" },
             { "<leader>ii", group = "Image",             mode = "n" },
+
+            -- Number
+            { "<leader>n",  group = "Number",            mode = "n" },
 
             -- Oil
             { "<leader>o",  group = "Oil",               mode = "n" },

@@ -45,7 +45,6 @@ require("lazy").setup({
         { import = "plugins.markdown" },
         -- NOTE: uncomment for nerdtree support
         -- { import = "plugins.nerdtree" },
-        { import = "plugins.conversions" },
         { import = "plugins.noice" },
         { import = "plugins.oil" },
         { import = "plugins.persistence" },
