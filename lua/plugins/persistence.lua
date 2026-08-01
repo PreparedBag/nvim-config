@@ -11,15 +11,25 @@ local function confirm(question)
     return vim.fn.confirm(question, "&Yes\n&No", 2) == 1
 end
 
--- Close transient plugin UIs before saving a session, but only if they're
--- already loaded — never force-load them here (that triggers the config
--- chain and can hit a circular require).
 local function clean_for_session()
+    -- dap UI (only if loaded)
+    if package.loaded["dap"] then
+        pcall(function() require("dap").repl.close() end)
+    end
     if package.loaded["dapui"] then
         pcall(function() require("dapui").close() end)
     end
-    if package.loaded["dap"] then
-        pcall(function() require("dap").repl.close() end)
+
+    -- Wipe Oil and other non-file buffers so they aren't saved into the session.
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_valid(buf) then
+            local bt = vim.bo[buf].buftype
+            local name = vim.api.nvim_buf_get_name(buf)
+            -- keep only normal, named, file-backed buffers
+            if bt ~= "" or name == "" or name:match("^%w+://") then
+                pcall(vim.api.nvim_buf_delete, buf, { force = true })
+            end
+        end
     end
 end
 
