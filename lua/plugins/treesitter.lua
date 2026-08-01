@@ -12,7 +12,7 @@ return {
 
             if ok then
                 ts.setup({
-                    ensure_installed = { "c", "lua", "vim", "vimdoc", "html", "css", "javascript", "mermaid", "yaml", "markdown", "go", "gomod", "gowork", "gosum", "rust" },
+                    ensure_installed = { "c", "regex", "lua", "vim", "vimdoc", "html", "css", "javascript", "mermaid", "yaml", "markdown", "go", "gomod", "gowork", "gosum", "rust" },
                     auto_install = true,
                     sync_install = false,
                     highlight = { enable = true },

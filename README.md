@@ -1,408 +1,191 @@
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300..900;1,300..900&display=swap');
-</style>
-    
-# NVIM-CONFIG
+# nvim-config
 
-A modern, optimized Neovim configuration with LSP support, fuzzy finding, file management, and more.
+A minimal, fast Neovim setup for C / embedded and general editing, managed by
+[lazy.nvim](https://github.com/folke/lazy.nvim). Heavier tooling (LSP, debugger,
+markdown preview) lives behind an optional **dev mode**, so the base install
+stays light. This README covers the base (non-dev) setup.
 
-## FEATURES
+## Requirements
 
-- **LSP Integration**: Full language server support with code actions, diagnostics, formatting, and refactoring
-- **Smart File Navigation**: Oil.nvim for directory browsing, Telescope for fuzzy finding, Harpoon for quick file switching
-- **Auto-completion**: Powered by nvim-cmp with LSP integration
-- **Syntax Highlighting**: Treesitter-based highlighting and code understanding
-- **Git Integration**: Built-in git support through various plugins
-- **Markdown Support**: Live preview with custom styling and Mermaid diagram support
-- **Optimized Loading**: Lazy-loaded plugins for fast startup times
+The installer handles everything: the latest Neovim, `git`, `curl`, `ripgrep`,
+`fd`, a C compiler (for Treesitter parsers), and clipboard support. Works on
+`x86_64` and `arm64`, including 64-bit Raspberry Pi OS.
 
-## INSTALLATION
-
-### Quick Install (Recommended)
-
-For automatic installation with OS and architecture detection:
+## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/PreparedBag/nvim-config/main/install.sh | bash -s -- -y
-```
-
-Or download and inspect the script first:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/PreparedBag/nvim-config/main/install.sh -o install.sh
-chmod +x install.sh
 ./install.sh
 ```
 
-**What the installer does:**
-- Detects your OS (Ubuntu, Debian, Fedora, Arch, macOS) and architecture (x86_64, ARM64)
-- Installs Neovim 0.10.0+ automatically
-- Installs all required dependencies
-- Sets up Node.js via nvm
-- Clones the configuration
-- Backs up any existing config
-- Configures your shell
+The script backs up any existing `~/.config/nvim`, installs the latest Neovim
+for your architecture, adds a `vim -> nvim` alias, installs the essentials, and
+clones this config. It rolls back on failure.
 
-**Supported Operating Systems:**
-- Ubuntu / Debian / Pop!_OS
-- Fedora
-- Arch Linux / Manjaro
-- macOS (with Homebrew)
+Flags: `-y` skip prompts (pipe-friendly: `... | bash -s -- -y`), `-h` help.
 
-**Supported Architectures:**
-- x86_64 (Intel/AMD 64-bit)
-- ARM64 / aarch64 (Raspberry Pi 4, Apple Silicon, etc.)
+First launch installs plugins automatically; run `:checkhealth` afterward to
+verify.
 
-**Uninstall:**
-To remove the configuration and optionally Neovim itself:
-```bash
-curl -fsSL https://raw.githubusercontent.com/PreparedBag/nvim-config/main/uninstall.sh | bash
-```
-
-**Troubleshooting the installer:**
-If the automated installation fails:
-1. Check the error messages - they indicate what went wrong
-2. Try the manual installation method below
-3. Make sure you have sudo privileges
-4. On macOS, ensure Homebrew is installed first: https://brew.sh
-5. Check that your OS is supported (see list above)
-
----
-
-### Manual Installation
-
-If you prefer to install manually, follow these steps:
-
-Follow these steps in order:
-
-1. **Update Neovim** - Install Neovim 0.10.0 or higher
-2. **Install Prerequisites** - Install required dependencies and tools
-3. **Clone Configuration** - Download this config to `~/.config/nvim`
-4. **First Launch** - Let plugins auto-install on first run
-5. **Verify Setup** - Run `:checkhealth` to confirm everything works
-
-### Step 1: Update Neovim
-
-Make sure you are using the latest Neovim (0.10.0+). The ones in the apt sources are usually too old for these plugins:
-
-https://github.com/neovim/neovim/blob/master/INSTALL.md
-
-#### x86_64
+## Dev mode (optional)
 
 ```bash
-# Download and install Neovim
-curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
-sudo rm -rf /opt/nvim
-sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
-rm nvim-linux-x86_64.tar.gz
-
-# Add to PATH
-grep -qxF 'export PATH="$PATH:/opt/nvim-linux-x86_64/bin"' ~/.bashrc || echo 'export PATH="$PATH:/opt/nvim-linux-x86_64/bin"' >> ~/.bashrc
-
-# Create alias (Optional)
-touch ~/.bash_aliases
-grep -qxF "alias vim='/opt/nvim-linux-x86_64/bin/nvim'" ~/.bash_aliases || echo "alias vim='/opt/nvim-linux-x86_64/bin/nvim'" >> ~/.bash_aliases
-
-# Reload shell configuration
-source ~/.bashrc
+./install-extras.sh
 ```
 
-#### ARM_64
-
-```bash
-# Install build dependencies
-sudo apt install ninja-build gettext cmake unzip curl build-essential
-
-# Build from source
-cd ~
-git clone https://github.com/neovim/neovim
-cd neovim
-make CMAKE_BUILD_TYPE=Release
-sudo make install
-
-# Create alias (Optional)
-touch ~/.bash_aliases
-grep -qxF "alias vim='nvim'" ~/.bash_aliases || echo "alias vim='nvim'" >> ~/.bash_aliases
-
-# Reload shell configuration
-source ~/.bashrc
-```
-
-**Note for ARM_64**: `sudo make install` installs Neovim to `/usr/local/bin/nvim`, which is already in your PATH. No additional PATH configuration needed.
-
-#### Verify Installation
-
-After installing Neovim, verify it's working:
-
-```bash
-nvim --version
-```
-
-You should see Neovim v0.10.0 or higher. If you get "command not found", restart your terminal and try again.
-
-### Step 2: Install Prerequisites
-
-For full functionality, install the following dependencies:
-
-```bash
-sudo apt install luarocks ripgrep nodejs npm golang cargo default-jdk-headless default-jre-headless fd-find python3-neovim
-sudo npm install -g neovim yarn
-```
-
-### Update Node.js with nvm
-
-Install and use the latest LTS version of Node.js:
-
-```bash
-# Install nvm
-curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-
-# Load nvm into current shell
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-# Install and use LTS version
-nvm install --lts
-nvm use --lts
-
-# Verify installation
-node --version
-npm --version
-```
-
-**Note**: After installing nvm, you may need to restart your terminal or run `source ~/.bashrc` for it to take effect in future sessions.
-
-### Step 3: Clone Configuration
-
-***IMPORTANT:*** Backup any existing nvim configurations before proceeding!
-
-```bash
-# Backup existing config (if any)
-[ -d ~/.config/nvim ] && mv ~/.config/nvim ~/.config/nvim.backup.$(date +%Y%m%d_%H%M%S)
-
-# Clone this configuration
-git clone https://github.com/PreparedBag/nvim-config.git ~/.config/nvim
-```
-
-### Step 4: First Launch
-
-Launch Neovim for the first time:
-
-```bash
-nvim
-```
-
-On first launch, Neovim will automatically:
-1. Install lazy.nvim plugin manager
-2. Download and install all plugins
-3. Set up LSP servers via Mason
-
-This may take a few minutes. Once complete, restart Neovim.
-
-### Step 5: Verify Setup
-
-Check the health of plugins by running inside nvim:
-
-```vim
-:checkhealth
-```
-
-You can add additional dependencies if needed based on the health check results.
-
-## KEY FEATURES & KEYBINDINGS
-
-### File Navigation
-- `<leader>fe` - Open Oil file explorer (supports `nvim .`)
-- `<leader>h` - Toggle hidden files (in Oil)
-- `<leader>ff` - Fuzzy find files
-- `<leader>fp` - Live grep search
-- `<leader>fb` - Find buffers
-
-### LSP Features
-- `gd` - Go to definition
-- `gD` - Go to declaration
-- `gi` - Go to implementation
-- `K` - Hover documentation
-- `<leader>la` - Code actions
-- `<leader>ln` - Rename symbol
-- `<leader>lf` - Format document
-- `<leader>lr` - Show references
-- `<leader>ld` - Show diagnostics
-- `<leader>j` / `<leader>k` - Navigate diagnostics
-
-### Harpoon Quick Switching
-- `<leader>a` - Add file to Harpoon
-- `<leader>e` - Toggle Harpoon menu
-- `<leader>1-8` - Jump to Harpoon file 1-8
-
-### Terminal
-- `<leader>,` - Toggle floating terminal
-
-### Other Useful Keybindings
-- `<leader>u` - Toggle undo tree
-- `<leader>bt` - Toggle binary view (xxd preview)
-- `gcc` - Comment line (normal mode)
-- `gc` - Comment selection (visual mode)
-
-Press `<Space>` (leader key) to see all available keybindings via which-key.
-
-## OPTIONAL CONFIGURATIONS
-
-### INSTALL CATPPUCCIN TERMINAL THEME
-
-Navigate to a directory where you want to clone the repo and run:
-
-```bash
-git clone https://github.com/catppuccin/gnome-terminal.git
-cd gnome-terminal
-./install.py
-```
-
-### MARKDOWN-PREVIEW
-
-The markdown preview plugin should install automatically on first use. If you encounter issues:
-
-```bash
-cd ~/.local/share/nvim/lazy/markdown-preview.nvim/app
-yarn install
-```
-
-**Note:** This config uses `yarn` for markdown-preview. Make sure yarn is installed:
-
-```bash
-npm install -g yarn
-```
-
-### UPDATING MERMAID.JS
-
-To update mermaid.js for markdown diagrams, download the desired version and copy it to:
-
-```bash
-~/.local/share/nvim/lazy/markdown-preview.nvim/app/_static/
-```
-
-Example with version 11.6.0:
-
-```bash
-# Download mermaid.min.js to your config directory first
-cp ~/.config/nvim/mermaid-11.6.0.min.js ~/.local/share/nvim/lazy/markdown-preview.nvim/app/_static/
-```
-
-## LSP CONFIGURATION
-
-### Supported Languages
-
-The following language servers are automatically installed:
-- **C/C++**: clangd
-- **Python**: pyright
-- **JavaScript/TypeScript**: ts_ls
-- **HTML**: html
-- **CSS**: cssls
-
-## TROUBLESHOOTING
-
-### LSP Not Working
-
-1. Check if the language server is installed: `:Mason`
-2. Check LSP status: `:LspInfo`
-3. Check health: `:checkhealth`
-4. For C/C++, ensure `compile_commands.json` exists in your project root
-
-### Slow Startup
-
-This config is optimized for fast startup using lazy loading. If you experience slowness:
-
-1. Check your plugin count: `:Lazy`
-2. Profile startup time: `nvim --startuptime startup.log`
-3. Ensure you're using Neovim 0.10.0+
-
-### Plugins Not Loading
-
-1. Update plugins: `:Lazy sync`
-2. Check for errors: `:Lazy log`
-3. Clean and reinstall: `:Lazy clean` then `:Lazy sync`
-
-### Telescope Not Finding Files
-
-Make sure `ripgrep` and `fd-find` are installed:
-
-```bash
-sudo apt install ripgrep fd-find
-```
-
-### Oil File Explorer Issues
-
-Oil loads immediately when you run `nvim .`. If it's not working:
-
-1. Check if Oil is installed: `:Lazy`
-2. Try manually opening: `:Oil`
-3. Check for conflicts with other file explorers
-
-## PERFORMANCE OPTIMIZATIONS
-
-This configuration includes several performance optimizations:
-
-- **Lazy Loading**: Plugins only load when needed
-- **Event-based Loading**: LSP and Treesitter load on `BufReadPost` instead of `BufReadPre`
-- **Deferred Keymaps**: Non-essential keymaps load after startup
-- **Optimized CMP**: Limited to 50 entries for faster completion
-- **Minimal Startup**: Only colorscheme and Oil load immediately
-
-## CUSTOMIZATION
-
-### Changing Colorscheme
-
-Edit `lua/config/lazy.lua` and change:
-
-```lua
-vim.cmd.colorscheme "catppuccin-frappe"
-```
-
-To one of:
-- `catppuccin-latte` / `catppuccin-frappe` / `catppuccin-macchiato` / `catppuccin-mocha`
-- `tokyonight`
-- Any colorscheme from lunarvim/colorschemes
-
-### Adding Custom Keybindings
-
-Add your keybindings to `lua/config/keymaps.lua` or within specific plugin configs.
-
-### Adding New LSP Servers
-
-1. Open Mason: `:Mason`
-2. Search for your language server
-3. Press `i` to install
-4. Add configuration in `lua/plugins/lsp-config.lua`
-
-## STRUCTURE
+Adds the prerequisites for LSP, debugging, and markdown preview - Node.js,
+`clang` + `arm-none-eabi-gcc`, and `yarn`. The language servers, formatters, and
+debug adapters themselves are installed in-editor by Mason. Dev-only plugins
+activate when `DEV_ENABLED` is set; toggle it with `<leader>M` (restart to
+apply). Not covered further here.
+
+## Plugins
+
+- **blink.cmp** - completion (LSP, snippets, path, buffer), enabled only in real code buffers with an LSP attached.
+- **LuaSnip** + **friendly-snippets** - snippet engine plus a prebuilt collection; custom snippets live in `snippets/`.
+- **telescope** (+ fzf, ui-select) - fuzzy finder for files, grep, buffers, and pickers.
+- **treesitter** - syntax highlighting, indentation, and folds.
+- **oil** - edit the filesystem like a normal buffer.
+- **harpoon** - pin and jump between a handful of key files.
+- **gitsigns** - inline git hunks: navigate, stage, preview, blame.
+- **git** (custom) - a full Git command menu (status, commit, push/pull, branches, stash, tags).
+- **comment** - line/block comments, doc comments, and TODO/annotation search.
+- **persistence** - auto-saved sessions, restorable per project.
+- **undotree** - visualize and browse the undo history.
+- **lualine** - statusline.
+- **which-key** - popup of available keybindings as you type.
+- **noice** + **nvim-notify** - modern cmdline and message UI.
+- **number** (custom) - inline hex/dec/bin conversions for C work.
+
+## Keymaps
+
+Leader is `<Space>`. Grouped by prefix. Dev-mode maps (LSP, debugger, markdown/html live servers)
+are omitted.
+
+### Files & search - `<leader>f`
+
+| Key | Action |
+| --- | --- |
+| `<leader>ff` | Find files (fuzzy) |
+| `<leader>fa` | Find all files (include ignored) |
+| `<leader>fw` | Find word under cursor (ripgrep) |
+| `<leader>fp` | Find phrase (live grep) |
+| `<leader>fs` | Find string (include all) |
+| `<leader>fH` | Help tags |
+| `<leader>fc` | Open Nvim config folder |
+| `<leader>fd` | Set Telescope cwd here |
+| `<leader>fo` | Reset Telescope cwd to original |
+| `<leader>fq` | View quickfix list |
+| `<leader>fh` | View quickfix history |
+| `<leader>ft` | Pending tasks (TODOs) |
+| `<leader>fT` | All annotations |
+| `<leader>fe` | File explorer (Oil) |
+
+### Buffers & files - `<leader>b`, misc
+
+| Key | Action |
+| --- | --- |
+| `<leader>bb` | Show all buffers |
+| `<leader>bd` | Delete current buffer |
+| `<leader>bt` | Toggle binary preview |
+| `<leader>q` | Quit without saving |
+| `<leader>x` | Make file executable (`chmod +x`) |
+
+### Windows & splits - `<leader>w`, `<leader>s`
+
+| Key | Action |
+| --- | --- |
+| `<leader>sv` | Vertical split |
+| `<leader>sh` | Horizontal split |
+| `<leader>wh` / `wj` / `wk` / `wl` | Focus left / down / up / right |
+| `<leader>ww` | Toggle window focus |
+| `<leader>we` | Equalize all windows |
+
+### Harpoon - `<leader>h`
+
+| Key | Action |
+| --- | --- |
+| `<leader>ha` | Add file to Harpoon |
+| `<leader>hA` | Add buffers to Harpoon |
+| `<leader>hc` | Clear Harpoon list |
+| `<leader>he` | Harpoon edit (native menu) |
+| `<leader>hm` | Harpoon menu (Telescope) |
+| `<leader>1`-`<leader>8` | Jump to Harpoon slot 1-8 |
+
+### Git menu - `<leader>g` (custom `git`)
+
+| Key | Action |
+| --- | --- |
+| `<leader>gs` | Git status |
+| `<leader>gl` | Git log |
+| `<leader>gc` | Commit staged |
+| `<leader>gA` | Add all + commit |
+| `<leader>gx` | Discard changes to file |
+| `<leader>gp` / `gP` | Push / Pull |
+| `<leader>gu` | Push + tags |
+| `<leader>gU` | Push + set upstream |
+| `<leader>gf` | Fetch + prune |
+| `<leader>gt` | New tag |
+| `<leader>gb...` | Branches: select, merge, delete, checkout, new |
+| `<leader>gz...` | Stash: apply, pop, drop, branch, save |
+
+### Git hunks - `<leader>g` (gitsigns)
+
+| Key | Action |
+| --- | --- |
+| `<leader>gj` / `gk` | Next / previous hunk |
+| `<leader>gq` | Send all hunks to quickfix |
+| `<leader>ghs` | Stage hunk (or selection) |
+| `<leader>ghr` | Discard hunk (or selection) |
+| `<leader>ghu` | Undo stage hunk |
+| `<leader>ghS` | Stage buffer |
+| `<leader>ghR` | Reset buffer |
+| `<leader>ghp` | Preview hunk |
+| `<leader>ghb` | Blame line |
+
+### Comments - `<leader>c`
+
+| Key | Action |
+| --- | --- |
+| `<leader>cc` | Comment line (or selection) |
+| `<leader>cb` | Block comment line (or selection) |
+| `<leader>cd` | Generate doc comment |
+
+### Sessions - `<leader>p` (persistence)
+
+| Key | Action |
+| --- | --- |
+| `<leader>pl` | Restore session (cwd) |
+| `<leader>pr` | Restore last session |
+| `<leader>ps` | Save session |
+| `<leader>pd` | Stop saving session |
+| `<leader>pq` | Save session and quit |
+| `<leader>pp` | Pick a session (Telescope) |
+
+### Numbers - `<leader>n` (custom `number base conversion`)
+
+| Key | Action |
+| --- | --- |
+| `<leader>np` | Toggle inline base preview |
+| `<leader>nt` | Cycle number under cursor in place (hex -> dec -> bin) |
+| `<leader>nh` / `nd` / `nb` / `no` | Show + copy as hex / dec / bin / oct |
+
+### Editor & clipboard
+
+| Key | Action |
+| --- | --- |
+| `<leader>y` | Yank selection to system clipboard |
+| `<leader>Y` | Yank line to system clipboard |
+| `<leader>p` | Paste without yanking (visual) |
+| `<leader>j` / `<leader>k` | Next / previous quickfix item |
+| `<leader>u` | Toggle Undotree |
+| `<leader>M` | Toggle dev mode (restart to apply) |
+
+## Layout
 
 ```
-~/.config/nvim/
-├── init.lua                    # Entry point
-├── lua/
-│   ├── config/
-│   │   ├── setup.lua          # Neovim options
-│   │   ├── keymaps.lua        # Global keymaps
-│   │   ├── lazy.lua           # Plugin manager setup
-│   │   └── autocmds.lua       # Auto commands
-│   └── plugins/               # Plugin configurations
-│       ├── colorschemes.lua
-│       ├── lsp-config.lua
-│       ├── telescope.lua
-│       ├── oil.lua
-│       ├── harpoon.lua
-│       └── ...
-└── markdown/
-    └── markdown.css           # Markdown preview styling
+lua/
+  config/    core options, keymaps, lazy bootstrap, number tooling
+  plugins/   one spec per plugin
+  after/     autocommands
+snippets/    custom LuaSnip snippets
 ```
-
-## SUPPORT
-
-For issues or questions:
-1. Check `:checkhealth` first
-2. Review plugin documentation: `:help <plugin-name>`
-3. Check the issues on GitHub
-
-## LICENSE
-
-This configuration is provided as-is. Feel free to modify and distribute as needed.

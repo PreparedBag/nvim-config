@@ -14,6 +14,8 @@ return {
         event = { "BufReadPost", "BufNewFile" },
         dependencies = { "neovim/nvim-lspconfig" },
         config = function()
+            vim.lsp.set_log_level("ERROR")
+
             -- ============================================================================
             -- HELPER FUNCTIONS
             -- ============================================================================

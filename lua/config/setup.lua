@@ -1,3 +1,6 @@
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_ruby_provider = 0
+
 -- Leader keys
 -- Set space as the leader key
 vim.g.mapleader = " "
