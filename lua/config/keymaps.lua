@@ -28,9 +28,9 @@ vim.keymap.set('i', '<C-b>', '<Left>', { noremap = true, silent = true, desc = '
 -- Join lines and keep cursor in place
 vim.keymap.set("n", "J", "mzJ`z", opts)
 -- Scroll half-page down and center
-vim.keymap.set("n", "<C-d>", "<C-d>zz", opts)
+-- vim.keymap.set("n", "<C-d>", "<C-d>zz", opts)
 -- Scroll half-page up and center
-vim.keymap.set("n", "<C-u>", "<C-u>zz", opts)
+-- vim.keymap.set("n", "<C-u>", "<C-u>zz", opts)
 
 -- Search Navigation
 -- Next search result and center
@@ -96,7 +96,9 @@ vim.keymap.set("n", "<leader>we", "<C-w>=", { noremap = true, silent = true, des
 -- Paste over selection without overwriting default register
 vim.keymap.set("x", "<leader>p", [["_dP]], { noremap = true, silent = true, desc = "Paste Without Yank" })
 -- Yank to system clipboard
-vim.keymap.set("x", "<leader>y", [["+y]], { noremap = true, silent = true, desc = "Yank to Clipboard" })
+vim.keymap.set("x", "<leader>y", function()
+    vim.cmd('normal! "+y')
+end, { desc = "Yank to Clipboard" })
 -- Yank whole line to system clipboard
 vim.keymap.set("n", "<leader>Y", [["+Y]], { noremap = true, silent = true, desc = "Yank Line to Clipboard" })
 

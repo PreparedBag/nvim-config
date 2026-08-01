@@ -126,29 +126,15 @@ install_neovim_linux() {
     INSTALLED_NVIM=true
 }
 
+# in install.sh, replace the whole install_neovim function body with:
 install_neovim() {
     step "Installing Neovim..."
-
-    if command_exists nvim; then
-        local cur; cur=$(nvim --version | head -n1 | grep -oP 'v\K[0-9.]+' || echo "0.0.0")
-        info "Found Neovim $cur"
-        if [ "$AUTO_YES" = false ]; then
-            read -p "Update to the latest Neovim? (y/N) " -n 1 -r; echo ""
-            [[ ! $REPLY =~ ^[Yy]$ ]] && { info "Keeping existing Neovim"; return 0; }
-        fi
-    fi
-
-    case $OS in
-        ubuntu|debian|pop|raspbian|fedora|arch|manjaro)
-            install_neovim_linux || return 1 ;;
-        macos)
-            brew install neovim || brew upgrade neovim || return 1 ;;
-    esac
-
-    if command_exists nvim; then
-        success "Neovim $(nvim --version | head -n1 | grep -oP 'v\K[0-9.]+') ready"
+    local dir; dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    # Pass -y through when install.sh is in auto-yes mode.
+    if [ "$AUTO_YES" = true ]; then
+        "$dir/update-nvim.sh" -y || return 1
     else
-        err "nvim not found after install"; return 1
+        "$dir/update-nvim.sh" || return 1
     fi
 }
 

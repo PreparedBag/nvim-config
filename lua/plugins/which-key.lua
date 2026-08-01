@@ -4,11 +4,13 @@ return {
     version = "*",
     config = function()
         local wk = require("which-key")
-
         wk.setup({
             delay = 200,
             icons = {
                 mappings = false,
+            },
+            triggers = {
+                { "<leader>", mode = "n" },
             },
         })
 
