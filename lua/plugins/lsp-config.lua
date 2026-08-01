@@ -87,13 +87,16 @@ return {
 
                 -- Diagnostics
                 map("n", "<leader>ld", vim.diagnostic.open_float, "Line Diagnostics")
-                map("n", "<leader>lk", vim.diagnostic.goto_prev, "Prev Diagnostic")
-                map("n", "<leader>lj", vim.diagnostic.goto_next, "Next Diagnostic")
+                map("n", "<leader>lk", function() vim.diagnostic.jump({ count = -1 }) end, "Prev Diagnostic")
+                map("n", "<leader>lj", function() vim.diagnostic.jump({ count = 1 }) end, "Next Diagnostic")
+                map("n", "<leader>le", function()
+                    vim.diagnostic.jump({ count = 1, severity = vim.diagnostic.severity.ERROR })
+                end, "Next Error")
 
                 -- References via LSP; falls back to ripgrep only if the LSP returns nothing.
                 map("n", "<leader>lr", function()
                     local word = vim.fn.expand("<cword>")
-                    local bufnr = vim.api.nvim_get_current_buf()
+                    -- local bufnr = vim.api.nvim_get_current_buf()
 
                     local function ripgrep()
                         require("telescope.builtin").grep_string({
@@ -112,7 +115,7 @@ return {
                     end
 
                     -- Pass encoding explicitly -> no more position_encoding warning
-                    local params = vim.lsp.util.make_position_params(0, clients[1].offset_encoding)
+                    local params = vim.lsp.util.make_position_params(0, clients[1].offset_encoding) --[[@as lsp.ReferenceParams]]
                     params.context = { includeDeclaration = true }
 
                     vim.lsp.buf_request_all(bufnr, "textDocument/references", params, function(results)
@@ -206,7 +209,7 @@ return {
                 local current_state = vim.b[bufnr].blink_cmp_enabled
 
                 if current_state == false then
-                    vim.b[bufnr].blink_cmp_enabled = nil -- nil = use default (enabled)
+                    vim.b[bufnr].blink_cmp_enabled = nil
                     vim.notify("Autocomplete enabled")
                 else
                     vim.b[bufnr].blink_cmp_enabled = false
@@ -249,8 +252,9 @@ return {
                 local attached = 0
 
                 for _, client in ipairs(all_clients) do
-                    if client.config.filetypes then
-                        for _, ft in ipairs(client.config.filetypes) do
+                    local fts = client.config.filetypes --[[@as string[]?]]
+                    if fts then
+                        for _, ft in ipairs(fts) do
                             if ft == filetype then
                                 vim.lsp.buf_attach_client(bufnr, client.id)
                                 on_attach(client, bufnr)

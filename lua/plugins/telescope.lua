@@ -200,13 +200,13 @@ return {
             vim.keymap.set("n", "<leader>fq", function()
                 builtin.quickfix({ initial_mode = "normal" })
             end, { noremap = true, silent = true, desc = "View Quickfix List" })
+
             vim.keymap.set("n", "<leader>fh", function()
-                local actions = require("telescope.actions")
                 local action_state = require("telescope.actions.state")
 
                 require("telescope.builtin").quickfixhistory({
                     initial_mode = "normal",
-                    attach_mappings = function(_, map_fn)
+                    attach_mappings = function(_, bufnr)
                         actions.select_default:replace(function(prompt_bufnr)
                             local entry = action_state.get_selected_entry()
                             actions.close(prompt_bufnr)
@@ -238,8 +238,10 @@ return {
                 local config_path = vim.fn.expand('~/.config/nvim')
                 vim.cmd.ex(config_path)
             end, { noremap = true, silent = true, desc = 'Open Nvim Config Folder' })
+
             vim.keymap.set("n", "<leader>fd", function() set_telescope_cwd_to_updated() end,
                 { noremap = true, silent = true, desc = "Set Telescope CWD Here" })
+
             vim.keymap.set("n", "<leader>fo", function() set_telescope_cwd_to_original() end,
                 { noremap = true, silent = true, desc = "Set Telescope CWD to Original" })
         end

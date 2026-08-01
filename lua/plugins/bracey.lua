@@ -11,7 +11,7 @@ return {
 
         -- Kill any running HTML/Flask server and free the ports
         local function stop_servers()
-            pcall(vim.cmd, 'BraceyStop')
+            pcall(function() vim.cmd('BraceyStop') end)
             vim.fn.system("pkill -f 'flask-dev-server.py' 2>/dev/null")
             vim.fn.system("fuser -k 3000/tcp 2>/dev/null")
             vim.fn.system("fuser -k 5000/tcp 2>/dev/null")

@@ -4,34 +4,17 @@
 -- session filenames encode the project path with % as the
 -- separator; decode it back for display. selecting an entry
 -- sources that session file to restore its buffers and layout.
+-- telescope is guaranteed loaded here via the spec's `dependencies`.
 -- ---------------------------------------------------------------
 
 local function confirm(question)
     return vim.fn.confirm(question, "&Yes\n&No", 2) == 1
 end
 
-local function session_picker()
-    local ok = pcall(require, "telescope")
-    if not ok then
-        vim.notify("telescope not available", vim.log.levels.ERROR)
-        return
-    end
-    require("lazy").load({ plugins = { "telescope.nvim" } })
-
-    local pickers = require("telescope.pickers")
-    local finders = require("telescope.finders")
-    local conf = require("telescope.config").values
-    local actions = require("telescope.actions")
-    local state = require("telescope.actions.state")
-
+-- Read the saved sessions off disk, decoding the %-encoded path for display.
+local function session_entries()
     local dir = require("persistence.config").options.dir
     local files = vim.fn.glob(dir .. "*.vim", true, true)
-
-    if #files == 0 then
-        vim.notify("No saved sessions", vim.log.levels.INFO)
-        return
-    end
-
     local entries = {}
     for _, file in ipairs(files) do
         local name = vim.fn.fnamemodify(file, ":t:r")
@@ -40,78 +23,60 @@ local function session_picker()
             display = name:gsub("%%%%", "/"):gsub("%%", "/"),
         })
     end
+    return entries
+end
+
+-- Build a fresh finder from the current on-disk sessions.
+-- Called on open and again on refresh after a delete.
+local function make_finder()
+    return require("telescope.finders").new_table({
+        results = session_entries(),
+        entry_maker = function(e)
+            return { value = e.file, display = e.display, ordinal = e.display }
+        end,
+    })
+end
+
+local function session_picker()
+    local pickers = require("telescope.pickers")
+    local conf = require("telescope.config").values
+    local actions = require("telescope.actions")
+    local state = require("telescope.actions.state")
+
+    if #session_entries() == 0 then
+        vim.notify("No saved sessions", vim.log.levels.INFO)
+        return
+    end
 
     pickers.new({
         initial_mode = "normal",
         prompt_title = "Sessions",
     }, {
-        finder = finders.new_table({
-            results = entries,
-            entry_maker = function(e)
-                return {
-                    value = e.file,
-                    display = e.display,
-                    ordinal = e.display,
-                }
-            end,
-        }),
+        finder = make_finder(),
         sorter = conf.generic_sorter({}),
-            attach_mappings = function(prompt_bufnr, map)
+        attach_mappings = function(_, map)
+            -- <CR>: source the selected session file
             actions.select_default:replace(function(bufnr)
                 local entry = state.get_selected_entry()
                 actions.close(bufnr)
-                if not entry then
-                    return
-                end
+                if not entry then return end
                 vim.cmd("silent! source " .. vim.fn.fnameescape(entry.value))
             end)
 
-            -- delete the session file under the cursor, refresh the list
+            -- <C-d>: delete the session under the cursor, then refresh the list
             map({ "i", "n" }, "<C-d>", function(bufnr)
                 local entry = state.get_selected_entry()
-                if not entry then
-                    return
-                end
-
-                if not confirm("Delete session '" .. entry.display .. "'?") then
-                    return
-                end
+                if not entry then return end
+                if not confirm("Delete session '" .. entry.display .. "'?") then return end
 
                 vim.fn.delete(entry.value)
-
-                -- rebuild the entry list from what's left on disk
-                local dir = require("persistence.config").options.dir
-                local files = vim.fn.glob(dir .. "*.vim", true, true)
-                local entries = {}
-                for _, file in ipairs(files) do
-                    local name = vim.fn.fnamemodify(file, ":t:r")
-                    table.insert(entries, {
-                        file = file,
-                        display = name:gsub("%%%%", "/"):gsub("%%", "/"),
-                    })
-                end
-
-                local picker = state.get_current_picker(bufnr)
-                picker:refresh(
-                    require("telescope.finders").new_table({
-                        results = entries,
-                        entry_maker = function(e)
-                            return {
-                                value = e.file,
-                                display = e.display,
-                                ordinal = e.display,
-                            }
-                        end,
-                    }),
-                    { reset_prompt = false }
-                )
-            end)
+                state.get_current_picker(bufnr):refresh(make_finder(), { reset_prompt = false })
+            end, { desc = "Delete Session" })
 
             return true
         end,
     }):find()
 end
-
 
 return {
     "folke/persistence.nvim",

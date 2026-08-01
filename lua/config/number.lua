@@ -8,7 +8,8 @@ local M = {}
 
 local ns = vim.api.nvim_create_namespace("numbase_preview")
 local enabled = false
--- TODO: uncomment for file specific enable 
+
+-- TODO: uncomment for file specific enable
 -- local filetypes = { c = true, cpp = true, h = true }
 
 -- Find the number token spanning the cursor.
@@ -17,9 +18,9 @@ local function number_under_cursor()
     local line = vim.api.nvim_get_current_line()
     local col = vim.api.nvim_win_get_cursor(0)[2] + 1
     local patterns = {
-        { pat = "0[xX]%x+", base = "hex" },
+        { pat = "0[xX]%x+",   base = "hex" },
         { pat = "0[bB][01]+", base = "bin" },
-        { pat = "%d+", base = "dec" },
+        { pat = "%d+",        base = "dec" },
     }
     for _, p in ipairs(patterns) do
         local init = 1
@@ -38,7 +39,7 @@ local function to_value(str, base)
     if base == "bin" then
         return tonumber(str:sub(3), 2) -- strip 0b, parse base 2
     end
-    return tonumber(str) -- 0x.. and decimal parse natively
+    return tonumber(str)               -- 0x.. and decimal parse natively
 end
 
 -- How many whole bytes are needed to represent value (min 1).
@@ -82,9 +83,11 @@ end
 
 local function refresh()
     vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
-    if not enabled or vim.bo.buftype ~= "" then return end
+
     -- TODO: uncomment for file specific enable
     -- if not enabled or not filetypes[vim.bo.filetype] then return end
+    if not enabled or vim.bo.buftype ~= "" then return end
+
     local str, base = number_under_cursor()
     if not str then return end
     local value = to_value(str, base)
@@ -103,7 +106,7 @@ local next_base = { hex = "dec", dec = "bin", bin = "hex" }
 
 local function cycle_base()
     local str, base, s, e = number_under_cursor()
-    if not str then
+    if not (str and s and e) then
         vim.notify("No number under cursor", vim.log.levels.WARN)
         return
     end

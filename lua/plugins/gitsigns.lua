@@ -77,7 +77,9 @@ return {
 
                 -- All project hunks into the quickfix list
                 map("n", "<leader>gq", function()
-                    gs.setqflist("all", { open = false })
+                    gs.setqflist("all", { open = false }, function()
+                        vim.fn.setqflist({}, "a", { title = "Git Hunks (all)" })
+                    end)
                 end, "All hunks to quickfix")
             end,
         })
