@@ -45,7 +45,7 @@ return {
                     if uses_flask then
                         -- Use Flask server
                         vim.notify("Flask imports detected...running local Flask dev server...", vim.log.levels.INFO)
-                        local flask_script = vim.fn.stdpath('config') .. '/flask-dev-server.py'
+                        local flask_script = vim.fn.stdpath('config') .. '/misc/flask-dev-server.py'
                         vim.fn.jobstart(
                             { 'python3', flask_script, current_dir, current_filename },
                             { detach = true }
