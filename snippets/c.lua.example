@@ -1,0 +1,102 @@
+-- ~/.config/nvim/snippets/c.lua
+-- Custom C snippets for LuaSnip. Loaded by the from_lua loader pointed at
+-- the snippets/ directory. Return a list of snippets from the file.
+
+local ls = require("luasnip")
+local s = ls.snippet
+local i = ls.insert_node
+local c = ls.choice_node
+local f = ls.function_node
+local fmt = require("luasnip.extras.fmt").fmt   -- {} placeholders
+local rep = require("luasnip.extras").rep       -- repeat a node's text
+
+return {
+    -- #include <...> with a choice between angle brackets and quotes
+    -- s("inc", fmt([[#include {}{}{}]], {
+    --     c(1, { ls.text_node("<"), ls.text_node('"') }),
+    --     i(2, "stdio.h"),
+    --     c(3, { ls.text_node(">"), ls.text_node('"') }),
+    -- })),
+
+    -- main function
+    s("main", fmt([[
+        int main(int argc, char *argv[]) {{
+            {}
+            return 0;
+        }}
+    ]], { i(0) })),
+
+    -- typedef struct; the name is typed once at {2} and echoed at the bottom
+    s("tstruct", fmt([[
+        typedef struct {{
+            {}
+        }} {};
+    ]], { i(1, "int x;"), i(2, "Name") })),
+
+    -- plain struct
+    s("struct", fmt([[
+        struct {} {{
+            {}
+        }};
+    ]], { i(1, "Name"), i(2, "int x;") })),
+
+    -- for loop over a count; the index name at {1} is reused in all 3 spots
+    s("fori", fmt([[
+        for (size_t {} = 0; {} < {}; {}++) {{
+            {}
+        }}
+    ]], {
+        i(1, "i"),
+        rep(1),          -- same as index
+        i(2, "n"),
+        rep(1),          -- same as index
+        i(0),
+    })),
+
+    -- while loop
+    s("while", fmt([[
+        while ({}) {{
+            {}
+        }}
+    ]], { i(1, "condition"), i(0) })),
+
+    -- if / else
+    s("ife", fmt([[
+        if ({}) {{
+            {}
+        }} else {{
+            {}
+        }}
+    ]], { i(1, "condition"), i(2), i(0) })),
+
+    -- function definition
+    s("fn", fmt([[
+        {} {}({}) {{
+            {}
+        }}
+    ]], { i(1, "void"), i(2, "name"), i(3, ""), i(0) })),
+
+    -- header include guard, derived from the file name (FOO_H)
+    s("guard", fmt([[
+        #ifndef {}
+        #define {}
+
+        {}
+
+        #endif // {}
+    ]], {
+        f(function()
+            local name = vim.fn.expand("%:t:r"):upper()
+            return name .. "_H"
+        end),
+        f(function()
+            local name = vim.fn.expand("%:t:r"):upper()
+            return name .. "_H"
+        end),
+        i(0),
+        f(function()
+            local name = vim.fn.expand("%:t:r"):upper()
+            return name .. "_H"
+        end),
+    })),
+}
