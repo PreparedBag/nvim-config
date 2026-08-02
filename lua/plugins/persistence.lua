@@ -36,12 +36,38 @@ end
 local function save_session()
     clean_for_session()
     require("persistence").save()
+    vim.notify("Session saved", vim.log.levels.INFO)
 end
 
 local function save_and_quit()
     clean_for_session()
     require("persistence").save()
-    vim.schedule(function() vim.cmd("confirm qa") end)
+
+    -- collect any modified buffers across the whole session
+    local modified = {}
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].modified then
+            table.insert(modified, vim.api.nvim_buf_get_name(buf))
+        end
+    end
+
+    if #modified == 0 then
+        vim.cmd("qa")
+        return
+    end
+
+    vim.ui.select(
+        { "Save all and quit", "Quit without saving", "Cancel" },
+        { prompt = #modified .. " buffer(s) have unsaved changes:" },
+        function(choice)
+            if choice == "Save all and quit" then
+                vim.cmd("wqa")
+            elseif choice == "Quit without saving" then
+                vim.cmd("qa!")
+            end
+            -- Cancel or dismiss: do nothing
+        end
+    )
 end
 
 -- Read the saved sessions off disk, decoding the %-encoded path for display.
