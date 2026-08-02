@@ -9,9 +9,11 @@ return {
 
             -- Parsers to install (replaces ensure_installed).
             require("nvim-treesitter").install({
-                "c", "regex", "lua", "vim", "vimdoc", "html", "css",
+                "c", "h", "cpp", "regex", "lua", "vim", "vimdoc", "html", "css",
                 "javascript", "mermaid", "yaml", "markdown", "markdown_inline",
-                "go", "gomod", "gowork", "gosum", "rust",
+                "go", "gomod", "gowork", "gosum", "rust", "bash", "make", "linkerscript", "asm", "cmake",
+                "gitcommit", "gitignore", "gitattributes", "git_rebase", "git_config", "diff",
+                "java", "json", "python"
             })
 
             -- Enable highlighting (and indent expr) per-buffer.

@@ -108,16 +108,62 @@ install_node() {
     success "Node ready: $(node --version)"
 }
 
+# tree-sitter CLI: required for nvim-treesitter `main` to compile parsers.
+# Tries the fast prebuilt npm binary first; falls back to building from
+# source via cargo if the npm binary can't actually run here (e.g. an older
+# glibc than the prebuilt binary was compiled against).
 install_treesitter_cli() {
     step "Installing tree-sitter-cli ${TREE_SITTER_CLI_VERSION}..."
+
     local current
     current=$(command_exists tree-sitter && tree-sitter --version 2>/dev/null | grep -oE '[0-9.]+')
     if [ "$current" = "$TREE_SITTER_CLI_VERSION" ]; then
         info "tree-sitter-cli already at pinned version"
         return 0
     fi
-    sudo npm install -g "tree-sitter-cli@${TREE_SITTER_CLI_VERSION}" || { err "tree-sitter-cli install failed"; return 1; }
-    success "tree-sitter-cli ready: $(tree-sitter --version)"
+
+    info "Trying prebuilt binary via npm..."
+    sudo npm install -g "tree-sitter-cli@${TREE_SITTER_CLI_VERSION}" >/dev/null 2>&1
+    hash -r  # clear any cached PATH lookup from before this install
+
+    # npm's binary is prebuilt against a specific glibc - verify it actually
+    # runs here, don't just trust that npm exited 0.
+    if command_exists tree-sitter && tree-sitter --version >/dev/null 2>&1; then
+        success "tree-sitter-cli ready (npm): $(tree-sitter --version)"
+        return 0
+    fi
+
+    warn "npm's prebuilt binary won't run here (likely an older glibc)."
+    warn "Removing it and building from source via cargo instead..."
+    sudo npm uninstall -g tree-sitter-cli >/dev/null 2>&1
+    hash -r  # forget the now-removed npm binary's location
+
+    if ! command_exists cargo; then
+        info "Installing Rust toolchain (rustup) for the source build..."
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal \
+            || { err "rustup install failed"; return 1; }
+        source "$HOME/.cargo/env"
+    fi
+
+    # cargo's build needs libclang (bindgen), not just the clang binary.
+    info "Ensuring libclang is available for the build..."
+    case $OS in
+        ubuntu|debian|pop|raspbian) sudo apt-get install -y libclang-dev ;;
+        fedora)                     sudo dnf install -y clang-devel llvm-devel ;;
+        arch|manjaro)                sudo pacman -S --noconfirm clang llvm ;;
+        macos)                       ;; # Xcode's clang ships libclang already
+    esac
+
+    cargo install tree-sitter-cli --version "${TREE_SITTER_CLI_VERSION}" --locked \
+        || { err "cargo build of tree-sitter-cli failed"; return 1; }
+    hash -r  # pick up the freshly built ~/.cargo/bin/tree-sitter
+
+    if command_exists tree-sitter && tree-sitter --version >/dev/null 2>&1; then
+        success "tree-sitter-cli ready (cargo): $(tree-sitter --version)"
+    else
+        err "tree-sitter-cli still not runnable after cargo build - check PATH includes ~/.cargo/bin"
+        return 1
+    fi
 }
 
 install_neovim() {
