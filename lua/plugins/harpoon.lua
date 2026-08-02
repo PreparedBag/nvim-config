@@ -69,7 +69,7 @@ return {
                 local win = vim.api.nvim_get_current_win()
                 local cfg = vim.api.nvim_win_get_config(win)
                 cfg.border = "rounded"
-                cfg.title = " Harpoon "
+                cfg.title = " Harpoon Quick List "
                 cfg.title_pos = "center"
                 vim.api.nvim_win_set_config(win, cfg)
             end,

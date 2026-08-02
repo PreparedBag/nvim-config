@@ -414,7 +414,7 @@ local function status_picker(root)
     local head = capture({ "symbolic-ref", "--short", "HEAD" }, root)
     local title
     if head == "" then
-        title = "⚠ DETACHED HEAD  (t: stage/unstage)"
+        title = "⚠ DETACHED HEAD  (t: Stage/Unstage)"
     else
         -- ahead/behind counts vs upstream, if an upstream exists
         local ab = capture({ "rev-list", "--left-right", "--count", "HEAD...@{u}" }, root)
@@ -426,7 +426,7 @@ local function status_picker(root)
             if tonumber(behind) > 0 then table.insert(parts, "↓ " .. behind) end
             if #parts > 0 then tracking = " " .. table.concat(parts, " ") end
         end
-        title = string.format("Git: %s%s (t: stage/unstage)", head, tracking)
+        title = string.format("Git: %s%s (t: Stage/Unstage)", head, tracking)
     end
 
     local function refresh(bufnr)
@@ -454,15 +454,15 @@ local function status_picker(root)
                     capture({ "add", "--", entry.path }, root)
                 end
                 picker:refresh(status_finder(root), { reset_prompt = false })
-            end, { desc = "Stage/unstage"})
+            end, { desc = "Stage/Unstage"})
             map({ "i", "n" }, "<C-a>", function(bufnr)
                 capture({ "add", "-A" }, root)
                 refresh(bufnr)
-            end, {desc = "Stage all"})
+            end, {desc = "Stage All"})
             map({ "i", "n" }, "<C-u>", function(bufnr)
                 capture({ "reset" }, root)
                 refresh(bufnr)
-            end, { desc = "Unstage all (reset)"})
+            end, { desc = "Unstage All (Reset)"})
             return true
         end,
     }):find()
