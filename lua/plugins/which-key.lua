@@ -6,8 +6,11 @@ return {
         local wk = require("which-key")
         wk.setup({
             delay = 200,
-            icons = {
-                mappings = false,
+            icons = { mappings = false, },
+            win = {
+                -- border = "rounded",
+                no_overlap = false,
+                wo = { winblend = 0 },
             },
         })
 
