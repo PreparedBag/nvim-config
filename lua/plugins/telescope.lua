@@ -68,6 +68,7 @@ return {
             -- Telescope setup
             telescope.setup({
                 defaults = {
+                    scroll_strategy = "limit",
                     layout_strategy = "horizontal",
                     layout_config = {
                         horizontal = { preview_width = 0.5 },
