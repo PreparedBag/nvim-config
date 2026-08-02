@@ -4,6 +4,7 @@ return {
     dependencies = {
         "nvim-lua/plenary.nvim",
         "nvim-telescope/telescope.nvim",
+
     },
     keys = {
         { "<leader>ha", function() require("harpoon"):list():add() end,    desc = "Add Current Buffer to Harpoon" },
@@ -19,7 +20,6 @@ return {
             "<leader>hA",
             function()
                 local harpoon = require("harpoon")
-                local list = harpoon:list()
                 local added = 0
 
                 for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do

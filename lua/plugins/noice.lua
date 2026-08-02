@@ -8,7 +8,7 @@ return {
             top_down = true,
             -- NOTE: update to preferred dialog style
             render = "default", -- fuller dialog style (vs "minimal" / "compact")
-            stages = "static", -- animation; "fade"/"slide"/"static"
+            stages = "static",  -- animation; "fade"/"slide"/"static"
             timeout = 3000,
         })
         require("noice").setup({

@@ -88,7 +88,9 @@ return {
                         case_mode = "smart_case",
                     },
                     ["ui-select"] = {
-                        require("telescope.themes").get_dropdown({})
+                        require("telescope.themes").get_dropdown({
+                            initial_mode = "normal",
+                        }),
                     },
                 },
             })

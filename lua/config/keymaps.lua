@@ -104,7 +104,27 @@ vim.keymap.set("n", "<leader>Y", [["+Y]], { noremap = true, silent = true, desc 
 
 -- Miscellaneous
 -- Quit current buffer without saving
-vim.keymap.set("n", "<leader>q", ":q<CR>", { noremap = true, silent = true, desc = "Quit Without Saving" })
+vim.keymap.set("n", "<leader>q", function()
+    if not vim.bo.modified then
+        vim.cmd("quit")
+        return
+
+    end
+
+    vim.ui.select(
+        { "Save and quit", "Quit without saving", "Cancel" },
+        { prompt = "Unsaved changes in this buffer:" },
+        function(choice)
+            if choice == "Save and quit" then
+                vim.cmd("write")
+                vim.cmd("quit")
+            elseif choice == "Quit without saving" then
+                vim.cmd("quit!")
+            end
+            -- Cancel or dismiss (Esc): do nothing
+        end
+    )
+end, { silent = true, desc = "Quit (confirm if unsaved)" })
 -- Quit all
 -- vim.keymap.set("n", "<leader>qa", ":qa<CR>", { noremap = true, silent = true, desc = "Quit All Without Saving" })
 -- Save file
