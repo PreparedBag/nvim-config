@@ -63,8 +63,17 @@ return {
         { "<leader>8",  function() require("harpoon"):list():select(8) end },
     },
     config = function()
-        vim.api.nvim_set_hl(0, "NormalFloat", { link = "Normal", bg = "none" })
-        vim.api.nvim_set_hl(0, "FloatBorder", { link = "Normal", bg = "none" })
+        vim.api.nvim_create_autocmd("FileType", {
+            pattern = "harpoon",
+            callback = function()
+                local win = vim.api.nvim_get_current_win()
+                local cfg = vim.api.nvim_win_get_config(win)
+                cfg.border = "rounded"
+                cfg.title = " Harpoon "
+                cfg.title_pos = "center"
+                vim.api.nvim_win_set_config(win, cfg)
+            end,
+        })
 
         local harpoon = require("harpoon")
         harpoon:setup({})

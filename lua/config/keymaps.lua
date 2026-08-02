@@ -96,9 +96,10 @@ vim.keymap.set("n", "<leader>we", "<C-w>=", { noremap = true, silent = true, des
 -- Paste over selection without overwriting default register
 vim.keymap.set("x", "<leader>p", [["_dP]], { noremap = true, silent = true, desc = "Paste Without Yank" })
 -- Yank to system clipboard
-vim.keymap.set("x", "<leader>y", function()
-    vim.cmd('normal! "+y')
-end, { desc = "Yank to Clipboard" })
+-- vim.keymap.set("x", "<leader>y", function()
+--     vim.cmd('normal! "+y')
+-- end, { desc = "Yank to Clipboard" })
+vim.keymap.set("x", "<leader>y", [["+y]], opts)
 -- Yank whole line to system clipboard
 vim.keymap.set("n", "<leader>Y", [["+Y]], { noremap = true, silent = true, desc = "Yank Line to Clipboard" })
 

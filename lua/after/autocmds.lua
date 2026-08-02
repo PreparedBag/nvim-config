@@ -15,6 +15,7 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 vim.opt.winborder = "rounded"
+vim.o.winborder = "rounded"
 
 -- Treesitter-based folding
 vim.opt.foldmethod = "expr"
