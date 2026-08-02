@@ -13,7 +13,7 @@ local function apply_highlights()
         return hl and hl.fg or nil
     end
 
-    vim.api.nvim_set_hl(0, "FloatTitle", { fg = theme_fg("Title"), bg = "none", bold = true })
+    vim.api.nvim_set_hl(0, "FloatTitle", { fg = theme_fg("Title"), bg = "none", italic = true, bold = true })
 
     vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorder", { link = "Normal" })
     vim.api.nvim_set_hl(0, "NoiceCmdlineIcon", { link = "Normal" })
@@ -23,9 +23,9 @@ local function apply_highlights()
     -- vim.api.nvim_set_hl(0, "TelescopePromptTitle", { link = "Normal", bg = "none" })
     -- vim.api.nvim_set_hl(0, "TelescopeResultsTitle", { link = "Normal", bg = "none" })
     -- vim.api.nvim_set_hl(0, "TelescopePreviewTitle", { link = "Normal", bg = "none" })
-    vim.api.nvim_set_hl(0, "TelescopePromptTitle", { fg = theme_fg("Title"), bg = "none", bold = true })
-    vim.api.nvim_set_hl(0, "TelescopeResultsTitle", { fg = theme_fg("Title"), bg = "none", bold = true })
-    vim.api.nvim_set_hl(0, "TelescopePreviewTitle", { fg = theme_fg("Title"), bg = "none", bold = true })
+    vim.api.nvim_set_hl(0, "TelescopePromptTitle", { fg = theme_fg("Title"), bg = "none", bold = true, italic = true })
+    vim.api.nvim_set_hl(0, "TelescopeResultsTitle", { fg = theme_fg("Title"), bg = "none", bold = true, italic = true })
+    vim.api.nvim_set_hl(0, "TelescopePreviewTitle", { fg = theme_fg("Title"), bg = "none", bold = true, italic = true })
 
     vim.api.nvim_set_hl(0, "GitLogHash", { fg = theme_fg("Number") })
     vim.api.nvim_set_hl(0, "GitLogHead", { fg = theme_fg("Constant"), bold = true })
