@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
-# Dev-mode installer: LSP/DAP/preview prerequisites on top of the basic install.
-# Mason installs servers/formatters/adapters in-editor, so this only provides the
-# runtimes + native toolchains Mason builds on:
-#   - Node.js + npm + yarn   (ts_ls/cssls/html/bash-ls; yarn for markdown-preview)
+# Dev-mode installer: LSP/DAP/preview prerequisites on top of the base install.
+# Mason installs servers/formatters/adapters in-editor; this only adds:
+#   - yarn   (markdown-preview.nvim's build step; Node itself comes from install.sh)
 #   - clang + clangd + arm-none-eabi-gcc   (C / embedded)
-#   - neovim node provider package
-# Run the basic installer first.
+# Run install.sh first.
 
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
-BLUE='\033[0;34m'; NC='\033[0m'
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
+
+NODE_MAJOR="24"          # fallback only, kept in sync with install.sh's pin
+YARN_VERSION="1.22.22"
 AUTO_YES=false
 
 info()    { echo -e "${BLUE}[INFO]${NC} $1"; }
@@ -42,23 +42,34 @@ detect_system() {
     info "OS: $OS"
 }
 
-install_node() {
-    step "Installing Node.js + npm..."
+# Fallback only - install.sh already installs Node as a base dependency.
+ensure_node() {
+    step "Checking Node.js..."
     if command_exists node && command_exists npm; then
-        info "Node $(node --version) already present"
-    else
-        case $OS in
-            ubuntu|debian|pop|raspbian)
-                curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - \
-                    && sudo apt-get install -y nodejs || { err "Node install failed"; return 1; } ;;
-            fedora)  sudo dnf install -y nodejs npm || return 1 ;;
-            arch|manjaro) sudo pacman -S --noconfirm nodejs npm || return 1 ;;
-            macos)   brew install node || return 1 ;;
-        esac
+        info "Node $(node --version) present"
+        return 0
     fi
-    info "Installing neovim node provider package..."
-    sudo npm install -g neovim || warn "Could not install neovim npm package"
-    success "Node ready"
+    warn "Node not found - installing (should have come from install.sh)"
+    case $OS in
+        ubuntu|debian|pop|raspbian)
+            curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | sudo -E bash - \
+                && sudo apt-get install -y nodejs || return 1 ;;
+        fedora)  sudo dnf install -y nodejs npm || return 1 ;;
+        arch|manjaro) sudo pacman -S --noconfirm nodejs npm || return 1 ;;
+        macos)   brew install node || return 1 ;;
+    esac
+}
+
+install_yarn() {
+    step "Installing yarn ${YARN_VERSION} (markdown-preview build dependency)..."
+    local current
+    current=$(command_exists yarn && yarn --version 2>/dev/null)
+    if [ "$current" = "$YARN_VERSION" ]; then
+        info "yarn already at pinned version"
+        return 0
+    fi
+    sudo npm install -g "yarn@${YARN_VERSION}" || { err "yarn install failed"; return 1; }
+    success "yarn ready: $(yarn --version)"
 }
 
 install_c_embedded() {
@@ -73,21 +84,9 @@ install_c_embedded() {
         macos)
             brew install llvm && brew install --cask gcc-arm-embedded || return 1 ;;
     esac
+    # Note: distro packages aren't individually version-pinned - apt/dnf/pacman
+    # give whatever's current in that release's repos. Accepted gap for now.
     success "C / embedded toolchain ready"
-}
-
-install_preview() {
-    step "Setting up markdown preview deps (yarn)..."
-    if command_exists yarn; then
-        info "yarn already present ($(yarn --version))"
-    else
-        info "Installing yarn globally via npm..."
-        if ! sudo npm install -g yarn; then
-            err "Failed to install yarn — markdown-preview build will fail"
-            return 1
-        fi
-    fi
-    success "Preview deps ready (Neovim runs the yarn build on first load)"
 }
 
 main() {
@@ -95,26 +94,24 @@ main() {
     check_root
     detect_system
 
-    command_exists nvim || warn "Neovim not found — run the basic installer first."
+    command_exists nvim || warn "Neovim not found - run install.sh first."
 
     echo ""
-    warn "Dev mode installs: Node.js+npm+yarn, clang/clangd, arm-none-eabi-gcc,"
-    warn "and the neovim node provider. Mason handles servers/adapters in-editor."
+    warn "Dev mode installs: yarn ${YARN_VERSION}, clang/clangd, arm-none-eabi-gcc."
+    warn "(Node.js and tree-sitter-cli come from install.sh, not here.)"
     if [ "$AUTO_YES" = false ]; then
         read -p "Continue? (y/N) " -n 1 -r; echo ""
         [[ ! $REPLY =~ ^[Yy]$ ]] && { info "Cancelled"; exit 0; }
     fi
 
-    install_node        || { err "Node setup failed"; exit 1; }
-    install_c_embedded  || { err "C/embedded setup failed"; exit 1; }
-    install_preview     || { err "Preview setup failed"; exit 1; }
+    ensure_node        || { err "Node check failed"; exit 1; }
+    install_yarn       || { err "yarn setup failed"; exit 1; }
+    install_c_embedded || { err "C/embedded setup failed"; exit 1; }
 
     step "Done!"
-    echo "  1. Launch nvim in dev mode (DEV_ENABLED)"
-    echo "  2. lazy will build markdown-preview (yarn) on first load"
+    echo "  1. Launch nvim in dev mode (<leader>M)"
+    echo "  2. lazy builds markdown-preview (yarn) on first load"
     echo "  3. :Mason installs servers/formatters/adapters"
-    echo "  4. Verify: :checkhealth mason  and  :checkhealth vim.provider"
-    info "clangd cross-driver expects arm-none-eabi-* in PATH for embedded."
 }
 
 main "$@"
