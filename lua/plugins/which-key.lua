@@ -9,9 +9,6 @@ return {
             icons = {
                 mappings = false,
             },
-            triggers = {
-                { "<leader>", mode = "n" },
-            },
         })
 
         local mappings = {
