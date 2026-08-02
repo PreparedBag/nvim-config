@@ -422,8 +422,8 @@ local function status_picker(root)
         local ahead, behind = ab:match("(%d+)%s+(%d+)")
         if ahead then
             local parts = {}
-            if tonumber(ahead) > 0 then table.insert(parts, "↑" .. ahead) end
-            if tonumber(behind) > 0 then table.insert(parts, "↓" .. behind) end
+            if tonumber(ahead) > 0 then table.insert(parts, "↑ " .. ahead) end
+            if tonumber(behind) > 0 then table.insert(parts, "↓ " .. behind) end
             if #parts > 0 then tracking = " " .. table.concat(parts, " ") end
         end
         title = string.format("Git: %s%s (t: stage/unstage)", head, tracking)
