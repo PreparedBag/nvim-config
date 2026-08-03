@@ -74,7 +74,7 @@ return {
                         horizontal = { preview_width = 0.5 },
                         vertical = { preview_height = 0.5 },
                     },
-                    preview = { treesitter = true },
+                    preview = { treesitter = false },
                     -- Send Tab-marked items (or all if none marked) to the quickfix list.
                     -- Does NOT auto-open anything; view it later with <leader>fq.
                     mappings = { i = shared, n = shared },

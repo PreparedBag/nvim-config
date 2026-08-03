@@ -12,6 +12,9 @@ return {
                 no_overlap = false,
                 wo = { winblend = 0 },
             },
+            triggers = {
+                { "<leader>", mode = "n" },
+            },
         })
 
         local mappings = {

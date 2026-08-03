@@ -4,7 +4,8 @@
 # Bump NVIM_VERSION deliberately after testing - this never chases "latest"
 # automatically, so every machine gets the same build until you move the pin.
 
-NVIM_VERSION="v0.12.4"   # tested combo: this + nvim-treesitter main + tree-sitter-cli 0.26.11
+# NVIM_VERSION="v0.12.4"
+NVIM_VERSION="v0.11.7"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
 info()    { echo -e "${BLUE}[INFO]${NC} $1"; }

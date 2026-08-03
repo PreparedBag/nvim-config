@@ -22,7 +22,7 @@ vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", opts)
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", opts)
 -- Move cursor right in insert mode (useful after accepting completions with parens)
 vim.keymap.set('i', '<C-l>', '<Right>', { noremap = true, silent = true, desc = 'Move cursor right in insert mode' })
-vim.keymap.set('i', '<C-b>', '<Left>', { noremap = true, silent = true, desc = 'Move cursor left in insert mode' })
+vim.keymap.set('i', '<C-h>', '<Left>', { noremap = true, silent = true, desc = 'Move cursor left in insert mode' })
 
 -- Joining and Scrolling
 -- Join lines and keep cursor in place
@@ -127,7 +127,6 @@ vim.keymap.set("n", "<leader>q", function()
     )
 end, { silent = true, desc = "Quit (confirm if unsaved)" })
 -- Quit all
--- vim.keymap.set("n", "<leader>qa", ":qa<CR>", { noremap = true, silent = true, desc = "Quit All Without Saving" })
 -- Save file
 vim.keymap.set("n", "<C-s>", "<cmd>w<cr>", opts)
 -- Close buffer

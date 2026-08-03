@@ -71,12 +71,13 @@ return {
                 -- Information
                 map("n", "K", vim.lsp.buf.hover, "Hover")
                 map("n", "<C-h>", vim.lsp.buf.signature_help, "Signature Help")
-                map("i", "<C-h>", function()
-                    if not signature_active then
-                        vim.lsp.buf.signature_help()
-                        signature_active = true
-                    end
-                end, "Signature Help")
+                -- NOTE: remapping c-h to move cursor left when in insert mode
+                -- map("i", "<C-h>", function()
+                --     if not signature_active then
+                --         vim.lsp.buf.signature_help()
+                --         signature_active = true
+                --     end
+                -- end, "Signature Help")
 
                 -- Code actions and refactoring
                 map("n", "<leader>la", vim.lsp.buf.code_action, "Code Actions")
