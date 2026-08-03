@@ -8,7 +8,7 @@ return {
             delay = 200,
             icons = { mappings = false, },
             win = {
-                -- border = "rounded",
+                border = "rounded",
                 no_overlap = false,
                 wo = { winblend = 0 },
             },
