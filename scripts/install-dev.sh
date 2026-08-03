@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
 # Dev-mode installer: LSP/DAP/preview prerequisites on top of the base install.
-# Mason installs servers/formatters/adapters in-editor; this only adds:
-#   - yarn   (markdown-preview.nvim's build step; Node itself comes from install.sh)
+# Mason installs servers/formatters/adapters in-editor; this adds:
+#   - Node.js + yarn   (Mason's npm-based servers; yarn for markdown-preview build)
 #   - clang + clangd + arm-none-eabi-gcc   (C / embedded)
 # Run install.sh first.
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
 
-NODE_MAJOR="24"          # fallback only, kept in sync with install.sh's pin
+NODE_MAJOR="24"
 YARN_VERSION="1.22.22"
 AUTO_YES=false
 
@@ -42,22 +42,25 @@ detect_system() {
     info "OS: $OS"
 }
 
-# Fallback only - install.sh already installs Node as a base dependency.
-ensure_node() {
-    step "Checking Node.js..."
-    if command_exists node && command_exists npm; then
-        info "Node $(node --version) present"
+install_node() {
+    step "Installing Node.js (pinned to v${NODE_MAJOR}.x)..."
+    if command_exists node && [ "$(node --version | grep -oE '^v[0-9]+' | tr -d v)" = "$NODE_MAJOR" ]; then
+        info "Node $(node --version) already at pinned major version"
         return 0
     fi
-    warn "Node not found - installing (should have come from install.sh)"
     case $OS in
         ubuntu|debian|pop|raspbian)
             curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | sudo -E bash - \
-                && sudo apt-get install -y nodejs || return 1 ;;
-        fedora)  sudo dnf install -y nodejs npm || return 1 ;;
-        arch|manjaro) sudo pacman -S --noconfirm nodejs npm || return 1 ;;
-        macos)   brew install node || return 1 ;;
+                && sudo apt-get install -y nodejs || { err "Node install failed"; return 1; } ;;
+        fedora)
+            curl -fsSL "https://rpm.nodesource.com/setup_${NODE_MAJOR}.x" | sudo bash - \
+                && sudo dnf install -y nodejs || return 1 ;;
+        arch|manjaro)
+            sudo pacman -S --noconfirm nodejs npm || return 1 ;;
+        macos)
+            brew install node@${NODE_MAJOR} || return 1 ;;
     esac
+    success "Node ready: $(node --version)"
 }
 
 install_yarn() {
@@ -84,8 +87,6 @@ install_c_embedded() {
         macos)
             brew install llvm && brew install --cask gcc-arm-embedded || return 1 ;;
     esac
-    # Note: distro packages aren't individually version-pinned - apt/dnf/pacman
-    # give whatever's current in that release's repos. Accepted gap for now.
     success "C / embedded toolchain ready"
 }
 
@@ -94,17 +95,16 @@ main() {
     check_root
     detect_system
 
-    command_exists nvim || warn "Neovim not found - run install.sh first."
+    command_exists nvim || warn "Neovim not found - run install-minimal.sh first."
 
     echo ""
-    warn "Dev mode installs: yarn ${YARN_VERSION}, clang/clangd, arm-none-eabi-gcc."
-    warn "(Node.js and tree-sitter-cli come from install.sh, not here.)"
+    warn "Dev mode installs: Node.js v${NODE_MAJOR}.x, yarn ${YARN_VERSION}, clang/clangd, arm-none-eabi-gcc."
     if [ "$AUTO_YES" = false ]; then
         read -p "Continue? (y/N) " -n 1 -r; echo ""
         [[ ! $REPLY =~ ^[Yy]$ ]] && { info "Cancelled"; exit 0; }
     fi
 
-    ensure_node        || { err "Node check failed"; exit 1; }
+    install_node       || { err "Node install failed"; exit 1; }
     install_yarn       || { err "yarn setup failed"; exit 1; }
     install_c_embedded || { err "C/embedded setup failed"; exit 1; }
 

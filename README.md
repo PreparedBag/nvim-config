@@ -29,7 +29,7 @@ verify.
 ## Dev mode (optional)
 
 ```bash
-./install-extras.sh
+./scripts/install-dev.sh
 ```
 
 Adds the prerequisites for LSP, debugging, and markdown preview - Node.js,
