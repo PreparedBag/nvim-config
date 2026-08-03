@@ -14,7 +14,8 @@ The installer handles everything: the latest Neovim, `git`, `curl`, `ripgrep`,
 ## Install
 
 ```bash
-./install.sh
+cd scripts/
+./install-minimal.sh
 ```
 
 The script backs up any existing `~/.config/nvim`, installs the latest Neovim
@@ -29,7 +30,8 @@ verify.
 ## Dev mode (optional)
 
 ```bash
-./scripts/install-dev.sh
+cd scripts/
+./install-dev.sh
 ```
 
 Adds the prerequisites for LSP, debugging, and markdown preview - Node.js,
