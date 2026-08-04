@@ -7,10 +7,11 @@ return {
         },
         opts = {
             use_default_keymaps = false, -- using our own <leader>J above
-            max_join_length = 120,
+            -- TODO: update max length
+            max_join_length = 500,
         },
     },
-    -- TODO: uncomment for autopairs
+    -- TODO: comment/uncomment for autopairs
     {
         "windwp/nvim-autopairs",
         event = "InsertEnter",
