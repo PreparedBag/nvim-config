@@ -27,8 +27,20 @@ return {
             ['<C-e>'] = { 'hide', 'fallback' },
             ['<C-y>'] = { 'accept', 'fallback' },
             -- ['<C-h>'] = { 'show_documentation', 'hide_documentation' },
-            ['<Tab>'] = { 'snippet_forward', 'fallback' },
-            ['<S-Tab>'] = { 'snippet_backward', 'fallback' },
+            ["<Tab>"] = {
+                "snippet_forward",
+                function()
+                    return vim.api.nvim_replace_termcodes("<Plug>(Tabout)", true, true, true)
+                end,
+                "fallback",
+            },
+            ["<S-Tab>"] = {
+                "snippet_backward",
+                function()
+                    return vim.api.nvim_replace_termcodes("<Plug>(TaboutBack)", true, true, true)
+                end,
+                "fallback",
+            },
         },
 
         snippets = { preset = 'luasnip' },
