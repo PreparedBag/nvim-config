@@ -1,7 +1,7 @@
 return {
     'mfussenegger/nvim-dap',
     enabled = _G.DEV_ENABLED,
-    ft = { "c", "cpp" },
+    ft = { 'c', 'cpp' },
     dependencies = {
         'rcarriga/nvim-dap-ui',
         'nvim-neotest/nvim-nio',
@@ -9,35 +9,18 @@ return {
         'nvim-telescope/telescope.nvim',
     },
 
+    -- These load the plugin lazily; the real handlers are set in config().
     keys = {
-        { '<Leader>ds',  desc = 'Enable Debugger' },
-
-        -- NOTE: comment/uncomment for UI preference
-
-        -- { '<Leader>dc',  desc = 'Continue/Start' },
-        -- { '<Leader>dtf', desc = 'Flash ELF' },
-        -- { '<Leader>dts', desc = 'Start Server' },
-        --
-        -- { '<Leader>db',  desc = 'Toggle Breakpoint' },
-        -- { '<Leader>dB',  desc = 'Conditional Breakpoint' },
-        -- { '<Leader>dC',  desc = 'Run to Cursor' },
-        -- { '<Leader>dr',  desc = 'Restart' },
-        -- { '<Leader>dp',  desc = 'Pause' },
-        -- { '<Leader>di',  desc = 'Step Into' },
-        -- { '<Leader>do',  desc = 'Step Over' },
-        -- { '<Leader>dO',  desc = 'Step Out' },
-        -- { '<Leader>dx',  desc = 'Clear Breakpoints' },
-        -- { '<Leader>du',  desc = 'Toggle UI' },
-        -- { '<Leader>de',  desc = 'Eval', mode = { 'n', 'v' } },
-        -- { '<Leader>dw',  desc = 'Add to Watches' },
-        -- { '<Leader>dW',  desc = 'Print Variable' },
-        -- { '<Leader>dk',  desc = 'Stack Up' },
-        -- { '<Leader>dj',  desc = 'Stack Down' },
-        -- { '<Leader>dv',  desc = 'Verbose Logging' },
-        -- { '<Leader>dg',  desc = 'Toggle Watches' },
-        -- { '<Leader>dte', desc = 'Set ELF' },
-        -- { '<Leader>dtc', desc = 'Stop Server' },
-        -- { '<Leader>dtt', desc = 'Terminate' },
+        { '<Leader>ds',  desc = 'Start Debug (server + launch)' },
+        { '<Leader>dc',  desc = 'Continue/Start' },
+        { '<Leader>dtp', desc = 'Pick Target' },
+        { '<Leader>dte', desc = 'Set ELF' },
+        { '<Leader>dtf', desc = 'Flash ELF' },
+        { '<Leader>dts', desc = 'Start Server' },
+        { '<Leader>dtc', desc = 'Stop Server' },
+        { '<Leader>dtt', desc = 'Terminate' },
+        { '<Leader>dq',  desc = 'Teardown' },
+        { '<Leader>db',  desc = 'Toggle Breakpoint' },
     },
 
     config = function()
@@ -45,15 +28,189 @@ return {
         local dapui = require('dapui')
         local dapvt = require('nvim-dap-virtual-text')
 
-        local jlink_job_id = nil
-        local selected_elf_path = nil
+        -- ========================================================================
+        -- 1. TARGET PRESETS
+        --    * One preset  -> used silently.
+        --    * Two or more -> picker on start (<Leader>dtp to re-pick).
+        --    * ./.nvim-dap.lua returning a table overrides everything (per-repo).
+        -- ========================================================================
+        local presets = {
+            ['STM32L433CC'] = {
+                device    = 'STM32L433CC',
+                interface = 'SWD',
+                speed     = '4000',
+                gdb_port  = 2331,
+            },
+            -- TODO: Add more to enable the picker, e.g.:
+            -- ['STM32F411CE'] = { device = 'STM32F411CE', interface = 'SWD', speed = '4000', gdb_port = 2331 },
+        }
 
-        -- running | paused | stopped | disconnected
-        local dap_run_state = 'disconnected'
+        local active = nil       -- resolved config table
+        local selected_elf = nil -- path to ELF being debugged
 
-        -- ============================================================================
-        -- DAP VIRTUAL TEXT SETUP
-        -- ============================================================================
+        local I, W, E = vim.log.levels.INFO, vim.log.levels.WARN, vim.log.levels.ERROR
+        local function notify(msg, lvl) vim.notify(msg, lvl or I) end
+
+        -- Resolve `active`: project file > single preset > picker.
+        local function resolve_config(cb)
+            if active then
+                if cb then cb() end
+                return
+            end
+
+            local pf = vim.fn.getcwd() .. '/.nvim-dap.lua'
+            if vim.fn.filereadable(pf) == 1 then
+                local ok, cfg = pcall(dofile, pf)
+                if ok and type(cfg) == 'table' then
+                    active = cfg
+                    notify('DAP config: project .nvim-dap.lua')
+                    if cb then cb() end
+                    return
+                end
+                notify('Bad .nvim-dap.lua, using presets', W)
+            end
+
+            local names = vim.tbl_keys(presets)
+            if #names == 1 then
+                active = presets[names[1]]
+                if cb then cb() end
+                return
+            end
+
+            vim.ui.select(names, { prompt = 'Debug target:' }, function(choice)
+                if not choice then return end
+                active = presets[choice]
+                notify('DAP config: ' .. choice)
+                if cb then cb() end
+            end)
+        end
+
+        -- ========================================================================
+        -- 2. STATE  (single source of truth)
+        --    active/inactive = dap.session()  |  running/paused = listeners
+        -- ========================================================================
+        local COL = {
+            active = '#e06c75',
+            run = '#98c379',
+            pause = '#e5c07b',
+            off = '#5c6370',
+        }
+        local running = false
+
+        local function state()
+            if not dap.session() then return 'inactive' end
+            return running and 'running' or 'paused'
+        end
+
+        -- --- Visual: red WinSeparator border while a session is live ------------
+        local saved_sep = nil
+        local function set_border(on)
+            if on then
+                if not saved_sep then
+                    saved_sep = vim.api.nvim_get_hl(0, { name = 'WinSeparator' })
+                end
+                vim.api.nvim_set_hl(0, 'WinSeparator', { fg = COL.active, bold = true })
+            elseif saved_sep then
+                vim.api.nvim_set_hl(0, 'WinSeparator', saved_sep)
+                saved_sep = nil
+            end
+        end
+
+        -- --- Visual: dapui window titles + REPL state label --------------------
+        local titles = {
+            dapui_scopes = 'SCOPES',
+            dapui_breakpoints = 'BREAKPOINTS',
+            dapui_stacks = 'STACKS',
+            dapui_watches = 'WATCHES',
+            dapui_console = 'CONSOLE',
+            dapui_repl = 'REPL',
+            ['dapui-repl'] = 'REPL',
+        }
+        local function is_repl(ft) return ft == 'dapui_repl' or ft == 'dapui-repl' end
+
+        local function define_hl()
+            vim.api.nvim_set_hl(0, 'DapWinBar', { link = 'Title' })
+            vim.api.nvim_set_hl(0, 'DapStateRun', { fg = COL.run, bold = true })
+            vim.api.nvim_set_hl(0, 'DapStatePause', { fg = COL.pause, bold = true })
+            vim.api.nvim_set_hl(0, 'DapStateOff', { fg = COL.off })
+        end
+        define_hl()
+
+        local function winbar_for(ft)
+            local base = titles[ft]
+            if not base then return nil end
+            if not is_repl(ft) then
+                return '%=%#DapWinBar# ' .. base .. ' %*%='
+            end
+            local s = state()
+            local hl, label = 'DapStateOff', '⛔ INACTIVE'
+            if s == 'running' then
+                hl, label = 'DapStateRun', '▶ RUNNING'
+            elseif s == 'paused' then
+                hl, label = 'DapStatePause', '⏸ PAUSED'
+            end
+            return '%=%#' .. hl .. '# ● DEBUG · ' .. label .. ' %*%='
+        end
+
+        local function style_win(win)
+            if not vim.api.nvim_win_is_valid(win) then return end
+            local buf = vim.api.nvim_win_get_buf(win)
+            local ft = vim.bo[buf].filetype
+            local wb = winbar_for(ft)
+            if not wb then return end
+
+            local opt = vim.api.nvim_set_option_value
+            opt('winbar', wb, { win = win })
+            opt('winhighlight', 'WinBar:CursorLine,WinBarNC:CursorLine', { win = win })
+            for _, o in ipairs({ 'cursorline', 'number', 'relativenumber' }) do
+                opt(o, false, { win = win })
+            end
+            opt('signcolumn', 'no', { win = win })
+        end
+
+        -- Re-read truth and repaint everything. Scheduled so dap.session()
+        -- reflects post-event state (terminate/exit/restart/attach).
+        local function refresh()
+            vim.schedule(function()
+                set_border(state() ~= 'inactive')
+                for _, win in ipairs(vim.api.nvim_list_wins()) do
+                    style_win(win)
+                end
+            end)
+        end
+
+        -- --- State listeners (the actual sync) --------------------------------
+        local function mark(v)
+            running = v; refresh()
+        end
+
+        dap.listeners.after.event_initialized['ui'] = function() mark(true) end
+        dap.listeners.after.event_stopped['ui']     = function() mark(false) end
+        dap.listeners.after.event_continued['ui']   = function() mark(true) end
+        dap.listeners.after.event_terminated['ui']  = function() mark(false) end
+        dap.listeners.after.event_exited['ui']      = function() mark(false) end
+        dap.listeners.after.disconnect['ui']        = function() mark(false) end
+
+        -- cpptools is unreliable about event_continued, so also mark running
+        -- off the request responses themselves.
+        for _, req in ipairs({ 'continue', 'next', 'stepIn', 'stepOut', 'stepBack', 'reverseContinue' }) do
+            dap.listeners.after[req]['ui'] = function() mark(true) end
+        end
+
+        vim.api.nvim_create_autocmd({ 'BufWinEnter', 'WinEnter', 'FileType' }, {
+            callback = function() style_win(vim.api.nvim_get_current_win()) end,
+        })
+        vim.api.nvim_create_autocmd('ColorScheme', {
+            callback = function()
+                saved_sep = nil -- scheme reset WinSeparator; re-capture on next set
+                define_hl()
+                refresh()
+            end,
+        })
+
+        -- ========================================================================
+        -- dap-virtual-text
+        -- ========================================================================
         dapvt.setup({
             enabled = true,
             enabled_commands = true,
@@ -70,9 +227,9 @@ return {
             virt_text_win_col = nil,
         })
 
-        -- ============================================================================
-        -- DAP UI SETUP
-        -- ============================================================================
+        -- ========================================================================
+        -- dap-ui  (controls disabled -> no button row; state shown in winbar)
+        -- ========================================================================
         dapui.setup({
             icons = { expanded = '▾', collapsed = '▸', current_frame = '▸' },
             mappings = {
@@ -97,510 +254,63 @@ return {
                     position = 'left',
                 },
                 {
-                    elements = {
-                        { id = 'repl', size = 1.0 },
-                    },
+                    elements = { { id = 'repl', size = 1.0 } },
                     size = 15,
                     position = 'bottom',
                 },
             },
-
-            controls = {
-                enabled = true,
-                element = 'repl',
-                icons = {
-                    pause = '⏸',
-                    play = '▶',
-                    step_into = '⏎',
-                    step_over = '⏭',
-                    step_out = '⏮',
-                    step_back = 'b',
-                    run_last = '▶▶',
-                    terminate = '⏹',
-                    disconnect = '⏏',
-                },
-            },
-
+            controls = { enabled = false },
             floating = {
                 max_height = 0.9,
                 max_width = 0.9,
                 border = 'single',
-                mappings = {
-                    close = { 'q', '<Esc>' },
-                },
+                mappings = { close = { 'q', '<Esc>' } },
             },
             windows = { indent = 1 },
-            render = {
-                max_type_length = 100,
-                max_value_lines = 100,
-                indent = 1,
-            },
+            render = { max_type_length = 100, max_value_lines = 100, indent = 1 },
         })
 
-        -- ============================================================================
-        -- Auto-scroll REPL to bottom on new output
-        -- ============================================================================
-        dap.listeners.after.event_output['dapui_scroll'] = function()
+        -- Auto open/close UI + auto-scroll REPL
+        dap.listeners.after.event_initialized['dapui'] = function()
+            vim.defer_fn(function() pcall(dapui.open) end, 100)
+        end
+        dap.listeners.before.event_terminated['dapui'] = function() pcall(dapui.close) end
+        dap.listeners.before.event_exited['dapui']     = function() pcall(dapui.close) end
+
+        dap.listeners.after.event_output['scroll']     = function()
             vim.schedule(function()
-                local repl_wins = vim.fn.win_findbuf(vim.fn.bufnr('dap-repl'))
-                for _, win in ipairs(repl_wins) do
-                    vim.api.nvim_win_call(win, function()
-                        vim.cmd('normal! G')
-                    end)
+                for _, win in ipairs(vim.fn.win_findbuf(vim.fn.bufnr('dap-repl'))) do
+                    vim.api.nvim_win_call(win, function() vim.cmd('normal! G') end)
                 end
             end)
         end
 
-        -- ============================================================================
-        -- Auto open/close UI
-        -- ============================================================================
-        dap.listeners.after.event_initialized['dapui_config'] = function()
-            vim.defer_fn(function()
-                pcall(dapui.open)
-            end, 100)
-        end
-        dap.listeners.before.event_terminated['dapui_config'] = function()
-            dapui.close()
-        end
-        dap.listeners.before.event_exited['dapui_config'] = function()
-            dapui.close()
-        end
+        -- ========================================================================
+        -- Signs
+        -- ========================================================================
+        vim.fn.sign_define('DapBreakpoint', { text = '🔴', texthl = 'DapBreakpoint' })
+        vim.fn.sign_define('DapBreakpointCondition', { text = '🟡', texthl = 'DapBreakpoint' })
+        vim.fn.sign_define('DapBreakpointRejected', { text = '🚫', texthl = 'DapBreakpointRejected' })
+        vim.fn.sign_define('DapStopped', { text = '▶️', texthl = 'DapStopped', linehl = 'debugPC' })
+        vim.fn.sign_define('DapLogPoint', { text = '📝', texthl = 'DapLogPoint' })
 
-        -- Clean up DAP UI state when session ends
-        dap.listeners.before['event_terminated']['cleanup'] = function()
-            vim.cmd('sign unplace *') -- Remove all signs
-            -- Reset any special buffer options
-            for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-                if vim.api.nvim_buf_is_valid(buf) then
-                    pcall(vim.api.nvim_buf_del_var, buf, 'dap_session')
-                    -- Clear any DAP-related buffer options
-                end
-            end
-        end
-
-        dap.listeners.before['event_exited']['cleanup'] = function()
-            vim.cmd('sign unplace *')
-            for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-                if vim.api.nvim_buf_is_valid(buf) then
-                    pcall(vim.api.nvim_buf_del_var, buf, 'dap_session')
-                end
-            end
-        end
-
-        -- ============================================================================
-        -- SIGNS AND ICONS
-        -- ============================================================================
-        vim.fn.sign_define('DapBreakpoint', {
-            text = '🔴',
-            texthl = 'DapBreakpoint',
-            linehl = '',
-            numhl = '',
-        })
-        vim.fn.sign_define('DapBreakpointCondition', {
-            text = '🟡',
-            texthl = 'DapBreakpoint',
-            linehl = '',
-            numhl = '',
-        })
-        vim.fn.sign_define('DapBreakpointRejected', {
-            text = '🚫',
-            texthl = 'DapBreakpointRejected',
-            linehl = '',
-            numhl = '',
-        })
-        vim.fn.sign_define('DapStopped', {
-            text = '▶️',
-            texthl = 'DapStopped',
-            linehl = 'debugPC',
-            numhl = '',
-        })
-        vim.fn.sign_define('DapLogPoint', {
-            text = '📝',
-            texthl = 'DapLogPoint',
-            linehl = '',
-            numhl = '',
-        })
-
-        -- ============================================================================
-        -- DEBUG ADAPTER CONFIGURATIONS
-        -- ============================================================================
+        -- ========================================================================
+        -- Adapter + configuration (address/port pulled from `active` at launch)
+        -- ========================================================================
         dap.adapters.cppdbg = {
             id = 'cppdbg',
             type = 'executable',
             command = vim.fn.stdpath('data') .. '/mason/bin/OpenDebugAD7',
         }
 
-        -- ============================================================================
-        -- REPL-only winbar with realtime state
-        -- ============================================================================
-        local function style_dap_winbar()
-            local ft = vim.bo.filetype
-
-            local titles = {
-                dapui_scopes      = 'SCOPES',
-                dapui_breakpoints = 'BREAKPOINTS',
-                dapui_stacks      = 'STACKS',
-                dapui_watches     = 'WATCHES',
-                dapui_console     = 'CONSOLE',
-                dapui_repl        = 'REPL',
-                ['dapui-repl']    = 'REPL',
-            }
-
-            local base = titles[ft]
-            if not base then
-                return
-            end
-
-            local title = base
-            if ft == 'dapui_repl' or ft == 'dapui-repl' then
-                local session = dap.session()
-
-                local prefix
-                if not session then
-                    prefix = (dap_run_state == 'stopped') and '⏹  STOPPED — ' or '⛔ DISCONNECTED — '
-                else
-                    prefix = (dap_run_state == 'running') and '▶ RUNNING — ' or '⏸  PAUSED — '
-                end
-
-                title = prefix .. base
-            end
-
-            vim.opt_local.winbar = '%=%#DapWinBar# ' .. title .. ' %*%='
-            vim.opt_local.winhighlight = 'WinBar:CursorLine,WinBarNC:CursorLine'
-
-            -- UI-only cleanup (don't affect code buffers)
-            if ft:match('^dapui_') or ft == 'dapui-repl' then
-                vim.opt_local.cursorline = false
-                vim.opt_local.number = false
-                vim.opt_local.relativenumber = false
-                vim.opt_local.signcolumn = 'no'
-            end
-        end
-
-        vim.api.nvim_create_autocmd({ 'BufWinEnter', 'WinEnter', 'FileType' }, {
-            callback = style_dap_winbar,
-        })
-
-        local function refresh_repl_winbar()
-            vim.schedule(function()
-                for _, win in ipairs(vim.api.nvim_list_wins()) do
-                    local buf = vim.api.nvim_win_get_buf(win)
-                    local ft = vim.bo[buf].filetype
-                    if ft == 'dapui_repl' or ft == 'dapui-repl' then
-                        vim.api.nvim_win_call(win, function()
-                            style_dap_winbar()
-                        end)
-                    end
-                end
-            end)
-        end
-
-        local function set_dap_state(state)
-            dap_run_state = state
-            refresh_repl_winbar()
-        end
-
-        -- cpptools sometimes doesn't emit event_continued reliably, so we:
-        -- 1) set "paused" on actual stop events
-        -- 2) set "running" immediately when we invoke continue/step/run-to-cursor
-        dap.listeners.after.event_stopped['repl_state'] = function()
-            set_dap_state('paused')
-        end
-        dap.listeners.before.event_terminated['repl_state'] = function()
-            set_dap_state('stopped')
-        end
-        dap.listeners.before.event_exited['repl_state'] = function()
-            set_dap_state('stopped')
-        end
-        dap.listeners.after.disconnect['repl_state'] = function()
-            set_dap_state('disconnected')
-        end
-
-        local function dap_mark_running_and(fn)
-            return function(...)
-                set_dap_state('running')
-                return fn(...)
-            end
-        end
-
-        local function dap_mark_stopped_and(fn)
-            return function(...)
-                set_dap_state('stopped')
-                return fn(...)
-            end
-        end
-
-        local function dap_mark_disconnected_and(fn)
-            return function(...)
-                set_dap_state('disconnected')
-                return fn(...)
-            end
-        end
-
-        local dap_continue = dap_mark_running_and(dap.continue)
-        local dap_step_into = dap_mark_running_and(dap.step_into)
-        local dap_step_over = dap_mark_running_and(dap.step_over)
-        local dap_step_out = dap_mark_running_and(dap.step_out)
-        local dap_run_to_cursor = dap_mark_running_and(dap.run_to_cursor)
-
-        local dap_disconnect = dap_mark_disconnected_and(dap.disconnect)
-        local dap_terminate = dap_mark_stopped_and(dap.terminate)
-
-        -- ============================================================================
-        -- Telescope ELF picker
-        -- ============================================================================
-        local function select_elf_file(cb)
-            require('telescope.builtin').find_files({
-                prompt_title = 'Select ELF File for Debugging',
-                cwd = vim.fn.getcwd(),
-                hidden = true,
-                find_command = {
-                    'rg',
-                    '--files',
-                    '--hidden',
-                    '--no-ignore',
-                    '--glob',
-                    '!.git/*',
-                },
-                attach_mappings = function(prompt_bufnr, _)
-                    local actions = require('telescope.actions')
-                    local action_state = require('telescope.actions.state')
-
-                    actions.select_default:replace(function()
-                        actions.close(prompt_bufnr)
-                        local selection = action_state.get_selected_entry()
-                        if not selection then
-                            return
-                        end
-
-                        selected_elf_path = selection.path
-                        vim.notify('ELF file set to: ' .. selected_elf_path, vim.log.levels.INFO)
-
-                        if cb then
-                            vim.defer_fn(function()
-                                cb()
-                            end, 100)
-                        end
-                    end)
-
-                    return true
-                end,
-            })
-        end
-
-        -- ============================================================================
-        -- Flash ELF via JLinkExe
-        -- ============================================================================
-        local function flash_elf()
-            if not selected_elf_path then
-                vim.notify('No ELF selected — please choose one', vim.log.levels.WARN)
-                select_elf_file(flash_elf)
-                return
-            end
-
-            -- Verify the file exists
-            if vim.fn.filereadable(selected_elf_path) ~= 1 then
-                vim.notify('ELF file not found: ' .. selected_elf_path, vim.log.levels.ERROR)
-                return
-            end
-
-            vim.notify('Flashing ' .. selected_elf_path .. '...', vim.log.levels.INFO)
-
-            local script_path = '/tmp/jlink_flash.jlink'
-            local script_content = string.format([[
-erase
-loadfile %s
-reset
-go
-exit
-]], selected_elf_path)
-
-            local file = io.open(script_path, 'w')
-            if not file then
-                vim.notify('Failed to create flash script', vim.log.levels.ERROR)
-                return
-            end
-            file:write(script_content)
-            file:close()
-
-            local flash_cmd = {
-                'JLinkExe',
-                '-device',
-                'STM32L433CC',
-                '-if',
-                'SWD',
-                '-speed',
-                '4000',
-                '-autoconnect',
-                '1',
-                '-CommandFile',
-                script_path,
-            }
-
-            local output_lines = {}
-
-            vim.fn.jobstart(flash_cmd, {
-                on_exit = function(_, exit_code)
-                    if exit_code == 0 then
-                        vim.notify('Flash complete!', vim.log.levels.INFO)
-                    else
-                        vim.notify('Flash failed with code: ' .. exit_code, vim.log.levels.ERROR)
-                        -- Print last few lines of output for debugging
-                        local last_lines = {}
-                        for i = math.max(1, #output_lines - 10), #output_lines do
-                            table.insert(last_lines, output_lines[i])
-                        end
-                        vim.notify('JLink error:\n' .. table.concat(last_lines, '\n'), vim.log.levels.ERROR)
-                    end
-                    os.remove(script_path)
-                end,
-                on_stdout = function(_, data)
-                    if data then
-                        for _, line in ipairs(data) do
-                            if line ~= '' then
-                                table.insert(output_lines, line)
-                                print(line)
-                            end
-                        end
-                    end
-                end,
-                on_stderr = function(_, data)
-                    if data then
-                        for _, line in ipairs(data) do
-                            if line ~= '' then
-                                table.insert(output_lines, line)
-                                print('STDERR: ' .. line)
-                            end
-                        end
-                    end
-                end,
-            })
-        end
-
-        -- ============================================================================
-        -- Start/Stop J-Link GDB Server
-        -- ============================================================================
-        local function start_debugger_session()
-            if not selected_elf_path then
-                vim.notify('No ELF selected — cannot start debugger', vim.log.levels.ERROR)
-                return
-            end
-            vim.notify('Connecting debugger...', vim.log.levels.INFO)
-            dap_continue()
-        end
-
-        local function start_jlink_gdb_server()
-            if jlink_job_id and jlink_job_id > 0 then
-                vim.notify('J-Link GDB Server already running', vim.log.levels.INFO)
-                return
-            end
-
-            if not selected_elf_path then
-                vim.notify('No ELF selected — please choose one', vim.log.levels.WARN)
-                select_elf_file(start_jlink_gdb_server)
-                return
-            end
-
-            local cmd = {
-                'JLinkGDBServer',
-                '-device',
-                'STM32L433CC',
-                '-if',
-                'SWD',
-                '-speed',
-                '4000',
-                -- '-port',
-                -- '2331',
-                -- '-swoport',
-                -- '2332',
-                -- '-telnetport',
-                -- '2333',
-                -- '-log', '/tmp/jlink-gdb.log',
-                -- '-noir',
-            }
-
-            jlink_job_id = vim.fn.jobstart(cmd, {
-                stdout_buffered = false,
-                stderr_buffered = false,
-
-                on_exit = function(_, exit_code)
-                    jlink_job_id = nil
-                    if exit_code ~= 0 then
-                        vim.notify('J-Link GDB Server exited with code: ' .. exit_code, vim.log.levels.WARN)
-                    else
-                        vim.notify('J-Link GDB Server stopped', vim.log.levels.INFO)
-                    end
-                end,
-
-                on_stdout = function(_, data)
-                    if not data then
-                        return
-                    end
-                    for _, line in ipairs(data) do
-                        if line ~= '' and line:match('Waiting for GDB connection') then
-                            vim.notify('J-Link GDB Server ready on port 2331', vim.log.levels.INFO)
-                            vim.defer_fn(function()
-                                start_debugger_session()
-                            end, 500)
-                        end
-                    end
-                end,
-
-                on_stderr = function(_, data)
-                    if not data then
-                        return
-                    end
-                    local lines = {}
-                    for _, line in ipairs(data) do
-                        if line ~= '' then
-                            table.insert(lines, line)
-                        end
-                    end
-                    if #lines > 0 then
-                        vim.notify('J-Link: ' .. table.concat(lines, '\n'), vim.log.levels.WARN)
-                    end
-                end,
-            })
-
-            if not jlink_job_id or jlink_job_id <= 0 then
-                jlink_job_id = nil
-                vim.notify('Failed to start J-Link GDB Server', vim.log.levels.ERROR)
-            else
-                vim.notify('Starting J-Link GDB Server...', vim.log.levels.INFO)
-            end
-        end
-
-        local function stop_jlink_gdb_server()
-            if not jlink_job_id or jlink_job_id <= 0 then
-                vim.notify('J-Link GDB Server not running', vim.log.levels.INFO)
-                set_dap_state('disconnected')
-                return
-            end
-
-            vim.notify('Stopping J-Link GDB Server...', vim.log.levels.INFO)
-
-            if dap.session() then
-                dap_disconnect()
-            else
-                set_dap_state('disconnected')
-            end
-
-            pcall(vim.fn.jobstop, jlink_job_id)
-        end
-
-        -- ============================================================================
-        -- C/C++ CONFIGURATIONS (cpptools)
-        -- ============================================================================
         dap.configurations.c = {
             {
                 name = 'J-Link (STM32 via cpptools)',
                 type = 'cppdbg',
                 request = 'launch',
                 program = function()
-                    if selected_elf_path then
-                        return selected_elf_path
-                    end
-                    vim.notify('No ELF file set! Use <Leader>dte to set one.', vim.log.levels.ERROR)
+                    if selected_elf then return selected_elf end
+                    notify('No ELF set — use <Leader>dte', E)
                     return nil
                 end,
                 cwd = '${workspaceFolder}',
@@ -608,8 +318,9 @@ exit
                 MIMode = 'gdb',
                 targetArchitecture = 'arm',
                 miDebuggerPath = 'gdb-multiarch',
-                miDebuggerServerAddress = 'localhost:2331',
-
+                miDebuggerServerAddress = function()
+                    return 'localhost:' .. tostring((active and active.gdb_port) or 2331)
+                end,
                 debugServerPath = '',
                 debugServerArgs = '',
                 serverStarted = 'Waiting for GDB connection',
@@ -617,227 +328,300 @@ exit
                 filterStdout = false,
                 serverLaunchTimeout = 5000,
                 externalConsole = false,
-
                 setupCommands = {
-                    {
-                        text = '-enable-pretty-printing',
-                        description = 'Enable pretty printing',
-                        ignoreFailures = true,
-                    },
-                    {
-                        text = '-gdb-set mi-async on',
-                        description = 'Enable async mode',
-                        ignoreFailures = true,
-                    },
+                    { text = '-enable-pretty-printing', description = 'Pretty print', ignoreFailures = true },
+                    { text = '-gdb-set mi-async on',    description = 'Async',        ignoreFailures = true },
                 },
-
-                -- launchCompleteCommand = 'exec-continue',
             },
         }
-
         dap.configurations.cpp = dap.configurations.c
         dap.defaults.fallback.force_external_terminal = false
         dap.defaults.fallback.external_terminal = nil
 
-        -- ============================================================================
-        -- KEY MAPPINGS
-        -- ============================================================================
+        -- ========================================================================
+        -- ELF picker (Telescope)
+        -- ========================================================================
+        local function select_elf(cb)
+            require('telescope.builtin').find_files({
+                prompt_title = 'Select ELF for Debugging',
+                cwd = vim.fn.getcwd(),
+                hidden = true,
+                find_command = { 'rg', '--files', '--hidden', '--no-ignore', '--glob', '!.git/*' },
+                attach_mappings = function(bufnr)
+                    local actions = require('telescope.actions')
+                    local astate = require('telescope.actions.state')
+                    actions.select_default:replace(function()
+                        actions.close(bufnr)
+                        local sel = astate.get_selected_entry()
+                        if not sel then return end
+                        selected_elf = sel.path or sel[1]
+                        notify('ELF: ' .. selected_elf)
+                        if cb then vim.defer_fn(cb, 100) end
+                    end)
+                    return true
+                end,
+            })
+        end
 
-        -- Target setup
-        vim.keymap.set('n', '<Leader>dte', function()
-            select_elf_file()
-        end, { noremap = true, silent = true, desc = 'Set ELF' })
-
-        vim.keymap.set('n', '<Leader>dtf', flash_elf, { noremap = true, silent = true, desc = 'Flash ELF' })
-        vim.keymap.set('n', '<Leader>dts', start_jlink_gdb_server,
-            { noremap = true, silent = true, desc = 'Start Server' })
-
-        vim.keymap.set('n', '<Leader>dtc', stop_jlink_gdb_server, { noremap = true, silent = true, desc = 'Stop Server' })
-
-        -- Session control
-        vim.keymap.set('n', '<Leader>dc', function()
-            vim.defer_fn(function()
-                dap_continue()
-            end, 200)
-        end, { noremap = true, silent = true, desc = 'Continue/Start (deferred)' })
-
-        vim.keymap.set('n', '<Leader>dq', function()
-            pcall(function() dap.terminate() end)
-            pcall(function() dap.close() end)
-            pcall(function() dapui.close() end)
-            if jlink_job_id and jlink_job_id > 0 then
-                pcall(vim.fn.jobstop, jlink_job_id)
-                jlink_job_id = nil
+        -- ========================================================================
+        -- Flash via JLinkExe (independent of the debug session)
+        -- ========================================================================
+        local function flash_elf()
+            if not active then
+                resolve_config(flash_elf)
+                return
             end
-            dap.repl.close()
-            vim.cmd('sign unplace *')
-            set_dap_state('disconnected')
-            vim.notify('DAP session torn down', vim.log.levels.INFO)
-        end, { noremap = true, silent = true, desc = 'Quit/Teardown DAP' })
+            if not selected_elf then
+                select_elf(flash_elf)
+                return
+            end
+            if vim.fn.filereadable(selected_elf) ~= 1 then
+                notify('ELF not found: ' .. selected_elf, E)
+                return
+            end
 
-        vim.keymap.set('n', '<Leader>dtt', dap_terminate, { noremap = true, silent = true, desc = 'Terminate' })
-        vim.keymap.set('n', '<Leader>dr', dap_mark_running_and(dap.restart),
-            { noremap = true, silent = true, desc = 'Restart' })
-        vim.keymap.set('n', '<Leader>dp', dap.pause, { noremap = true, silent = true, desc = 'Pause' })
+            local script = '/tmp/jlink_flash.jlink'
+            local f = io.open(script, 'w')
+            if not f then
+                notify('Cannot write flash script', E)
+                return
+            end
+            f:write(('erase\nloadfile %s\nreset\ngo\nexit\n'):format(selected_elf))
+            f:close()
+
+            notify('Flashing ' .. selected_elf .. '...')
+            local out = {}
+            vim.fn.jobstart({
+                'JLinkExe', '-device', active.device, '-if', active.interface,
+                '-speed', active.speed, '-autoconnect', '1', '-CommandFile', script,
+            }, {
+                on_stdout = function(_, d)
+                    for _, l in ipairs(d or {}) do if l ~= '' then table.insert(out, l) end end
+                end,
+                on_stderr = function(_, d)
+                    for _, l in ipairs(d or {}) do if l ~= '' then table.insert(out, l) end end
+                end,
+                on_exit = function(_, code)
+                    if code == 0 then
+                        notify('Flash complete!')
+                    else
+                        local tail = table.concat({ unpack(out, math.max(1, #out - 8)) }, '\n')
+                        notify('Flash failed (' .. code .. ')\n' .. tail, E)
+                    end
+                    os.remove(script)
+                end,
+            })
+        end
+
+        -- ========================================================================
+        -- J-Link GDB Server: start (auto-launch) / stop (ordered teardown)
+        -- ========================================================================
+        local jlink_job = nil
+        local server_ready = false
+
+        local function launch_session()
+            if dap.session() then return end -- already attached
+            dap.continue()
+        end
+
+        local function start_server()
+            if jlink_job then
+                notify('GDB Server already running')
+                return
+            end
+            if not active then
+                resolve_config(start_server)
+                return
+            end
+            if not selected_elf then
+                select_elf(start_server)
+                return
+            end
+
+            server_ready = false
+            local cmd = {
+                'JLinkGDBServer',
+                '-device', active.device,
+                '-if', active.interface,
+                '-speed', active.speed,
+                '-port', tostring(active.gdb_port),
+            }
+
+            jlink_job = vim.fn.jobstart(cmd, {
+                on_stdout = function(_, data)
+                    for _, line in ipairs(data or {}) do
+                        -- fire-once: line can arrive fragmented or repeat
+                        if not server_ready and line:match('Waiting for GDB connection') then
+                            server_ready = true
+                            notify('GDB Server ready on :' .. active.gdb_port)
+                            vim.defer_fn(launch_session, 300)
+                        end
+                    end
+                end,
+                on_stderr = function(_, data)
+                    local lines = {}
+                    for _, l in ipairs(data or {}) do if l ~= '' then table.insert(lines, l) end end
+                    if #lines > 0 then notify('J-Link: ' .. table.concat(lines, '\n'), W) end
+                end,
+                on_exit = function(_, code)
+                    jlink_job = nil
+                    server_ready = false
+                    -- server died: tear down any dangling session so state clears
+                    if dap.session() then pcall(dap.terminate) end
+                    notify('GDB Server stopped' .. (code ~= 0 and (' (code ' .. code .. ')') or ''),
+                        code ~= 0 and W or I)
+                end,
+            })
+
+            if not jlink_job or jlink_job <= 0 then
+                jlink_job = nil
+                notify('Failed to start GDB Server', E)
+            else
+                notify('Starting GDB Server...')
+            end
+        end
+
+        local function kill_server()
+            if jlink_job then
+                pcall(vim.fn.jobstop, jlink_job); jlink_job = nil
+            end
+            server_ready = false
+        end
+
+        -- Terminate the session first, kill the server only once it's gone.
+        local function stop_server()
+            if dap.session() then
+                dap.terminate(nil, nil, function() vim.schedule(kill_server) end)
+                vim.defer_fn(function() if jlink_job then kill_server() end end, 1500) -- safety net
+            else
+                kill_server()
+            end
+        end
+
+        -- Full teardown for <Leader>dq
+        local function teardown()
+            local function finish()
+                pcall(dapui.close)
+                pcall(function() dap.repl.close() end)
+                vim.cmd('silent! sign unplace *')
+                running = false
+                kill_server()
+                refresh()
+                notify('DAP torn down')
+            end
+            if dap.session() then
+                dap.terminate(nil, nil, function() vim.schedule(finish) end)
+                vim.defer_fn(function() if dap.session() then finish() end end, 1500)
+            else
+                finish()
+            end
+        end
+
+        -- ========================================================================
+        -- Extract the expression under the cursor (word + . -> [] chains)
+        -- ========================================================================
+        local function expr_under_cursor()
+            local line = vim.fn.getline('.')
+            local col = vim.fn.col('.') - 1
+
+            local finish = col
+            while finish <= #line and line:sub(finish, finish):match('[%w_]') do
+                finish = finish + 1
+            end
+
+            local start = col
+            while start > 0 and line:sub(start, start):match('[%w_%.%->%[%]]') do
+                start = start - 1
+            end
+            if start == 0 then start = 1 else start = start + 1 end
+
+            return line:sub(start, finish - 1)
+        end
+
+        -- ========================================================================
+        -- Keymaps
+        -- ========================================================================
+        local function map(lhs, rhs, desc)
+            vim.keymap.set('n', lhs, rhs, { noremap = true, silent = true, desc = desc })
+        end
+
+        -- Target / session lifecycle
+        map('<Leader>ds', start_server, 'Start Debug (server + launch)')
+        map('<Leader>dtp', function()
+            active = nil; resolve_config()
+        end, 'Pick Target')
+        map('<Leader>dte', function() select_elf() end, 'Set ELF')
+        map('<Leader>dtf', flash_elf, 'Flash ELF')
+        map('<Leader>dts', start_server, 'Start Server')
+        map('<Leader>dtc', stop_server, 'Stop Server')
+        map('<Leader>dtt', dap.terminate, 'Terminate')
+        map('<Leader>dq', teardown, 'Teardown DAP')
+
+        map('<Leader>dc', dap.continue, 'Continue/Start')
+        map('<Leader>dr', dap.restart, 'Restart')
+        map('<Leader>dp', dap.pause, 'Pause')
 
         -- Stepping
-        vim.keymap.set('n', '<Leader>di', dap_step_into, { noremap = true, silent = true, desc = 'Step Into' })
-        vim.keymap.set('n', '<Leader>do', dap_step_over, { noremap = true, silent = true, desc = 'Step Over' })
-        vim.keymap.set('n', '<Leader>dO', dap_step_out, { noremap = true, silent = true, desc = 'Step Out' })
+        map('<Leader>di', dap.step_into, 'Step Into')
+        map('<Leader>do', dap.step_over, 'Step Over')
+        map('<Leader>dO', dap.step_out, 'Step Out')
+        map('<Leader>dC', dap.run_to_cursor, 'Run to Cursor')
 
         -- Breakpoints
-        vim.keymap.set('n', '<Leader>db', dap.toggle_breakpoint,
-            { noremap = true, silent = true, desc = 'Toggle Breakpoint' })
-        vim.keymap.set('n', '<Leader>dB', function()
+        map('<Leader>db', dap.toggle_breakpoint, 'Toggle Breakpoint')
+        map('<Leader>dB', function()
             dap.set_breakpoint(vim.fn.input('Breakpoint condition: '))
-        end, { noremap = true, silent = true, desc = 'Conditional Breakpoint' })
-        vim.keymap.set('n', '<Leader>dx', function()
-            dap.clear_breakpoints()
-        end, { noremap = true, silent = true, desc = 'Clear Breakpoints' })
+        end, 'Conditional Breakpoint')
+        map('<Leader>dx', dap.clear_breakpoints, 'Clear Breakpoints')
+
+        -- Eval / watches / print
+        vim.keymap.set({ 'n', 'v' }, '<Leader>de', dapui.eval,
+            { noremap = true, silent = true, desc = 'Eval' })
+        map('<Leader>dw', function()
+            local w = expr_under_cursor()
+            if w == '' then
+                notify('No variable under cursor', W)
+                return
+            end
+            dapui.elements.watches.add(w)
+            notify("Watch: '" .. w .. "'")
+        end, 'Add to Watches')
+        map('<Leader>dW', function()
+            local w = expr_under_cursor()
+            if w == '' then
+                notify('No variable under cursor', W)
+                return
+            end
+            dap.repl.execute('`p ' .. w)
+            notify("Printed '" .. w .. "'")
+        end, 'Print Variable')
+
+        -- Stack navigation
+        map('<Leader>dk', dap.up, 'Stack Up')
+        map('<Leader>dj', dap.down, 'Stack Down')
 
         -- UI toggle
-        vim.keymap.set('n', '<Leader>du', function()
-            local is_open = false
+        map('<Leader>du', function()
+            local open = false
             for _, win in ipairs(vim.api.nvim_list_wins()) do
-                local buf = vim.api.nvim_win_get_buf(win)
-                local buf_name = vim.api.nvim_buf_get_name(buf)
-                if buf_name:match('DAP') then
-                    is_open = true
+                if vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(win)):match('DAP') then
+                    open = true
                     break
                 end
             end
-
-            if is_open then
+            if open then
                 dapui.close()
             else
                 dapui.close()
                 vim.defer_fn(function()
                     dapui.open({ reset = true })
-                    vim.schedule(function()
-                        vim.cmd('wincmd =')
-                    end)
+                    vim.schedule(function() vim.cmd('wincmd =') end)
                 end, 50)
             end
-        end, { noremap = true, silent = true, desc = 'Toggle UI' })
+        end, 'Toggle UI')
 
-        -- Evaluation
-        vim.keymap.set('n', '<Leader>de', dapui.eval, { noremap = true, silent = true, desc = 'Eval Expression' })
-        vim.keymap.set('v', '<Leader>de', dapui.eval, { noremap = true, silent = true, desc = 'Eval Selection' })
-
-        -- Version 1: Print to REPL
-        vim.keymap.set('n', '<Leader>dW', function()
-            local line = vim.fn.getline('.')
-            local col = vim.fn.col('.') - 1 -- 0-indexed
-
-            -- Find the end of the current word under cursor (no dots/arrows after)
-            local finish = col
-            while finish <= #line do
-                local char = line:sub(finish, finish)
-                if not char:match('[%w_]') then -- Only word chars, no dots
-                    break
-                end
-                finish = finish + 1
-            end
-
-            -- Walk backwards from current position to find start (include dots/arrows)
-            local start = col
-            while start > 0 do
-                local char = line:sub(start, start)
-                if not char:match('[%w_%.%->%[%]]') then
-                    start = start + 1
-                    break
-                end
-                start = start - 1
-            end
-            if start == 0 then
-                start = 1
-            end
-
-            -- Extract from start to end of current word
-            local word = line:sub(start, finish - 1)
-
-            if word == '' then
-                vim.notify('No variable under cursor', vim.log.levels.WARN)
-                return
-            end
-
-            dap.repl.execute('`p ' .. word)
-            vim.notify("Printed '" .. word .. "' to REPL", vim.log.levels.INFO)
-        end, { noremap = true, silent = true, desc = 'Print Variable' })
-
-        -- Version 2: Add to Watches
-        vim.keymap.set('n', '<Leader>dw', function()
-            local line = vim.fn.getline('.')
-            local col = vim.fn.col('.') - 1 -- 0-indexed
-
-            -- Find the end of the current word under cursor (no dots/arrows after)
-            local finish = col
-            while finish <= #line do
-                local char = line:sub(finish, finish)
-                if not char:match('[%w_]') then -- Only word chars, no dots
-                    break
-                end
-                finish = finish + 1
-            end
-
-            -- Walk backwards from current position to find start (include dots/arrows)
-            local start = col
-            while start > 0 do
-                local char = line:sub(start, start)
-                if not char:match('[%w_%.%->%[%]]') then
-                    start = start + 1
-                    break
-                end
-                start = start - 1
-            end
-            if start == 0 then
-                start = 1
-            end
-
-            -- Extract from start to end of current word
-            local word = line:sub(start, finish - 1)
-
-            if word == '' then
-                vim.notify('No variable under cursor', vim.log.levels.WARN)
-                return
-            end
-
-            dapui.elements.watches.add(word)
-            vim.notify("Added '" .. word .. "' to watches", vim.log.levels.INFO)
-        end, { noremap = true, silent = true, desc = 'Add to Watches' })
-
-        -- Run to cursor
-        vim.keymap.set('n', '<Leader>dC', dap_run_to_cursor, { noremap = true, silent = true, desc = 'Run to Cursor' })
-
-        -- Stack navigation
-        vim.keymap.set('n', '<Leader>dk', function()
-            dap.up()
-        end, { noremap = true, silent = true, desc = 'Stack Up' })
-        vim.keymap.set('n', '<Leader>dj', function()
-            dap.down()
-        end, { noremap = true, silent = true, desc = 'Stack Down' })
-
-        -- Logging
-        vim.keymap.set('n', '<Leader>dv', function()
-            dap.set_log_level('TRACE')
-            vim.notify('DAP log: ' .. vim.fn.stdpath('cache') .. '/dap.log', vim.log.levels.INFO)
-        end, { noremap = true, silent = true, desc = 'Verbose Logging' })
-
-        -- Window navigation
-        local function jump_to_dap_window(filetype_pattern)
-            for _, win in ipairs(vim.api.nvim_list_wins()) do
-                local buf = vim.api.nvim_win_get_buf(win)
-                local ft = vim.api.nvim_get_option_value('filetype', { buf = buf })
-                if ft == filetype_pattern or ft:match(filetype_pattern) then
-                    vim.api.nvim_set_current_win(win)
-                    return
-                end
-            end
-            vim.notify('DAP window not found: ' .. filetype_pattern, vim.log.levels.WARN)
-        end
-
-        vim.keymap.set('n', '<Leader>dg', function()
-            -- Already in a dapui watches window? go back
+        -- Jump to watches window (toggle back)
+        map('<Leader>dg', function()
             if vim.bo.filetype == 'dapui_watches' then
                 if vim.g.dap_return_win and vim.api.nvim_win_is_valid(vim.g.dap_return_win) then
                     vim.api.nvim_set_current_win(vim.g.dap_return_win)
@@ -845,11 +629,23 @@ exit
                 end
                 return
             end
-
             vim.g.dap_return_win = vim.api.nvim_get_current_win()
-            jump_to_dap_window('dapui_watches')
-        end, { noremap = true, silent = true, desc = 'Toggle Watches' })
+            for _, win in ipairs(vim.api.nvim_list_wins()) do
+                local ft = vim.bo[vim.api.nvim_win_get_buf(win)].filetype
+                if ft == 'dapui_watches' then
+                    vim.api.nvim_set_current_win(win)
+                    return
+                end
+            end
+            notify('Watches window not found', W)
+        end, 'Toggle Watches')
 
-        vim.notify('DAP configured successfully!', vim.log.levels.INFO)
+        -- Logging
+        map('<Leader>dv', function()
+            dap.set_log_level('TRACE')
+            notify('DAP log: ' .. vim.fn.stdpath('cache') .. '/dap.log')
+        end, 'Verbose Logging')
+
+        notify('DAP configured successfully!')
     end,
 }

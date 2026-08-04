@@ -1,6 +1,7 @@
 return {
     {
         "Wansmer/treesj",
+        enabled = _G.DEV_ENABLED,
         dependencies = { "nvim-treesitter/nvim-treesitter" },
         keys = {
             { "<leader>J", "<cmd>TSJToggle<cr>", desc = "Toggle Split/Join (Treesitter)" },
@@ -15,6 +16,7 @@ return {
     {
         "windwp/nvim-autopairs",
         event = "InsertEnter",
+        enabled = _G.DEV_ENABLED,
         opts = {
             check_ts = true, -- treesitter-aware: skip pairing inside strings/comments
             fast_wrap = {},  -- <M-e> fast-wraps the next node in a pair
