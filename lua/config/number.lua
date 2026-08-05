@@ -4,6 +4,8 @@
 --   <leader>nc       rewrite the number under the cursor in place (hex->dec->bin)
 --   <leader>n{h,d,b,o}  show a conversion as a message AND copy it to clipboard
 
+vim.opt.nrformats = { "alpha", "hex", "bin" }
+
 local M = {}
 
 local ns = vim.api.nvim_create_namespace("numbase_preview")
