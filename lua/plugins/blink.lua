@@ -28,6 +28,13 @@ return {
             ['<C-y>'] = { 'accept', 'fallback' },
             -- ['<C-h>'] = { 'show_documentation', 'hide_documentation' },
             ["<Tab>"] = {
+                function()
+                    if vim.snippet.active({ direction = 1 }) then
+                        vim.snippet.jump(1)
+                        return true
+                    end
+                    return false
+                end,
                 "snippet_forward",
                 function()
                     return vim.api.nvim_replace_termcodes("<Plug>(Tabout)", true, true, true)
@@ -35,6 +42,13 @@ return {
                 "fallback",
             },
             ["<S-Tab>"] = {
+                function()
+                    if vim.snippet.active({ direction = -1 }) then
+                        vim.snippet.jump(-1)
+                        return true
+                    end
+                    return false
+                end,
                 "snippet_backward",
                 function()
                     return vim.api.nvim_replace_termcodes("<Plug>(TaboutBack)", true, true, true)
