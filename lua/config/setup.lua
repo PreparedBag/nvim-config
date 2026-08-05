@@ -12,74 +12,37 @@ vim.opt.nrformats = { "alpha", "hex", "bin" }
 -- Disable Netrw banner
 vim.g.netrw_banner = 0
 
--- General Settings
--- Disable mode display in the command line
 vim.opt.showmode = false
--- Disable GUI cursor
 vim.opt.guicursor = ""
--- Show line numbers
 vim.opt.number = true
--- Show relative line numbers
 vim.opt.relativenumber = true
--- Set tab width to 4 spaces
 vim.opt.tabstop = 4
--- Set soft tabstop to 4 spaces
 vim.opt.softtabstop = 4
--- Set shift width (indentation) to 4 spaces
 vim.opt.shiftwidth = 4
--- Convert tabs to spaces
 vim.opt.expandtab = true
--- Enable smart indentation
 vim.opt.smartindent = true
--- Enable break indent for wrapping long lines
 vim.opt.breakindent = true
--- Disable line wrapping
 vim.opt.wrap = false
--- Disable swap files
 vim.opt.swapfile = false
--- Disable backup files
 vim.opt.backup = false
 vim.opt.writebackup = false
--- Set undo directory and enable undo file
 vim.opt.undodir = os.getenv("HOME") .. "/.config/nvim/.undodir"
 vim.opt.undofile = true
--- Highlight search results
-vim.opt.hlsearch = true
--- Enable incremental search
+vim.opt.hlsearch = false
 vim.opt.incsearch = true
--- Ignore case in searches
 vim.opt.ignorecase = true
--- Enable true color support
 vim.opt.termguicolors = true
--- Keep 9 lines above and below the cursor
-vim.opt.scrolloff = 9
--- Always show the sign column
+vim.opt.scrolloff = 8
 vim.opt.signcolumn = "yes:2"
--- Append '@-@' to valid file names
 vim.opt.isfname:append("@-@")
--- Set update time to 100ms for faster UI updates
-vim.opt.updatetime = 100
--- Allow hidden buffers
+vim.opt.updatetime = 50
 vim.opt.hidden = true
--- Enable line wrapping
-vim.opt.wrap = true
--- Use system clipboard for all yank, delete, change, and put operations
--- vim.opt.clipboard = "unnamedplus"
--- Highlight the current line
+vim.opt.wrap = false
 vim.opt.cursorline = true
+vim.opt.completeopt = { "menu", "menuone", "noselect" }
+vim.opt.splitbelow = false
+vim.opt.splitright = true
 
 -- vim.opt.timeout = true
 -- vim.opt.timeoutlen = 300
-
--- Completion Settings
--- Configure completion menu behavior
-vim.opt.completeopt = { "menu", "menuone", "noselect" }
-
--- Splitting behavior
--- Open new horizontal splits below the current window
-vim.opt.splitbelow = true
--- Open new vertical splits to the right of the current window
-vim.opt.splitright = true
-
--- Enable mouse support in all modes
-vim.opt.mouse = "a"
+-- vim.opt.mouse = "a"

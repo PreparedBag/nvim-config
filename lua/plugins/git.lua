@@ -702,10 +702,8 @@ return {
             { "<leader>gs", git_guard(status_picker),                                                     desc = "Git Status" },
             { "<leader>gl", git_guard(log_picker),                                                        desc = "Git Log" },
             { "<leader>gx", git_guard(discard_file),                                                      desc = "Discard Changes to File" },
-            { "<leader>gp", git_guard(function(root) run_auth({ "push" }, root) end),                     desc = "Push" },
-            { "<leader>gP", git_guard(function(root) run_auth({ "pull" }, root) end),                     desc = "Pull" },
+            { "<leader>gp", git_guard(function(root) run_auth({ "pull" }, root) end),                     desc = "Pull" },
             { "<leader>gu", git_guard(function(root) run_auth({ "push", "--follow-tags" }, root) end),    desc = "Push + Tags" },
-            { "<leader>gU", git_guard(function(root) run_auth({ "push", "-u", "origin", "HEAD" }, root) end), desc = "Push + Set Upstream" },
             { "<leader>gf", git_guard(function(root) run_auth({ "fetch", "--prune", "--tags" }, root) end), desc = "Fetch + Prune" },
             {
                 "<leader>gc",
@@ -717,7 +715,7 @@ return {
                 desc = "Commit Staged",
             },
             {
-                "<leader>gA",
+                "<leader>ga",
                 git_guard(function(root)
                     prompt("Commit message (all files): ", function(msg)
                         capture({ "add", "-A" }, root)

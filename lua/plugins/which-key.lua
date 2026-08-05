@@ -5,7 +5,7 @@ return {
     config = function()
         local wk = require("which-key")
         wk.setup({
-            delay = 200,
+            delay = 300,
             icons = { mappings = false, },
             win = {
                 border = "rounded",
@@ -14,6 +14,7 @@ return {
             },
             triggers = {
                 { "<leader>", mode = "n" },
+                { "g", mode = "n" },
             },
         })
 

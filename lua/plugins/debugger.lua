@@ -9,18 +9,19 @@ return {
         'nvim-telescope/telescope.nvim',
     },
 
-    -- These load the plugin lazily; the real handlers are set in config().
+    -- these load the plugin lazily; the real handlers are set in config().
     keys = {
-        { '<Leader>ds',  desc = 'Start Debug (server + launch)' },
-        { '<Leader>dc',  desc = 'Continue/Start' },
-        { '<Leader>dtp', desc = 'Pick Target' },
-        { '<Leader>dte', desc = 'Set ELF' },
-        { '<Leader>dtf', desc = 'Flash ELF' },
-        { '<Leader>dts', desc = 'Start Server' },
-        { '<Leader>dtc', desc = 'Stop Server' },
-        { '<Leader>dtt', desc = 'Terminate' },
-        { '<Leader>dq',  desc = 'Teardown' },
-        { '<Leader>db',  desc = 'Toggle Breakpoint' },
+        { '<Leader>d', desc = 'Debugger' },
+        -- { '<Leader>ds',  desc = 'Start Debug Session' },
+        -- { '<Leader>dc',  desc = 'Continue/Start' },
+        -- { '<Leader>dtp', desc = 'Pick Target' },
+        -- { '<Leader>dte', desc = 'Set ELF' },
+        -- { '<Leader>dtf', desc = 'Flash ELF' },
+        -- { '<Leader>dts', desc = 'Start Server' },
+        -- { '<Leader>dtc', desc = 'Stop Server' },
+        -- { '<Leader>dtt', desc = 'Terminate' },
+        -- { '<Leader>dq',  desc = 'Teardown' },
+        -- { '<Leader>db',  desc = 'Toggle Breakpoint' },
     },
 
     config = function()
@@ -546,7 +547,7 @@ return {
         end
 
         -- Target / session lifecycle
-        map('<Leader>ds', start_server, 'Start Debug (server + launch)')
+        map('<Leader>ds', start_server, 'Start Debug Session')
         map('<Leader>dtp', function()
             active = nil; resolve_config()
         end, 'Pick Target')

@@ -38,7 +38,7 @@ return {
                     else
                         gs.nav_hunk("next")
                     end
-                end, "Next hunk")
+                end, "Next Hunk")
 
                 map("n", "<leader>gk", function()
                     if vim.wo.diff then
@@ -46,41 +46,41 @@ return {
                     else
                         gs.nav_hunk("prev")
                     end
-                end, "Prev hunk")
+                end, "Prev Hunk")
 
                 -- Stage hunk (normal + visual range)
-                map("n", "<leader>ghs", gs.stage_hunk, "Stage hunk")
+                map("n", "<leader>ghs", gs.stage_hunk, "Stage Hunk")
                 map("v", "<leader>ghs", function()
                     gs.stage_hunk({ vim.fn.line("."), vim.fn.line("v") })
-                end, "Stage selected hunk")
+                end, "Stage Selected Hunk")
 
                 -- Discard/reset hunk (normal + visual range)
-                map("n", "<leader>ghr", gs.reset_hunk, "Discard hunk")
+                map("n", "<leader>ghr", gs.reset_hunk, "Discard Hunk")
                 map("v", "<leader>ghr", function()
                     gs.reset_hunk({ vim.fn.line("."), vim.fn.line("v") })
-                end, "Discard selected hunk")
+                end, "Discard Selected Hunk")
 
                 -- Undo the last stage
-                map("n", "<leader>ghu", gs.undo_stage_hunk, "Undo stage hunk")
+                map("n", "<leader>ghu", gs.undo_stage_hunk, "Undo Stage Hunk")
 
                 -- Preview hunk under cursor
-                map("n", "<leader>ghp", gs.preview_hunk, "Preview hunk")
+                map("n", "<leader>ghp", gs.preview_hunk, "Preview Hunk")
 
                 -- Whole-buffer stage / reset
-                map("n", "<leader>ghS", gs.stage_buffer, "Stage buffer")
-                map("n", "<leader>ghR", gs.reset_buffer, "Reset buffer")
+                map("n", "<leader>ghS", gs.stage_buffer, "Stage Buffer")
+                map("n", "<leader>ghR", gs.reset_buffer, "Reset Buffer")
 
                 -- Blame current line
                 map("n", "<leader>ghb", function()
                     gs.blame_line({ full = true })
-                end, "Blame line")
+                end, "Blame Line")
 
                 -- All project hunks into the quickfix list
                 map("n", "<leader>gq", function()
                     gs.setqflist("all", { open = false }, function()
-                        vim.fn.setqflist({}, "a", { title = "Git Hunks (all)" })
+                        vim.fn.setqflist({}, "a", { title = "Git Hunks (All)" })
                     end)
-                end, "All hunks to quickfix")
+                end, "All Hunks to Quickfix")
             end,
         })
     end,

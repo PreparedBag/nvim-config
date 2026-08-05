@@ -1,7 +1,7 @@
 -- lua/config/numbase.lua
 -- Self-contained number-base tooling for C (no external plugins):
 --   <leader>np       toggle inline overlay showing the other two bases
---   <leader>nt       rewrite the number under the cursor in place (hex->dec->bin)
+--   <leader>nc       rewrite the number under the cursor in place (hex->dec->bin)
 --   <leader>n{h,d,b,o}  show a conversion as a message AND copy it to clipboard
 
 local M = {}
@@ -151,7 +151,7 @@ function M.setup()
         vim.notify("Number base preview: " .. (enabled and "on" or "off"))
     end, { desc = "Toggle Number Base Preview" })
 
-    vim.keymap.set("n", "<leader>nt", cycle_base,
+    vim.keymap.set("n", "<leader>nc", cycle_base,
         { desc = "Cycle Number Base (Hex/Dec/Bin)" })
 
     local conv = {
