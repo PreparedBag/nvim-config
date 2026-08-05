@@ -686,6 +686,27 @@ local function discard_file(root)
     end)
 end
 
+local function discard_all(root)
+    vim.ui.select(
+        { "Discard all tracked changes", "Discard tracked changes + remove untracked files", "Cancel" },
+        { prompt = "Restore repo from HEAD:" },
+        function(choice)
+            if choice == "Discard all tracked changes" then
+                run({ "restore", "--staged", "--worktree", "--", "." }, root)
+                vim.schedule(function() vim.cmd("checktime") end)
+            elseif choice == "Discard tracked changes + remove untracked files" then
+                if not confirm("This also deletes UNTRACKED files — unrecoverable. Continue?") then
+                    return
+                end
+                run({ "restore", "--staged", "--worktree", "--", "." }, root)
+                run({ "clean", "-fd" }, root)
+                vim.schedule(function() vim.cmd("checktime") end)
+            end
+            -- Cancel or dismiss: do nothing
+        end
+    )
+end
+
 
 -- ---------------------------------------------------------------
 -- keymaps
@@ -701,7 +722,8 @@ return {
         keys = {
             { "<leader>gs", git_guard(status_picker), desc = "Git Status" },
             { "<leader>gl", git_guard(log_picker),    desc = "Git Log" },
-            { "<leader>gx", git_guard(discard_file),  desc = "Discard Changes to File" },
+            { "<leader>gr", git_guard(discard_file),  desc = "Restore Buffer from HEAD" },
+            { "<leader>gR", git_guard(discard_all),   desc = "Restore All from HEAD" },
             {
                 "<leader>gp",
                 git_guard(function(root)
