@@ -47,7 +47,7 @@ return {
                 "<leader>ft",
                 function()
                     require("telescope").extensions["todo-comments"].todo({
-                        keywords = "TODO,FIXME,HACK",
+                        keywords = "TODO,FIXME,HACK,TEST,BUG",
                         initial_mode = "normal",
                     })
                 end,
