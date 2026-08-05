@@ -10,7 +10,7 @@ vim.keymap.set("n", "<leader>M", function()
         :format(next_dev and "ON" or "OFF"),
         vim.log.levels.INFO
     )
-end, { desc = "Toggle Dev Mode (Restart to Apply)" })
+end, { desc = "Toggle Dev Mode" })
 
 vim.keymap.set("n", "Q", "<nop>", { noremap = true, silent = true, desc = "Useless" })
 
@@ -26,29 +26,25 @@ vim.keymap.set("n", "N", "Nzzzv", { noremap = true, silent = true, desc = "Prev 
 
 vim.keymap.set('n', '<Esc>', ':nohlsearch<CR><Esc>', { noremap = true, silent = true, desc = "ESC and clear highlights" })
 
--- navigate to next/prev file in buffers
-vim.keymap.set("n", "<leader><Tab>", "<cmd>bnext<cr>", { noremap = true, silent = true, desc = "Next buffer" })
-vim.keymap.set("n", "<leader><S-Tab>", "<cmd>bprevious<cr>", { noremap = true, silent = true, desc = "Prev buffer" })
+-- vim.keymap.set("n", "<leader>j", "<cmd>cnext<CR>zz", { noremap = true, silent = true, desc = "Next Quickfix Item" })
+vim.keymap.set("n", "<leader>j", function()
+    local ok = pcall(vim.cmd.cnext)
+    if not ok then
+        -- TEST: uncomment for wrapping
+        -- pcall(vim.cmd.cfirst) -- past the end -> wrap to first
+        vim.notify("End of quickfix list", vim.log.levels.INFO)
+    end
+end, { noremap = true, silent = true, desc = "Next Quickfix Item" })
 
-vim.keymap.set("n", "<leader>j", "<cmd>cnext<CR>zz", { noremap = true, silent = true, desc = "Next Quickfix Item" })
--- vim.keymap.set("n", "<leader>j", function()
---     local ok = pcall(vim.cmd.cnext)
---     if not ok then
---         -- TEST: uncomment for wrapping
---         -- pcall(vim.cmd.cfirst) -- past the end -> wrap to first
---         vim.notify("End of quickfix list", vim.log.levels.INFO)
---     end
--- end, { noremap = true, silent = true, desc = "Next Quickfix Item" })
-
-vim.keymap.set("n", "<leader>k", "<cmd>cprev<CR>zz", { noremap = true, silent = true, desc = "Prev Quickfix Item" })
--- vim.keymap.set("n", "<leader>k", function()
---     local ok = pcall(vim.cmd.cprev)
---     if not ok then
---         -- TEST: uncomment for wrapping
---         -- pcall(vim.cmd.clast) -- before the start -> wrap to last
---         vim.notify("Start of quickfix list", vim.log.levels.INFO)
---     end
--- end, { noremap = true, silent = true, desc = "Previous Quickfix Item" })
+-- vim.keymap.set("n", "<leader>k", "<cmd>cprev<CR>zz", { noremap = true, silent = true, desc = "Prev Quickfix Item" })
+vim.keymap.set("n", "<leader>k", function()
+    local ok = pcall(vim.cmd.cprev)
+    if not ok then
+        -- TEST: uncomment for wrapping
+        -- pcall(vim.cmd.clast) -- before the start -> wrap to last
+        vim.notify("Start of quickfix list", vim.log.levels.INFO)
+    end
+end, { noremap = true, silent = true, desc = "Previous Quickfix Item" })
 
 -- keep `*` / `#` centered
 vim.keymap.set("n", "*", "*zzzv", { noremap = true, silent = true, desc = "Next match" })
@@ -64,8 +60,10 @@ vim.keymap.set('n', '<leader>wj', '<C-w>j', { noremap = true, silent = true, des
 vim.keymap.set('n', '<leader>wk', '<C-w>k', { noremap = true, silent = true, desc = "Focus Up" })
 vim.keymap.set("n", "<C-Up>", "<cmd>resize +2<cr>", { noremap = true, silent = true, desc = "Increase vertical (+2)" })
 vim.keymap.set("n", "<C-Down>", "<cmd>resize -2<cr>", { noremap = true, silent = true, desc = "Decrease vertical (-2)" })
-vim.keymap.set("n", "<C-Left>", "<cmd>vertical resize -2<cr>", { noremap = true, silent = true, desc = "Decrease Horizontal (-2)" })
-vim.keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<cr>", { noremap = true, silent = true, desc = "Increase Horizontal (+2)" })
+vim.keymap.set("n", "<C-Left>", "<cmd>vertical resize -2<cr>",
+    { noremap = true, silent = true, desc = "Decrease Horizontal (-2)" })
+vim.keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<cr>",
+    { noremap = true, silent = true, desc = "Increase Horizontal (+2)" })
 vim.keymap.set("n", "<leader>we", "<C-w>=", { noremap = true, silent = true, desc = "Equalize All" })
 
 -- copy/paste
@@ -93,11 +91,61 @@ vim.keymap.set("n", "<leader>q", function()
             -- Cancel or dismiss (Esc): do nothing
         end
     )
-end, { silent = true, desc = "Quit (Confirm if Unsaved)" })
+end, { silent = true, desc = "Quit with Confirm" })
 
+-- buffers
 vim.keymap.set("n", "<C-s>", "<cmd>w<cr>", { noremap = true, silent = true, desc = "Save current buffer" })
-vim.keymap.set("n", "<leader>bd", ":bd<CR>", { noremap = true, silent = true, desc = "Delete Current" })
+vim.keymap.set("n", "<leader><Tab>", "<cmd>bnext<cr>", { noremap = true, silent = true, desc = "Next buffer" })
+-- TODO: uncomment for previous buffer navigation
+-- vim.keymap.set("n", "<leader><S-Tab>", "<cmd>bprevious<cr>", { noremap = true, silent = true, desc = "Prev buffer" })
+local function delete_buffers()
+    local builtin = require('telescope.builtin')
+    local actions = require('telescope.actions')
+    local action_state = require('telescope.actions.state')
+
+    builtin.buffers({
+        initial_mode = 'normal',
+        prompt_title = 'Delete Buffers',
+        attach_mappings = function(prompt_bufnr, map)
+            local function delete_selected()
+                local picker = action_state.get_current_picker(prompt_bufnr)
+                local selections = picker:get_multi_selection()
+                if #selections == 0 then
+                    local entry = action_state.get_selected_entry()
+                    if entry then selections = { entry } end
+                end
+
+                actions.close(prompt_bufnr)
+
+                local failed = {}
+                for _, entry in ipairs(selections) do
+                    if vim.api.nvim_buf_is_valid(entry.bufnr) then
+                        local name = vim.api.nvim_buf_get_name(entry.bufnr)
+                        local ok = pcall(vim.api.nvim_buf_delete, entry.bufnr, { force = false })
+                        if not ok then
+                            table.insert(failed, name ~= '' and name or ('buffer ' .. entry.bufnr))
+                        end
+                    end
+                    -- already invalid (e.g. wiped as a side effect of an earlier
+                    -- delete in this same batch) -> nothing to do, it's already gone
+                end
+
+                if #failed > 0 then
+                    vim.notify('Unsaved changes, not deleted:\n' .. table.concat(failed, '\n'),
+                        vim.log.levels.WARN)
+                end
+            end
+
+            map('i', '<CR>', delete_selected)
+            map('n', '<CR>', delete_selected)
+            return true -- keep Telescope's other defaults (Tab multi-select, etc.)
+        end,
+    })
+end
+
+vim.keymap.set('n', '<leader>bd', delete_buffers, { noremap = true, silent = true, desc = 'Delete Buffers' })
 vim.keymap.set("n", "<leader>bb", ":Telescope buffers<CR><ESC>", { noremap = true, silent = true, desc = "Show All" })
+
 vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { noremap = true, silent = true, desc = "Make File Executable" })
 vim.keymap.set('v', '<Tab>', '>gv', { noremap = true, silent = true, desc = "Indent right" })
 vim.keymap.set('v', '<S-Tab>', '<gv', { noremap = true, silent = true, desc = "Indent left" })

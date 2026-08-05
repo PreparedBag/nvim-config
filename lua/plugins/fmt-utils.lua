@@ -69,7 +69,7 @@ return {
         enabled = _G.DEV_ENABLED,
         dependencies = { "nvim-treesitter/nvim-treesitter" },
         keys = {
-            { "<leader>J", "<cmd>TSJToggle<cr>", desc = "Toggle Split/Join (Treesitter)" },
+            { "<leader>J", "<cmd>TSJToggle<cr>", desc = "Toggle Split/Join" },
         },
         opts = {
             use_default_keymaps = false, -- using our own <leader>J above

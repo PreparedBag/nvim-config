@@ -5,9 +5,7 @@ vim.g.loaded_ruby_provider = 0
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
--- Disable Netrw banner
 vim.g.netrw_banner = 0
-
 vim.o.sessionoptions = "buffers,curdir,folds,globals,help,tabpages,winsize,winpos,localoptions"
 vim.o.showmode = false
 vim.o.guicursor = ""
@@ -28,6 +26,7 @@ vim.o.undofile = true
 vim.o.hlsearch = false
 vim.o.incsearch = true
 vim.o.ignorecase = true
+vim.o.smartcase = true
 vim.o.termguicolors = true
 vim.o.scrolloff = 8
 vim.o.signcolumn = "yes:2"

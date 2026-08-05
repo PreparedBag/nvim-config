@@ -5,9 +5,9 @@ return {
     },
     config = function()
         require("notify").setup({
-            top_down = true,
+            top_down = false,
             -- NOTE: update to preferred dialog style
-            render = "default", -- fuller dialog style (vs "minimal" / "compact")
+            render = "compact", -- fuller dialog style (vs "minimal" / "compact")
             stages = "static",  -- animation; "fade"/"slide"/"static"
             timeout = 3000,
         })

@@ -11,16 +11,16 @@ return {
 
     -- These load the plugin lazily; the real handlers are set in config().
     keys = {
-        { '<Leader>ds',  desc = 'Start Debug (server + launch)' },
-        { '<Leader>dc',  desc = 'Continue/Start' },
+        { '<Leader>ds',  desc = 'Start Debug Session' },
+        { '<Leader>dc',  desc = 'Continue' },
         { '<Leader>dtp', desc = 'Pick Target' },
         { '<Leader>dte', desc = 'Set ELF' },
         { '<Leader>dtf', desc = 'Flash ELF' },
-        { '<Leader>dts', desc = 'Start Server' },
-        { '<Leader>dtc', desc = 'Stop Server' },
-        { '<Leader>dtr', desc = 'Recover Target (reset+go)' },
+        -- { '<Leader>dts', desc = 'Start Server' },
+        -- { '<Leader>dtc', desc = 'Stop Server' },
+        { '<Leader>dtr', desc = 'Recover Target' },
         { '<Leader>dtt', desc = 'Terminate' },
-        { '<Leader>dq',  desc = 'Teardown' },
+        { '<Leader>dq',  desc = 'Stop Debug Session' },
         { '<Leader>db',  desc = 'Toggle Breakpoint' },
     },
 
@@ -494,7 +494,7 @@ return {
             f:write('r\ng\nexit\n') -- reset (halts), then go (resume)
             f:close()
 
-            notify('Recovering target (reset + go)...')
+            notify('Recovering target...')
             vim.fn.jobstart({
                 'JLinkExe', '-device', active.device, '-if', active.interface,
                 '-speed', active.speed, '-autoconnect', '1', '-CommandFile', script,
@@ -556,18 +556,18 @@ return {
         end
 
         -- Target / session lifecycle
-        map('<Leader>ds', start_server, 'Start Debug (server + launch)')
+        map('<Leader>ds', start_server, 'Start Debug Session')
         map('<Leader>dtp', function() active = nil; resolve_config() end, 'Pick Target')
         map('<Leader>dte', function() select_elf() end, 'Set ELF')
         map('<Leader>dtf', flash_elf, 'Flash ELF')
-        map('<Leader>dts', start_server, 'Start Server')
-        map('<Leader>dtc', stop_server, 'Stop Server')
-        map('<Leader>dtr', recover_target, 'Recover Target (reset+go)')
+        -- map('<Leader>dts', start_server, 'Start Server')
+        -- map('<Leader>dtc', stop_server, 'Stop Server')
+        map('<Leader>dtr', recover_target, 'Recover Target')
         map('<Leader>dtt', dap.terminate, 'Terminate')
-        map('<Leader>dq', teardown, 'Teardown DAP')
+        map('<Leader>dq', teardown, 'Stop Debug Session')
 
-        map('<Leader>dc', dap.continue, 'Continue/Start')
-        map('<Leader>dr', restart_target, 'Restart Target (reset @ 0)')
+        map('<Leader>dc', dap.continue, 'Continue')
+        map('<Leader>dr', restart_target, 'Restart Target')
         map('<Leader>dp', dap.pause, 'Pause')
 
         -- Stepping
@@ -645,6 +645,6 @@ return {
             notify('DAP log: ' .. vim.fn.stdpath('cache') .. '/dap.log')
         end, 'Verbose Logging')
 
-        notify('DAP configured successfully!')
+        notify('DAP Configured Successfully!')
     end,
 }
