@@ -9,16 +9,17 @@ return {
         'nvim-telescope/telescope.nvim',
     },
 
-    -- these load the plugin lazily; the real handlers are set in config().
+    -- These load the plugin lazily; the real handlers are set in config().
     keys = {
-        { '<Leader>d', desc = 'Debugger' },
-        -- { '<Leader>ds',  desc = 'Start Debug Session' },
+        { '<Leader>d', desc = 'Enable Debugger' },
+        -- { '<Leader>ds',  desc = 'Start DAP' },
         -- { '<Leader>dc',  desc = 'Continue/Start' },
         -- { '<Leader>dtp', desc = 'Pick Target' },
         -- { '<Leader>dte', desc = 'Set ELF' },
         -- { '<Leader>dtf', desc = 'Flash ELF' },
         -- { '<Leader>dts', desc = 'Start Server' },
         -- { '<Leader>dtc', desc = 'Stop Server' },
+        -- { '<Leader>dtr', desc = 'Recover Target (reset+go)' },
         -- { '<Leader>dtt', desc = 'Terminate' },
         -- { '<Leader>dq',  desc = 'Teardown' },
         -- { '<Leader>db',  desc = 'Toggle Breakpoint' },
@@ -42,7 +43,7 @@ return {
                 speed     = '4000',
                 gdb_port  = 2331,
             },
-            -- TODO: Add more to enable the picker, e.g.:
+            -- Add more to enable the picker, e.g.:
             -- ['STM32F411CE'] = { device = 'STM32F411CE', interface = 'SWD', speed = '4000', gdb_port = 2331 },
         }
 
@@ -91,30 +92,15 @@ return {
         --    active/inactive = dap.session()  |  running/paused = listeners
         -- ========================================================================
         local COL = {
-            active = '#e06c75',
             run = '#98c379',
             pause = '#e5c07b',
-            off = '#5c6370',
+            off = '#9ca3b0',
         }
         local running = false
 
         local function state()
             if not dap.session() then return 'inactive' end
             return running and 'running' or 'paused'
-        end
-
-        -- --- Visual: red WinSeparator border while a session is live ------------
-        local saved_sep = nil
-        local function set_border(on)
-            if on then
-                if not saved_sep then
-                    saved_sep = vim.api.nvim_get_hl(0, { name = 'WinSeparator' })
-                end
-                vim.api.nvim_set_hl(0, 'WinSeparator', { fg = COL.active, bold = true })
-            elseif saved_sep then
-                vim.api.nvim_set_hl(0, 'WinSeparator', saved_sep)
-                saved_sep = nil
-            end
         end
 
         -- --- Visual: dapui window titles + REPL state label --------------------
@@ -124,16 +110,15 @@ return {
             dapui_stacks = 'STACKS',
             dapui_watches = 'WATCHES',
             dapui_console = 'CONSOLE',
-            dapui_repl = 'REPL',
-            ['dapui-repl'] = 'REPL',
+            ['dap-repl'] = 'REPL',
         }
-        local function is_repl(ft) return ft == 'dapui_repl' or ft == 'dapui-repl' end
+        local function is_repl(ft) return ft == 'dap-repl' end
 
         local function define_hl()
             vim.api.nvim_set_hl(0, 'DapWinBar', { link = 'Title' })
             vim.api.nvim_set_hl(0, 'DapStateRun', { fg = COL.run, bold = true })
             vim.api.nvim_set_hl(0, 'DapStatePause', { fg = COL.pause, bold = true })
-            vim.api.nvim_set_hl(0, 'DapStateOff', { fg = COL.off })
+            vim.api.nvim_set_hl(0, 'DapStateOff', { fg = COL.off, bold = true })
         end
         define_hl()
 
@@ -144,13 +129,13 @@ return {
                 return '%=%#DapWinBar# ' .. base .. ' %*%='
             end
             local s = state()
-            local hl, label = 'DapStateOff', '⛔ INACTIVE'
+            local hl, label = 'DapStateOff', 'INACTIVE'
             if s == 'running' then
-                hl, label = 'DapStateRun', '▶ RUNNING'
+                hl, label = 'DapStateRun', 'RUNNING'
             elseif s == 'paused' then
-                hl, label = 'DapStatePause', '⏸ PAUSED'
+                hl, label = 'DapStatePause', 'PAUSED'
             end
-            return '%=%#' .. hl .. '# ● DEBUG · ' .. label .. ' %*%='
+            return '%=%#' .. hl .. '# REPL · ' .. label .. ' %*%='
         end
 
         local function style_win(win)
@@ -173,7 +158,6 @@ return {
         -- reflects post-event state (terminate/exit/restart/attach).
         local function refresh()
             vim.schedule(function()
-                set_border(state() ~= 'inactive')
                 for _, win in ipairs(vim.api.nvim_list_wins()) do
                     style_win(win)
                 end
@@ -203,7 +187,6 @@ return {
         })
         vim.api.nvim_create_autocmd('ColorScheme', {
             callback = function()
-                saved_sep = nil -- scheme reset WinSeparator; re-capture on next set
                 define_hl()
                 refresh()
             end,
@@ -419,6 +402,8 @@ return {
         -- ========================================================================
         local jlink_job = nil
         local server_ready = false
+        local recover_pending = false -- set by kill_server(true); consumed in on_exit below
+        local recover_target          -- forward-declared; defined further down, assigned there
 
         local function launch_session()
             if dap.session() then return end -- already attached
@@ -455,7 +440,9 @@ return {
                         if not server_ready and line:match('Waiting for GDB connection') then
                             server_ready = true
                             notify('GDB Server ready on :' .. active.gdb_port)
-                            vim.defer_fn(launch_session, 300)
+                            -- JLinkGDBServer can misreport its own state if commanded
+                            -- too soon after this line; 500ms clears that window.
+                            vim.defer_fn(launch_session, 500)
                         end
                     end
                 end,
@@ -471,6 +458,12 @@ return {
                     if dap.session() then pcall(dap.terminate) end
                     notify('GDB Server stopped' .. (code ~= 0 and (' (code ' .. code .. ')') or ''),
                         code ~= 0 and W or I)
+                    if recover_pending then
+                        recover_pending = false
+                        -- small delay: give the OS/driver a moment to release
+                        -- the USB probe before JLinkExe grabs it again
+                        vim.defer_fn(recover_target, 300)
+                    end
                 end,
             })
 
@@ -482,21 +475,44 @@ return {
             end
         end
 
-        local function kill_server()
+        -- `recover`: reset+resume the target after the server is fully gone.
+        -- If a job is running, the actual recovery happens in its on_exit
+        -- (we need the real process exit, not just "jobstop was called").
+        -- If no job is running, there's nothing to wait for, so do it now.
+        local function kill_server(recover)
             if jlink_job then
-                pcall(vim.fn.jobstop, jlink_job); jlink_job = nil
+                if recover then recover_pending = true end
+                pcall(vim.fn.jobstop, jlink_job)
+                -- jlink_job = nil
+            elseif recover then
+                recover_target()
             end
             server_ready = false
         end
 
-        -- Terminate the session first, kill the server only once it's gone.
-        local function stop_server()
+        -- If the server is only ever killed (vs. exiting cleanly), J-Link can
+        -- leave the CPU halted rather than resuming it. Explicitly telling
+        -- J-Link to resume before we disconnect removes that ambiguity
+        -- regardless of how cleanly the teardown that follows actually goes.
+        local function resume_before_disconnect(cb)
             if dap.session() then
-                dap.terminate(nil, nil, function() vim.schedule(kill_server) end)
-                vim.defer_fn(function() if jlink_job then kill_server() end end, 1500) -- safety net
+                pcall(function() dap.repl.execute('monitor go') end)
+                vim.defer_fn(cb, 150)
             else
-                kill_server()
+                cb()
             end
+        end
+
+        -- Resume, then terminate the session, then kill the server once it's gone.
+        local function stop_server()
+            resume_before_disconnect(function()
+                if dap.session() then
+                    dap.terminate(nil, nil, function() vim.schedule(function() kill_server(true) end) end)
+                    vim.defer_fn(function() if jlink_job then kill_server(true) end end, 1500) -- safety net
+                else
+                    kill_server(true)
+                end
+            end)
         end
 
         -- Full teardown for <Leader>dq
@@ -506,16 +522,49 @@ return {
                 pcall(function() dap.repl.close() end)
                 vim.cmd('silent! sign unplace *')
                 running = false
-                kill_server()
+                kill_server(true)
                 refresh()
                 notify('DAP torn down')
             end
-            if dap.session() then
-                dap.terminate(nil, nil, function() vim.schedule(finish) end)
-                vim.defer_fn(function() if dap.session() then finish() end end, 1500)
-            else
-                finish()
+            resume_before_disconnect(function()
+                if dap.session() then
+                    dap.terminate(nil, nil, function() vim.schedule(finish) end)
+                    vim.defer_fn(function() if dap.session() then finish() end end, 1500)
+                else
+                    finish()
+                end
+            end)
+        end
+
+        -- Fast recover: reset + resume, no erase/reflash. If this alone clears
+        -- a lockup, it confirms the chip was just left halted/desynced rather
+        -- than needing reprogramming.
+        recover_target = function()
+            if not active then
+                resolve_config(recover_target)
+                return
             end
+
+            local script = '/tmp/jlink_recover.jlink'
+            local f = io.open(script, 'w')
+            if not f then
+                notify('Cannot write recover script', E)
+                return
+            end
+            f:write('r\ng\nexit\n') -- reset (halts), then go (resume)
+            f:close()
+
+            notify('Recovering target (reset + go)...')
+            vim.fn.jobstart({
+                'JLinkExe', '-device', active.device, '-if', active.interface,
+                '-speed', active.speed, '-autoconnect', '1', '-CommandFile', script,
+            }, {
+                on_exit = function(_, code)
+                    notify(code == 0 and 'Target recovered' or ('Recover failed (' .. code .. ')'),
+                        code == 0 and I or E)
+                    os.remove(script)
+                end,
+            })
         end
 
         -- ========================================================================
@@ -547,7 +596,7 @@ return {
         end
 
         -- Target / session lifecycle
-        map('<Leader>ds', start_server, 'Start Debug Session')
+        map('<Leader>ds', start_server, 'Start DAP')
         map('<Leader>dtp', function()
             active = nil; resolve_config()
         end, 'Pick Target')
@@ -555,6 +604,7 @@ return {
         map('<Leader>dtf', flash_elf, 'Flash ELF')
         map('<Leader>dts', start_server, 'Start Server')
         map('<Leader>dtc', stop_server, 'Stop Server')
+        map('<Leader>dtr', recover_target, 'Recover Target (reset+go)')
         map('<Leader>dtt', dap.terminate, 'Terminate')
         map('<Leader>dq', teardown, 'Teardown DAP')
 
