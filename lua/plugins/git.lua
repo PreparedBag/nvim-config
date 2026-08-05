@@ -454,15 +454,15 @@ local function status_picker(root)
                     capture({ "add", "--", entry.path }, root)
                 end
                 picker:refresh(status_finder(root), { reset_prompt = false })
-            end, { desc = "Stage/Unstage"})
+            end, { desc = "Stage/Unstage" })
             map({ "i", "n" }, "<C-a>", function(bufnr)
                 capture({ "add", "-A" }, root)
                 refresh(bufnr)
-            end, {desc = "Stage All"})
+            end, { desc = "Stage All" })
             map({ "i", "n" }, "<C-u>", function(bufnr)
                 capture({ "reset" }, root)
                 refresh(bufnr)
-            end, { desc = "Unstage All (Reset)"})
+            end, { desc = "Unstage All (Reset)" })
             return true
         end,
     }):find()
@@ -699,12 +699,43 @@ return {
     {
         'nvim-telescope/telescope.nvim',
         keys = {
-            { "<leader>gs", git_guard(status_picker),                                                     desc = "Git Status" },
-            { "<leader>gl", git_guard(log_picker),                                                        desc = "Git Log" },
-            { "<leader>gx", git_guard(discard_file),                                                      desc = "Discard Changes to File" },
-            { "<leader>gp", git_guard(function(root) run_auth({ "pull" }, root) end),                     desc = "Pull" },
-            { "<leader>gu", git_guard(function(root) run_auth({ "push", "--follow-tags" }, root) end),    desc = "Push + Tags" },
-            { "<leader>gf", git_guard(function(root) run_auth({ "fetch", "--prune", "--tags" }, root) end), desc = "Fetch + Prune" },
+            { "<leader>gs", git_guard(status_picker), desc = "Git Status" },
+            { "<leader>gl", git_guard(log_picker),    desc = "Git Log" },
+            { "<leader>gx", git_guard(discard_file),  desc = "Discard Changes to File" },
+            {
+                "<leader>gp",
+                git_guard(function(root)
+                    run_auth({
+                        "pull",
+                    }, root)
+                end),
+                desc = "Pull"
+            },
+            {
+                "<leader>gu",
+                git_guard(function(root)
+                    run_auth({
+                        "push",
+                        "-u",
+                        "origin",
+                        "HEAD",
+                        "--follow-tags",
+                    }, root)
+                end),
+                desc = "Push + Tags"
+            },
+            {
+                "<leader>gf",
+                git_guard(function(root)
+                    run_auth({
+                        "fetch",
+                        "--prune",
+                        "--tags",
+                        "--prune-tags",
+                    }, root)
+                end),
+                desc = "Fetch + Prune"
+            },
             {
                 "<leader>gc",
                 git_guard(function(root)
@@ -743,7 +774,12 @@ return {
                 "<leader>gzc",
                 git_guard(function(root)
                     prompt("Stash message: ", function(msg)
-                        run({ "stash", "push", "-m", msg }, root)
+                        run({
+                            "stash",
+                            "push",
+                            "-m",
+                            msg,
+                        }, root)
                     end)
                 end),
                 desc = "Stash Changes",
@@ -760,7 +796,11 @@ return {
                 "<leader>gbn",
                 git_guard(function(root)
                     prompt("New branch: ", function(name)
-                        run({ "checkout", "-b", name }, root)
+                        run({
+                            "checkout",
+                            "-b",
+                            name,
+                        }, root)
                     end)
                 end),
                 desc = "New",
