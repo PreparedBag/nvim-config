@@ -39,23 +39,24 @@ local function save_session()
     vim.notify("Session saved", vim.log.levels.INFO)
 end
 
-local function save_and_quit()
+local function dap_session_active()
+    local dap = package.loaded['dap']
+    return dap ~= nil and dap.session() ~= nil
+end
+
+local function save_and_quit_confirmed()
     clean_for_session()
     require("persistence").save()
-
-    -- collect any modified buffers across the whole session
     local modified = {}
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].modified then
             table.insert(modified, vim.api.nvim_buf_get_name(buf))
         end
     end
-
     if #modified == 0 then
         vim.cmd("qa")
         return
     end
-
     vim.ui.select(
         { "Save all and quit", "Quit without saving", "Cancel" },
         { prompt = #modified .. " buffer(s) have unsaved changes:" },
@@ -65,9 +66,22 @@ local function save_and_quit()
             elseif choice == "Quit without saving" then
                 vim.cmd("qa!")
             end
-            -- Cancel or dismiss: do nothing
         end
     )
+end
+
+local function save_and_quit()
+    if dap_session_active() then
+        vim.ui.select(
+            { "Quit anyway", "Cancel" },
+            { prompt = "Debug session still active — stop it with <Leader>dq first?" },
+            function(choice)
+                if choice == "Quit anyway" then save_and_quit_confirmed() end
+            end
+        )
+        return
+    end
+    save_and_quit_confirmed()
 end
 
 -- Read the saved sessions off disk, decoding the %-encoded path for display.
