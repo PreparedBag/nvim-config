@@ -1,17 +1,17 @@
-*preparedbag-config.txt*                   Per-project local config for Neovim
+*project-config.txt*                         Per-project local config for Neovim
 
 ==============================================================================
-CONTENTS                                         *preparedbag-config-contents*
+CONTENTS                                               *project-config-contents*
 
-    1. Introduction ..................................... |nvim-config-intro|
-    2. File location ................................. |nvim-config-location|
-    3. Sections ...................................... |nvim-config-sections|
-        dap ............................................... |nvim-config-dap|
-        telescope ................................... |nvim-config-telescope|
-    4. Adding a new section ............................ |nvim-config-adding|
+    1. Introduction ..................................... |project-config-intro|
+    2. File location ................................. |project-config-location|
+    3. Sections ...................................... |project-config-sections|
+        dap ............................................... |project-config-dap|
+        telescope ................................... |project-config-telescope|
+    4. Adding a new section ............................ |project-config-adding|
 
 ==============================================================================
-1. Introduction                                     *preparedbag-config-intro*
+1. Introduction                                           *project-config-intro*
 
 `.nvim-project-settings.lua` is an optional, per-project settings file. It 
 lives in a project's root directory and is read by this Neovim config to 
@@ -26,7 +26,7 @@ itself. See |nvim-config-adding| before adding a new direct `dofile()` call
 anywhere else.
 
 ==============================================================================
-2. File location                                 *preparedbag-config-location*
+2. File location                                       *project-config-location*
 
     <project-root>/.nvim-project-settings.lua
 
@@ -53,10 +53,10 @@ valid Lua — computed values, conditionals, `os.getenv()`, etc. — not just a
 static table.
 
 ==============================================================================
-3. Sections                                      *preparedbag-config-sections*
+3. Sections                                            *project-config-sections*
 
 ------------------------------------------------------------------------------
-dap                                                   *preparedbag-config-dap*
+dap                                                         *project-config-dap*
 
 Overrides the debug target used by nvim-dap (`lua/plugins/dap.lua`). When
 present, this REPLACES the preset picker entirely for this project — all
@@ -69,7 +69,7 @@ four fields are required.
     gdb_port    number  Port for JLinkGDBServer <-> the debug adapter
 
 ------------------------------------------------------------------------------
-telescope                                       *preparedbag-config-telescope*
+telescope                                             *project-config-telescope*
 
 Adds extra search roots to Telescope's file/grep pickers (<leader>ff,
 <leader>fa, <leader>fs, <leader>fp, <leader>fw), on top of the project root
@@ -80,7 +80,7 @@ otherwise need `../`, which also pulls in unwanted siblings.
                            resolved to an absolute path before use.
 
 ==============================================================================
-4. Adding a new section                            *preparedbag-config-adding*
+4. Adding a new section                                  *project-config-adding*
 
 To add a new per-project setting:
 

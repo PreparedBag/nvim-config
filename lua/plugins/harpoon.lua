@@ -4,7 +4,6 @@ return {
     dependencies = {
         "nvim-lua/plenary.nvim",
         "nvim-telescope/telescope.nvim",
-
     },
     keys = {
         { "<leader>ha", function() require("harpoon"):list():add() end,    desc = "Add Current Buffer to Harpoon" },
@@ -21,7 +20,6 @@ return {
             function()
                 local harpoon = require("harpoon")
                 local added = 0
-
                 for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
                     -- Must be loaded and listed (skips scratch/unlisted buffers)
                     if vim.api.nvim_buf_is_loaded(bufnr)
@@ -33,14 +31,13 @@ return {
                         -- Non-empty name that points at an actual file on disk
                         if name ~= "" and vim.fn.filereadable(name) == 1 then
                             harpoon:list():add({
-                                value = vim.fn.fnamemodify(name, ":."),
+                                value = require("config.project").relative_path(vim.loop.cwd(), name),
                                 context = { row = 1, col = 0 },
                             })
                             added = added + 1
                         end
                     end
                 end
-
                 vim.notify(("Added %d buffer(s) to Harpoon"):format(added), vim.log.levels.INFO)
             end,
             desc = "Add Open Buffers to Harpoon",
@@ -76,7 +73,33 @@ return {
         })
 
         local harpoon = require("harpoon")
-        harpoon:setup({})
+
+        -- harpoon's default create_list_item normalizes via plenary's
+        -- Path:make_relative, which only strips a matching cwd prefix and
+        -- falls back to the full absolute path for anything outside cwd
+        -- (e.g. a ../shared file). This override computes a genuine
+        -- ../-relative path instead, same fix as telescope.lua's
+        -- path_display, so <leader>ha stores it correctly too.
+        harpoon:setup({
+            default = {
+                create_list_item = function(config, name)
+                    name = name or vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
+                    local root = config.get_root_dir()
+                    local rel = require("config.project").relative_path(root, name)
+
+                    local bufnr = vim.fn.bufnr(name, false)
+                    local pos = { 1, 0 }
+                    if bufnr ~= -1 then
+                        pos = vim.api.nvim_win_get_cursor(0)
+                    end
+
+                    return {
+                        value = rel,
+                        context = { row = pos[1], col = pos[2] },
+                    }
+                end,
+            },
+        })
 
         -- attach a buffer-local save map when the NATIVE quick menu opens
         harpoon:extend({

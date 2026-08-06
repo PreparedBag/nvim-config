@@ -1,8 +1,8 @@
-preparedbag-config-adding	preparedbag-config.txt	/*preparedbag-config-adding*
-preparedbag-config-contents	preparedbag-config.txt	/*preparedbag-config-contents*
-preparedbag-config-dap	preparedbag-config.txt	/*preparedbag-config-dap*
-preparedbag-config-intro	preparedbag-config.txt	/*preparedbag-config-intro*
-preparedbag-config-location	preparedbag-config.txt	/*preparedbag-config-location*
-preparedbag-config-sections	preparedbag-config.txt	/*preparedbag-config-sections*
-preparedbag-config-telescope	preparedbag-config.txt	/*preparedbag-config-telescope*
-preparedbag-config.txt	preparedbag-config.txt	/*preparedbag-config.txt*
+project-config-adding	preparedbag-config.txt	/*project-config-adding*
+project-config-contents	preparedbag-config.txt	/*project-config-contents*
+project-config-dap	preparedbag-config.txt	/*project-config-dap*
+project-config-intro	preparedbag-config.txt	/*project-config-intro*
+project-config-location	preparedbag-config.txt	/*project-config-location*
+project-config-sections	preparedbag-config.txt	/*project-config-sections*
+project-config-telescope	preparedbag-config.txt	/*project-config-telescope*
+project-config.txt	preparedbag-config.txt	/*project-config.txt*

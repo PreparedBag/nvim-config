@@ -93,47 +93,8 @@ return {
                 return args
             end
 
-            -- Genuine relative path (with ../ as needed) — unlike the default, which
-            -- only strips a matching prefix and falls back to absolute otherwise.
             local function relative_path_display(opts, path)
-                local sep = require("telescope.utils").get_separator()
-
-                -- Only absolute paths need diffing against cwd (the multi-dir
-                -- search_dirs case). A plain single-directory search already returns
-                -- paths relative to cwd straight from rg/fd - nothing to do there.
-                local is_absolute = path:sub(1, 1) == sep or path:match("^%a:[\\/]")
-                if not is_absolute then
-                    return path
-                end
-
-                local cwd = opts.cwd or vim.uv.cwd()
-
-                local function split(p)
-                    local parts = {}
-                    for part in p:gmatch("[^" .. sep .. "]+") do
-                        table.insert(parts, part)
-                    end
-                    return parts
-                end
-
-                local base_parts = split(vim.fn.fnamemodify(cwd, ":p"))
-                local target_parts = split(path)
-
-                local common = 0
-                while common < #base_parts and common < #target_parts
-                    and base_parts[common + 1] == target_parts[common + 1] do
-                    common = common + 1
-                end
-
-                local rel_parts = {}
-                for _ = 1, (#base_parts - common) do
-                    table.insert(rel_parts, "..")
-                end
-                for i = common + 1, #target_parts do
-                    table.insert(rel_parts, target_parts[i])
-                end
-
-                return table.concat(rel_parts, sep)
+                return require("config.project").relative_path(opts.cwd or vim.uv.cwd(), path)
             end
 
             local shared = {
