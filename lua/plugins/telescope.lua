@@ -93,6 +93,49 @@ return {
                 return args
             end
 
+            -- Genuine relative path (with ../ as needed) — unlike the default, which
+            -- only strips a matching prefix and falls back to absolute otherwise.
+            local function relative_path_display(opts, path)
+                local sep = require("telescope.utils").get_separator()
+
+                -- Only absolute paths need diffing against cwd (the multi-dir
+                -- search_dirs case). A plain single-directory search already returns
+                -- paths relative to cwd straight from rg/fd - nothing to do there.
+                local is_absolute = path:sub(1, 1) == sep or path:match("^%a:[\\/]")
+                if not is_absolute then
+                    return path
+                end
+
+                local cwd = opts.cwd or vim.uv.cwd()
+
+                local function split(p)
+                    local parts = {}
+                    for part in p:gmatch("[^" .. sep .. "]+") do
+                        table.insert(parts, part)
+                    end
+                    return parts
+                end
+
+                local base_parts = split(vim.fn.fnamemodify(cwd, ":p"))
+                local target_parts = split(path)
+
+                local common = 0
+                while common < #base_parts and common < #target_parts
+                    and base_parts[common + 1] == target_parts[common + 1] do
+                    common = common + 1
+                end
+
+                local rel_parts = {}
+                for _ = 1, (#base_parts - common) do
+                    table.insert(rel_parts, "..")
+                end
+                for i = common + 1, #target_parts do
+                    table.insert(rel_parts, target_parts[i])
+                end
+
+                return table.concat(rel_parts, sep)
+            end
+
             local shared = {
                 ["<C-y>"] = { actions.smart_send_to_qflist, type = "action", opts = { desc = "Send to quickfix" } },
                 ["<C-l>"] = false, -- Disable default C-l since we use it for move right
@@ -111,6 +154,7 @@ return {
             -- Telescope setup
             telescope.setup({
                 defaults = {
+                    path_display = relative_path_display,
                     scroll_strategy = "limit",
                     layout_strategy = "horizontal",
                     layout_config = {
@@ -146,6 +190,7 @@ return {
 
             vim.keymap.set("n", "<leader>ff", function()
                 builtin.find_files({
+                    prompt_title = "Find Files",
                     search_dirs = project_search_dirs(),
                     find_command = vim.list_extend({
                         'rg',
@@ -158,6 +203,7 @@ return {
 
             vim.keymap.set("n", "<leader>fp", function()
                 builtin.live_grep({
+                    prompt_title = "Live Grep",
                     search_dirs = project_search_dirs(),
                     vimgrep_arguments = vim.list_extend({
                         'rg',
@@ -179,6 +225,7 @@ return {
 
             vim.keymap.set("n", "<leader>fa", function()
                 builtin.find_files({
+                    prompt_title = "Find Files (Include All)",
                     search_dirs = project_search_dirs(),
                     hidden = true,
                     find_command = {
@@ -194,6 +241,7 @@ return {
 
             vim.keymap.set("n", "<leader>fs", function()
                 builtin.live_grep({
+                    prompt_title = "Live Grep (Include All)",
                     search_dirs = project_search_dirs(),
                     vimgrep_arguments = {
                         'rg',
