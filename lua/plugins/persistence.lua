@@ -20,13 +20,23 @@ local function clean_for_session()
         pcall(function() require("dapui").close() end)
     end
 
-    -- Wipe Oil and other non-file buffers so they aren't saved into the session.
+    -- Buffers actually visible in a window right now (any tab).
+    local visible = {}
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+        visible[vim.api.nvim_win_get_buf(win)] = true
+    end
+
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         if vim.api.nvim_buf_is_valid(buf) then
             local bt = vim.bo[buf].buftype
             local name = vim.api.nvim_buf_get_name(buf)
-            -- keep only normal, named, file-backed buffers
-            if bt ~= "" or name == "" or name:match("^%w+://") then
+            local is_special = bt ~= "" or name == "" or name:match("^%w+://")
+
+            if is_special then
+                pcall(vim.api.nvim_buf_delete, buf, { force = true })
+            elseif not visible[buf] and not vim.bo[buf].modified then
+                -- a real file buffer, but not currently on screen -> drop it
+                -- from the session (it just won't be restored)
                 pcall(vim.api.nvim_buf_delete, buf, { force = true })
             end
         end
@@ -133,8 +143,13 @@ local function session_picker()
                 local entry = state.get_selected_entry()
                 actions.close(bufnr)
                 if not entry then return end
+                local start = vim.loop.hrtime()
                 vim.cmd("silent! source " .. vim.fn.fnameescape(entry.value))
                 _G.original_working_directory = vim.fn.getcwd()
+                vim.schedule(function()
+                    local ms = (vim.loop.hrtime() - start) / 1e6
+                    vim.notify(string.format("Session restored in %.1fms", ms))
+                end)
             end)
 
             -- <C-d>: delete the session under the cursor, then refresh the list
@@ -168,7 +183,14 @@ return {
         { "<leader>pq", save_and_quit, desc = "Save Session and Quit" },
         {
             "<leader>pr",
-            function() require("persistence").load() end,
+            function()
+                local start = vim.loop.hrtime()
+                require("persistence").load()
+                vim.schedule(function()
+                    local ms = (vim.loop.hrtime() - start) / 1e6
+                    vim.notify(string.format("Session restored in %.1fms", ms))
+                end)
+            end,
             desc = "Restore Session (CWD)",
         },
         {
