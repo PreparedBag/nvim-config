@@ -37,4 +37,7 @@ vim.api.nvim_create_autocmd("ColorScheme", {
     callback = apply_highlights,
 })
 
+vim.opt.winborder = "rounded"
+vim.o.winborder = "rounded"
+
 apply_highlights()

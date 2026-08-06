@@ -142,13 +142,13 @@ end
 -- before git runs, so a blank password never reaches the server.
 -- ---------------------------------------------------------------
 
-local function run_auth(args, root)
+local function run_auth(args, root, title)
     if not ASK_PASSWORD then
         run(args, root)
         return
     end
 
-    local ok, pw = pcall(vim.fn.inputsecret, "SSH password (Esc to cancel): ")
+    local ok, pw = pcall(vim.fn.inputsecret, title .. ": Enter Password (Esc to cancel): ")
     vim.cmd("redraw")
 
     if not ok or pw == "" then
@@ -608,7 +608,7 @@ end
 local function branch_delete_origin(root)
     branch_action_picker(root, function(branch)
         if confirm("Delete '" .. branch .. "' on origin?") then
-            run_auth({ "push", "origin", "--delete", branch }, root)
+            run_auth({ "push", "origin", "--delete", branch }, root, "Delete Branch")
         end
     end)
 end
@@ -735,9 +735,9 @@ return {
                 git_guard(function(root)
                     run_auth({
                         "pull",
-                    }, root)
+                    }, root, "Pull")
                 end),
-                desc = "Pull"
+                desc = "Git Pull"
             },
             {
                 "<leader>gu",
@@ -748,7 +748,7 @@ return {
                         "origin",
                         "HEAD",
                         "--follow-tags",
-                    }, root)
+                    }, root, "Git Push")
                 end),
                 desc = "Push + Tags"
             },
@@ -760,7 +760,7 @@ return {
                         "--prune",
                         "--tags",
                         "--prune-tags",
-                    }, root)
+                    }, root, "Git Fetch")
                 end),
                 desc = "Fetch + Prune"
             },

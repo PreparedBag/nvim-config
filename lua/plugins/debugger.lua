@@ -46,26 +46,25 @@ return {
             -- ['STM32F411CE'] = { device = 'STM32F411CE', interface = 'SWD', speed = '4000', gdb_port = 2331 },
         }
 
-        local active = nil        -- resolved config table
-        local selected_elf = nil  -- path to ELF being debugged
+        local active = nil       -- resolved config table
+        local selected_elf = nil -- path to ELF being debugged
 
         local I, W, E = vim.log.levels.INFO, vim.log.levels.WARN, vim.log.levels.ERROR
         local function notify(msg, lvl) vim.notify(msg, lvl or I) end
 
         -- Resolve `active`: project file > single preset > picker.
         local function resolve_config(cb)
-            if active then if cb then cb() end return end
+            if active then
+                if cb then cb() end
+                return
+            end
 
-            local pf = vim.fn.getcwd() .. '/.nvim-dap.lua'
-            if vim.fn.filereadable(pf) == 1 then
-                local ok, cfg = pcall(dofile, pf)
-                if ok and type(cfg) == 'table' then
-                    active = cfg
-                    notify('DAP config: project .nvim-dap.lua')
-                    if cb then cb() end
-                    return
-                end
-                notify('Bad .nvim-dap.lua, using presets', W)
+            local project = require('config.project').section('dap')
+            if project then
+                active = project
+                notify('DAP config: .nvim-config.lua [dap]')
+                if cb then cb() end
+                return
             end
 
             local names = vim.tbl_keys(presets)
@@ -101,9 +100,12 @@ return {
 
         -- --- Visual: dapui window titles + REPL state label --------------------
         local titles = {
-            dapui_scopes = 'SCOPES', dapui_breakpoints = 'BREAKPOINTS',
-            dapui_stacks = 'STACKS', dapui_watches = 'WATCHES',
-            dapui_console = 'CONSOLE', ['dap-repl'] = 'REPL',
+            dapui_scopes = 'SCOPES',
+            dapui_breakpoints = 'BREAKPOINTS',
+            dapui_stacks = 'STACKS',
+            dapui_watches = 'WATCHES',
+            dapui_console = 'CONSOLE',
+            ['dap-repl'] = 'REPL',
         }
         local function is_repl(ft) return ft == 'dap-repl' end
 
@@ -158,7 +160,9 @@ return {
         end
 
         -- --- State listeners (the actual sync) --------------------------------
-        local function mark(v) running = v; refresh() end
+        local function mark(v)
+            running = v; refresh()
+        end
 
         dap.listeners.after.event_initialized['ui'] = function() mark(true) end
         dap.listeners.after.event_stopped['ui']     = function() mark(false) end
@@ -209,7 +213,11 @@ return {
             icons = { expanded = '▾', collapsed = '▸', current_frame = '▸' },
             mappings = {
                 expand = { '<CR>', '<2-LeftMouse>' },
-                open = 'o', remove = 'd', edit = 'e', repl = 'r', toggle = 't',
+                open = 'o',
+                remove = 'd',
+                edit = 'e',
+                repl = 'r',
+                toggle = 't',
             },
             element_mappings = {},
             expand_lines = vim.fn.has('nvim-0.7') == 1,
@@ -248,7 +256,7 @@ return {
         dap.listeners.before.event_terminated['dapui'] = function() pcall(dapui.close) end
         dap.listeners.before.event_exited['dapui']     = function() pcall(dapui.close) end
 
-        dap.listeners.after.event_output['scroll'] = function()
+        dap.listeners.after.event_output['scroll']     = function()
             vim.schedule(function()
                 for _, win in ipairs(vim.fn.win_findbuf(vim.fn.bufnr('dap-repl'))) do
                     vim.api.nvim_win_call(win, function() vim.cmd('normal! G') end)
@@ -301,7 +309,7 @@ return {
                 externalConsole = false,
                 setupCommands = {
                     { text = '-enable-pretty-printing', description = 'Pretty print', ignoreFailures = true },
-                    { text = '-gdb-set mi-async on', description = 'Async', ignoreFailures = true },
+                    { text = '-gdb-set mi-async on',    description = 'Async',        ignoreFailures = true },
                 },
                 -- Runs AFTER the remote connection (miDebuggerServerAddress)
                 -- is actually established — setupCommands can fire too early
@@ -344,15 +352,25 @@ return {
         -- Flash via JLinkExe (independent of the debug session)
         -- ========================================================================
         local function flash_elf()
-            if not active then resolve_config(flash_elf) return end
-            if not selected_elf then select_elf(flash_elf) return end
+            if not active then
+                resolve_config(flash_elf)
+                return
+            end
+            if not selected_elf then
+                select_elf(flash_elf)
+                return
+            end
             if vim.fn.filereadable(selected_elf) ~= 1 then
-                notify('ELF not found: ' .. selected_elf, E) return
+                notify('ELF not found: ' .. selected_elf, E)
+                return
             end
 
             local script = '/tmp/jlink_flash.jlink'
             local f = io.open(script, 'w')
-            if not f then notify('Cannot write flash script', E) return end
+            if not f then
+                notify('Cannot write flash script', E)
+                return
+            end
             f:write(('erase\nloadfile %s\nreset\ngo\nexit\n'):format(selected_elf))
             f:close()
 
@@ -392,9 +410,18 @@ return {
         end
 
         local function start_server()
-            if jlink_job then notify('GDB Server already running') return end
-            if not active then resolve_config(start_server) return end
-            if not selected_elf then select_elf(start_server) return end
+            if jlink_job then
+                notify('GDB Server already running')
+                return
+            end
+            if not active then
+                resolve_config(start_server)
+                return
+            end
+            if not selected_elf then
+                select_elf(start_server)
+                return
+            end
 
             server_ready = false
             local cmd = {
@@ -442,7 +469,9 @@ return {
         end
 
         local function kill_server()
-            if jlink_job then pcall(vim.fn.jobstop, jlink_job); jlink_job = nil end
+            if jlink_job then
+                pcall(vim.fn.jobstop, jlink_job); jlink_job = nil
+            end
             server_ready = false
         end
 
@@ -486,11 +515,17 @@ return {
         -- Manual recover: reset + resume, no erase/reflash. Only ever run
         -- explicitly via <Leader>dtr.
         local function recover_target()
-            if not active then resolve_config(recover_target) return end
+            if not active then
+                resolve_config(recover_target)
+                return
+            end
 
             local script = '/tmp/jlink_recover.jlink'
             local f = io.open(script, 'w')
-            if not f then notify('Cannot write recover script', E) return end
+            if not f then
+                notify('Cannot write recover script', E)
+                return
+            end
             f:write('r\ng\nexit\n') -- reset (halts), then go (resume)
             f:close()
 
@@ -557,7 +592,9 @@ return {
 
         -- Target / session lifecycle
         map('<Leader>ds', start_server, 'Start Debug Session')
-        map('<Leader>dtp', function() active = nil; resolve_config() end, 'Pick Target')
+        map('<Leader>dtp', function()
+            active = nil; resolve_config()
+        end, 'Pick Target')
         map('<Leader>dte', function() select_elf() end, 'Set ELF')
         map('<Leader>dtf', flash_elf, 'Flash ELF')
         -- map('<Leader>dts', start_server, 'Start Server')
@@ -588,13 +625,19 @@ return {
             { noremap = true, silent = true, desc = 'Eval' })
         map('<Leader>dw', function()
             local w = expr_under_cursor()
-            if w == '' then notify('No variable under cursor', W) return end
+            if w == '' then
+                notify('No variable under cursor', W)
+                return
+            end
             dapui.elements.watches.add(w)
             notify("Watch: '" .. w .. "'")
         end, 'Add to Watches')
         map('<Leader>dW', function()
             local w = expr_under_cursor()
-            if w == '' then notify('No variable under cursor', W) return end
+            if w == '' then
+                notify('No variable under cursor', W)
+                return
+            end
             dap.repl.execute('`p ' .. w)
             notify("Printed '" .. w .. "'")
         end, 'Print Variable')
@@ -608,7 +651,8 @@ return {
             local open = false
             for _, win in ipairs(vim.api.nvim_list_wins()) do
                 if vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(win)):match('DAP') then
-                    open = true break
+                    open = true
+                    break
                 end
             end
             if open then
@@ -634,7 +678,10 @@ return {
             vim.g.dap_return_win = vim.api.nvim_get_current_win()
             for _, win in ipairs(vim.api.nvim_list_wins()) do
                 local ft = vim.bo[vim.api.nvim_win_get_buf(win)].filetype
-                if ft == 'dapui_watches' then vim.api.nvim_set_current_win(win) return end
+                if ft == 'dapui_watches' then
+                    vim.api.nvim_set_current_win(win)
+                    return
+                end
             end
             notify('Watches window not found', W)
         end, 'Toggle Watches')

@@ -56,11 +56,57 @@ return {
                 end
             end
 
+            -- Reads optional .nvim-project-settings.lua from the project root for extra
+            -- search directories (e.g. a sibling ../shared library outside cwd).
+            -- Returns nil (telescope's own default: just cwd) if the file isn't there.
+            local function project_search_dirs()
+                local extra = require('config.project').section('telescope')
+                if not extra or type(extra.extra_dirs) ~= 'table' then
+                    return nil
+                end
+
+                local root = vim.fn.getcwd()
+                local dirs = { root }
+                for _, rel in ipairs(extra.extra_dirs) do
+                    table.insert(dirs, vim.fn.fnamemodify(root .. '/' .. rel, ':p'))
+                end
+                return dirs
+            end
+
+            -- Extra `--glob '!pattern'` args from .nvim-project-settings.lua's
+            -- telescope.exclude, on top of whatever a picker's own find_command/
+            -- vimgrep_arguments already excludes.
+            local function project_exclude_args()
+                local ok, project = pcall(require, 'config.project')
+                if not ok then
+                    return {}
+                end
+
+                local extra = project.section('telescope')
+                local args = {}
+                if extra and type(extra.exclude) == 'table' then
+                    for _, pattern in ipairs(extra.exclude) do
+                        table.insert(args, '--glob')
+                        table.insert(args, '!' .. pattern)
+                    end
+                end
+                return args
+            end
+
             local shared = {
                 ["<C-y>"] = { actions.smart_send_to_qflist, type = "action", opts = { desc = "Send to quickfix" } },
+                ["<C-l>"] = false, -- Disable default C-l since we use it for move right
+            }
+
+            local insert_mappings = vim.tbl_extend("force", {}, shared, {
+                ["<C-j>"] = { actions.move_selection_next, type = "action", opts = { desc = "Next result" } },
+                ["<C-k>"] = { actions.move_selection_previous, type = "action", opts = { desc = "Previous result" } },
+            })
+
+            local normal_mappings = vim.tbl_extend("force", {}, shared, {
                 ["<C-j>"] = { page_results(1, 0.5), type = "action", opts = { desc = "Results: half-page down" } },
                 ["<C-k>"] = { page_results(-1, 0.5), type = "action", opts = { desc = "Results: half-page up" } },
-            }
+            })
 
             -- Telescope setup
             telescope.setup({
@@ -74,7 +120,7 @@ return {
                     preview = { treesitter = false },
                     -- Send Tab-marked items (or all if none marked) to the quickfix list.
                     -- Does NOT auto-open anything; view it later with <leader>fq.
-                    mappings = { i = shared, n = shared },
+                    mappings = { i = insert_mappings, n = normal_mappings },
                 },
                 extensions = {
                     -- fzf-native is an extension, so its config belongs HERE, not
@@ -100,17 +146,40 @@ return {
 
             vim.keymap.set("n", "<leader>ff", function()
                 builtin.find_files({
-                    find_command = {
+                    search_dirs = project_search_dirs(),
+                    find_command = vim.list_extend({
                         'rg',
                         '--files',
                         '--glob',
-                        '!.git/*'
-                    }
+                        '!.git/*',
+                    }, project_exclude_args())
                 })
             end, { noremap = true, silent = true, desc = "Find Files (Fuzzy Finder)" })
 
+            vim.keymap.set("n", "<leader>fp", function()
+                builtin.live_grep({
+                    search_dirs = project_search_dirs(),
+                    vimgrep_arguments = vim.list_extend({
+                        'rg',
+                        '--color=never',
+                        '--no-heading',
+                        '--with-filename',
+                        '--line-number',
+                        '--column',
+                        '--smart-case',
+                        '--glob',
+                        '!.git/*',
+                        '--glob',
+                        '!node_modules/*',
+                        '--glob',
+                        '!*.min.js'
+                    }, project_exclude_args())
+                })
+            end, { noremap = true, silent = true, desc = "Find Phrase (Live Grep)" })
+
             vim.keymap.set("n", "<leader>fa", function()
                 builtin.find_files({
+                    search_dirs = project_search_dirs(),
                     hidden = true,
                     find_command = {
                         'rg',
@@ -125,6 +194,7 @@ return {
 
             vim.keymap.set("n", "<leader>fs", function()
                 builtin.live_grep({
+                    search_dirs = project_search_dirs(),
                     vimgrep_arguments = {
                         'rg',
                         '--color=never',
@@ -145,26 +215,6 @@ return {
                 })
             end, { noremap = true, silent = true, desc = "Find String (Include All)" })
 
-            vim.keymap.set("n", "<leader>fp", function()
-                builtin.live_grep({
-                    vimgrep_arguments = {
-                        'rg',
-                        '--color=never',
-                        '--no-heading',
-                        '--with-filename',
-                        '--line-number',
-                        '--column',
-                        '--smart-case',
-                        '--glob',
-                        '!.git/*',
-                        '--glob',
-                        '!node_modules/*',
-                        '--glob',
-                        '!*.min.js'
-                    }
-                })
-            end, { noremap = true, silent = true, desc = "Find Phrase (Live Grep)" })
-
             vim.keymap.set("n", "<leader>fH", builtin.help_tags, { noremap = true, silent = true, desc = "Help Tags" })
 
             -- Grep the word under the cursor
@@ -172,6 +222,7 @@ return {
                 local word = vim.fn.expand("<cword>")
                 require('telescope.builtin').grep_string({
                     search = word,
+                    search_dirs = project_search_dirs(),
                     initial_mode = "normal",
                     prompt_title = "Ripgrep: " .. word,
                 })
@@ -190,6 +241,7 @@ return {
 
                 require("telescope.builtin").grep_string({
                     search = text,
+                    search_dirs = project_search_dirs(),
                     initial_mode = "normal",
                     prompt_title = "Ripgrep: " .. text,
                 })

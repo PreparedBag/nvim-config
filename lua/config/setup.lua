@@ -41,6 +41,22 @@ vim.o.modeline = false
 vim.opt.isfname:append("@-@")
 vim.opt.completeopt = { "menu", "menuone", "noselect" }
 
+-- Treesitter-based folding
+vim.o.foldmethod = "expr"
+vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+vim.o.foldenable = false
+vim.o.foldlevel = 99
+vim.o.foldlevelstart = 99
+vim.o.foldnestmax = 5
+vim.o.foldtext = ""
+vim.o.foldcolumn = "1"
+vim.opt.fillchars:append({
+    fold = " ",
+    foldclose = "+",
+    foldopen = " ",
+    foldsep = " ",
+})
+
 -- vim.o.timeout = true
 -- vim.o.timeoutlen = 300
 -- vim.o.mouse = "a"

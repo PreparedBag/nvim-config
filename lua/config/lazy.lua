@@ -72,5 +72,5 @@ require("lazy").setup({
 -- vim.cmd.colorscheme "aurora"
 vim.cmd.colorscheme "catppuccin-frappe"
 
-require("after.color-fix")
+require("after.theme-utils")
 require("after.autocmds")
