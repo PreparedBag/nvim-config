@@ -147,6 +147,15 @@ end
 
 vim.keymap.set('n', '<leader>bd', delete_buffers, { noremap = true, silent = true, desc = 'Delete Buffers' })
 vim.keymap.set("n", "<leader>bb", ":Telescope buffers<CR><ESC>", { noremap = true, silent = true, desc = "Show All" })
+vim.keymap.set('n', '<leader>br', function()
+    if vim.bo.modified then
+        vim.notify('Buffer has unsaved changes - save or discard first', vim.log.levels.WARN)
+        return
+    end
+    vim.cmd('edit!')
+    pcall(vim.cmd, 'TSBufDisable highlight')
+    pcall(vim.cmd, 'TSBufEnable highlight')
+end, { noremap = true, silent = true, desc = 'Reload Buffer from File' })
 
 vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { noremap = true, silent = true, desc = "Make File Executable" })
 vim.keymap.set('v', '<Tab>', '>gv', { noremap = true, silent = true, desc = "Indent right" })
