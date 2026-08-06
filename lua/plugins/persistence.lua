@@ -11,6 +11,40 @@ local function confirm(question)
     return vim.fn.confirm(question, "&Yes\n&No", 2) == 1
 end
 
+-- Wipes every buffer before loading a different session, so the new
+-- session starts clean instead of the old one's buffers hanging around
+-- hidden. Returns false (caller should abort the switch) if the user
+-- cancels out of the unsaved-changes prompt.
+local function wipe_all_buffers()
+    local modified = {}
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].modified then
+            table.insert(modified, vim.api.nvim_buf_get_name(buf))
+        end
+    end
+
+    if #modified > 0 then
+        local choice = vim.fn.confirm(
+            #modified .. " buffer(s) have unsaved changes. Save before switching sessions?",
+            "&Save all\n&Discard\n&Cancel", 3
+        )
+        if choice == 0 or choice == 3 then
+            return false
+        elseif choice == 1 then
+            vim.cmd("wall")
+        end
+        -- choice == 2 (Discard): fall through
+    end
+
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_valid(buf) then
+            pcall(vim.api.nvim_buf_delete, buf, { force = true })
+        end
+    end
+
+    return true
+end
+
 local function clean_for_session()
     -- dap UI (only if loaded)
     if package.loaded["dap"] then
@@ -143,6 +177,7 @@ local function session_picker()
                 local entry = state.get_selected_entry()
                 actions.close(bufnr)
                 if not entry then return end
+                if not wipe_all_buffers() then return end
                 local start = vim.loop.hrtime()
                 vim.cmd("silent! source " .. vim.fn.fnameescape(entry.value))
                 _G.original_working_directory = vim.fn.getcwd()
@@ -184,6 +219,7 @@ return {
         {
             "<leader>pr",
             function()
+                if not wipe_all_buffers() then return end
                 local start = vim.loop.hrtime()
                 require("persistence").load()
                 vim.schedule(function()
