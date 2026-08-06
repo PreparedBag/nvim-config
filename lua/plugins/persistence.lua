@@ -134,6 +134,7 @@ local function session_picker()
                 actions.close(bufnr)
                 if not entry then return end
                 vim.cmd("silent! source " .. vim.fn.fnameescape(entry.value))
+                _G.original_working_directory = vim.fn.getcwd()
             end)
 
             -- <C-d>: delete the session under the cursor, then refresh the list

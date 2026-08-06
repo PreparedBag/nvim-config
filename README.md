@@ -55,7 +55,7 @@ apply). Not covered further here.
 - **undotree** - visualize and browse the undo history.
 - **lualine** - statusline.
 - **which-key** - popup of available keybindings as you type.
-- **noice** + **nvim-notify** - modern cmdline and message UI.
+- **noice** - modern cmdline and message UI.
 - **number** (custom) - inline hex/dec/bin conversions for C work.
 
 ## Keymaps

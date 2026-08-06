@@ -1,3 +1,6 @@
+-- Store the original working directory when Neovim starts
+_G.original_working_directory = vim.fn.getcwd()
+
 -- Dev mode marker: default minimal (no marker), marker file with "true" enables dev
 local marker = vim.fn.stdpath("data") .. "/nvim-dev"
 

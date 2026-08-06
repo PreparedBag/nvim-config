@@ -1,16 +1,6 @@
 return {
     "folke/noice.nvim",
-    dependencies = {
-        "rcarriga/nvim-notify",
-    },
     config = function()
-        require("notify").setup({
-            top_down = false,
-            -- NOTE: update to preferred dialog style
-            render = "compact", -- fuller dialog style (vs "minimal" / "compact")
-            stages = "static",  -- animation; "fade"/"slide"/"static"
-            timeout = 3000,
-        })
         require("noice").setup({
             routes = {
                 {

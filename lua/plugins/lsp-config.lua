@@ -57,10 +57,10 @@ return {
                 end
 
                 -- Navigation
-                map("n", "gd", vim.lsp.buf.definition, "Go to Definition")
+                map("n", "gd", function() require("telescope.builtin").lsp_definitions({ initial_mode = "normal" }) end, "Go to Definition")
                 map("n", "gD", vim.lsp.buf.declaration, "Go to Declaration")
-                map("n", "gi", vim.lsp.buf.implementation, "Go to Implementation")
-                map("n", "gt", vim.lsp.buf.type_definition, "Go to Type Definition")
+                map("n", "gi", function() require("telescope.builtin").lsp_implementations({ initial_mode = "normal" }) end, "Go to Implementation")
+                map("n", "gt", function() require("telescope.builtin").lsp_type_definitions({ initial_mode = "normal" }) end, "Go to Type Definition")
 
                 map("n", "<leader>lq", function() vim.diagnostic.setqflist({ open = false }) end,
                     "Diagnostics to quickfix");
