@@ -9,6 +9,7 @@ vim.opt.nrformats = { "alpha", "hex", "bin" }
 local M = {}
 
 local ns = vim.api.nvim_create_namespace("numbase_preview")
+local augroup = "numbase_preview"
 local enabled = false
 
 -- TODO: uncomment for file specific enable
@@ -24,6 +25,8 @@ local function number_under_cursor()
         { pat = "0[bB][01]+", base = "bin" },
         { pat = "%d+",        base = "dec" },
     }
+
+    -- 1. number literally under the cursor
     for _, p in ipairs(patterns) do
         local init = 1
         while true do
@@ -33,6 +36,18 @@ local function number_under_cursor()
                 return line:sub(s, e), p.base, s, e
             end
             init = e + 1
+        end
+    end
+
+    -- 2. fallback: first number anywhere on the line. Scanned position by
+    -- position (rather than per-pattern like above) so e.g. "0x1A" is
+    -- matched whole instead of the decimal pattern grabbing just its "0".
+    for i = 1, #line do
+        for _, p in ipairs(patterns) do
+            local s, e = line:find("^" .. p.pat, i)
+            if s then
+                return line:sub(s, e), p.base, s, e
+            end
         end
     end
 end
@@ -86,9 +101,12 @@ end
 local function refresh()
     vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
 
+    -- No `enabled` check needed here anymore - refresh() is only ever
+    -- invoked by the CursorMoved/CursorMovedI autocmd, and that autocmd
+    -- only exists while enabled (see enable_preview/disable_preview below).
     -- TODO: uncomment for file specific enable
-    -- if not enabled or not filetypes[vim.bo.filetype] then return end
-    if not enabled or vim.bo.buftype ~= "" then return end
+    -- if not filetypes[vim.bo.filetype] then return end
+    if vim.bo.buftype ~= "" then return end
 
     local str, base = number_under_cursor()
     if not str then return end
@@ -100,6 +118,25 @@ local function refresh()
         virt_text_pos = "eol",
         hl_mode = "combine", -- let cursorline / row highlight show through
     })
+end
+
+-- Register/unregister the CursorMoved autocmd itself, rather than leaving
+-- it always-on and checking `enabled` inside refresh() - so disabled means
+-- genuinely zero work per cursor move, not a fast no-op every time.
+
+local function enable_preview()
+    vim.api.nvim_create_augroup(augroup, { clear = true })
+    vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+        group = augroup,
+        callback = refresh,
+    })
+end
+
+local function disable_preview()
+    -- Recreating the group empty (clear = true) removes the autocmd that
+    -- was in it - CursorMoved/CursorMovedI fire nothing until re-enabled.
+    vim.api.nvim_create_augroup(augroup, { clear = true })
+    vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
 end
 
 -- In-place base cycle: hex -> dec -> bin -> hex -------------------------------
@@ -142,14 +179,18 @@ end
 -- Setup -----------------------------------------------------------------------
 
 function M.setup()
-    vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
-        group = vim.api.nvim_create_augroup("numbase_preview", { clear = true }),
-        callback = refresh,
-    })
+    if enabled then
+        enable_preview() -- respect whatever `enabled`'s default is set to above
+    end
 
     vim.keymap.set("n", "<leader>np", function()
         enabled = not enabled
-        refresh()
+        if enabled then
+            enable_preview()
+            refresh()
+        else
+            disable_preview()
+        end
         vim.notify("Number base preview: " .. (enabled and "on" or "off"))
     end, { desc = "Toggle Number Base Preview" })
 

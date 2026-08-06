@@ -26,7 +26,7 @@ end
 
 -- Returns just one top-level section (e.g. "dap", "telescope"), or nil if
 -- absent. Warns (rather than erroring) if present but not a table, since
--- that's almost certainly a typo in the project's .nvim-config.lua.
+-- that's almost certainly a typo in the project's .nvim-project-settings.lua.
 function M.section(name)
     local cfg = M.get()
     if not cfg then
@@ -43,7 +43,7 @@ function M.section(name)
 end
 
 -- Reads optional per-project settings from .nvim-project-settings.lua in
--- the cwd. See `:h nvim-config` for the file's syntax and the list of
+-- the cwd. See `:h project-config` for the file's syntax and the list of
 -- sections.
 --
 -- Always re-reads from disk on each call rather than caching — the file is
@@ -70,7 +70,7 @@ end
 
 -- Returns just one top-level section (e.g. "dap", "telescope"), or nil if
 -- absent. Warns (rather than erroring) if present but not a table, since
--- that's almost certainly a typo in the project's .nvim-config.lua.
+-- that's almost certainly a typo in the project's .project-config.lua.
 function M.section(name)
     local cfg = M.get()
     if not cfg then
