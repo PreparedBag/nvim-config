@@ -39,16 +39,44 @@ local function number_under_cursor()
         end
     end
 
-    -- 2. fallback: first number anywhere on the line. Scanned position by
+    -- TODO: uncomment for first number
+    -- 2a. fallback: first number anywhere on the line. Scanned position by
     -- position (rather than per-pattern like above) so e.g. "0x1A" is
     -- matched whole instead of the decimal pattern grabbing just its "0".
-    for i = 1, #line do
+    -- for i = 1, #line do
+    --     for _, p in ipairs(patterns) do
+    --         local s, e = line:find("^" .. p.pat, i)
+    --         if s then
+    --             return line:sub(s, e), p.base, s, e
+    --         end
+    --     end
+    -- end
+
+    -- TODO: uncomment for last number
+    -- 2b. fallback: LAST number anywhere on the line. Scanned position by
+    -- position (rather than per-pattern like above) so e.g. "0x1A" is
+    -- matched whole instead of the decimal pattern grabbing just its "0".
+    -- Keeps overwriting the result as it scans, so what's left at the end
+    -- is the last match on the line, not the first.
+    local last
+    local i = 1
+    while i <= #line do
+        local matched = false
         for _, p in ipairs(patterns) do
             local s, e = line:find("^" .. p.pat, i)
             if s then
-                return line:sub(s, e), p.base, s, e
+                last = { line:sub(s, e), p.base, s, e }
+                i = e + 1 -- skip past the whole match, not just one char
+                matched = true
+                break
             end
         end
+        if not matched then
+            i = i + 1
+        end
+    end
+    if last then
+        return last[1], last[2], last[3], last[4]
     end
 end
 
