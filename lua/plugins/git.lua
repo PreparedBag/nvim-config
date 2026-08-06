@@ -695,7 +695,13 @@ local function discard_all(root)
                 run({ "restore", "--staged", "--worktree", "--", "." }, root)
                 vim.schedule(function() vim.cmd("checktime") end)
             elseif choice == "Discard tracked changes + remove untracked files" then
-                if not confirm("This also deletes UNTRACKED files — unrecoverable. Continue?") then
+                local preview = vim.fn.systemlist({ "git", "-C", root, "clean", "-fdn" })
+                if #preview == 0 then
+                    run({ "restore", "--staged", "--worktree", "--", "." }, root)
+                    vim.schedule(function() vim.cmd("checktime") end)
+                    return
+                end
+                if not confirm("Will also permanently delete:\n" .. table.concat(preview, "\n")) then
                     return
                 end
                 run({ "restore", "--staged", "--worktree", "--", "." }, root)
