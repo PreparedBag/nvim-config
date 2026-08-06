@@ -19,8 +19,10 @@ vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { noremap = true, silent = true, de
 vim.keymap.set('i', '<C-l>', '<Right>', { noremap = true, silent = true, desc = 'Move cursor right in insert mode' })
 vim.keymap.set('i', '<C-h>', '<Left>', { noremap = true, silent = true, desc = 'Move cursor left in insert mode' })
 vim.keymap.set("n", "J", "mzJ`z", { noremap = true, silent = true, desc = "Join lines" })
-vim.keymap.set("n", "<C-d>", "<C-d>zz", { noremap = true, silent = true, desc = "Jump half-page down" })
-vim.keymap.set("n", "<C-u>", "<C-u>zz", { noremap = true, silent = true, desc = "Jump half-page up" })
+vim.keymap.set("n", "<C-d>", function() vim.cmd("normal! \4zz") end, { noremap = true, silent = true, desc = "Jump half-page down" })
+vim.keymap.set("n", "<C-u>", function() vim.cmd("normal! \21zz") end, { noremap = true, silent = true, desc = "Jump half-page up" })
+-- vim.keymap.set("n", "<C-d>", "<C-d>zz", { noremap = true, silent = true, desc = "Jump half-page down" })
+-- vim.keymap.set("n", "<C-u>", "<C-u>zz", { noremap = true, silent = true, desc = "Jump half-page up" })
 vim.keymap.set("n", "n", "nzzzv", { noremap = true, silent = true, desc = "Next result" })
 vim.keymap.set("n", "N", "Nzzzv", { noremap = true, silent = true, desc = "Prev result" })
 
