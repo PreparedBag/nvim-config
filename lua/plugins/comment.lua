@@ -47,7 +47,7 @@ return {
                 "<leader>ft",
                 function()
                     require("telescope").extensions["todo-comments"].todo({
-                        keywords = "TODO,FIXME,HACK,TEST,BUG",
+                        keywords = "TODO,FIXME,TEST,REVIEW",
                         initial_mode = "normal",
                     })
                 end,
@@ -64,7 +64,11 @@ return {
             },
         },
         config = function()
-            require("todo-comments").setup({})
+            require("todo-comments").setup({
+                keywords = {
+                    MARK = { icon = "", color = "info", alt = { "REMINDER", "OPTION" } },
+                },
+            })
         end,
     },
     {

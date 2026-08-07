@@ -32,7 +32,7 @@ vim.keymap.set('n', '<Esc>', ':nohlsearch<CR><Esc>', { noremap = true, silent = 
 vim.keymap.set("n", "<leader>j", function()
     local ok = pcall(vim.cmd.cnext)
     if not ok then
-        -- TEST: uncomment for wrapping
+        -- OPTION: uncomment for wrapping
         -- pcall(vim.cmd.cfirst) -- past the end -> wrap to first
         vim.notify("End of quickfix list", vim.log.levels.INFO)
     end
@@ -42,7 +42,7 @@ end, { noremap = true, silent = true, desc = "Next Quickfix Item" })
 vim.keymap.set("n", "<leader>k", function()
     local ok = pcall(vim.cmd.cprev)
     if not ok then
-        -- TEST: uncomment for wrapping
+        -- OPTION: uncomment for wrapping
         -- pcall(vim.cmd.clast) -- before the start -> wrap to last
         vim.notify("Start of quickfix list", vim.log.levels.INFO)
     end
@@ -98,7 +98,7 @@ end, { silent = true, desc = "Quit with Confirm" })
 -- buffers
 vim.keymap.set("n", "<C-s>", "<cmd>w<cr>", { noremap = true, silent = true, desc = "Save current buffer" })
 vim.keymap.set("n", "<leader><Tab>", "<cmd>bnext<cr>", { noremap = true, silent = true, desc = "Next buffer" })
--- TODO: uncomment for previous buffer navigation
+-- OPTION: uncomment for previous buffer navigation
 -- vim.keymap.set("n", "<leader><S-Tab>", "<cmd>bprevious<cr>", { noremap = true, silent = true, desc = "Prev buffer" })
 local function delete_buffers()
     local builtin = require('telescope.builtin')

@@ -71,13 +71,6 @@ return {
                 -- Information
                 map("n", "K", vim.lsp.buf.hover, "Hover")
                 map("n", "<C-h>", vim.lsp.buf.signature_help, "Signature Help")
-                -- NOTE: remapping c-h to move cursor left when in insert mode
-                -- map("i", "<C-h>", function()
-                --     if not signature_active then
-                --         vim.lsp.buf.signature_help()
-                --         signature_active = true
-                --     end
-                -- end, "Signature Help")
 
                 -- Code actions and refactoring
                 map("n", "<leader>la", vim.lsp.buf.code_action, "Code Actions")
@@ -296,7 +289,7 @@ return {
             }
 
             vim.lsp.config.clangd = {
-                -- NOTE: dropped --clang-tidy to reduce CPU load. add back in if needed.
+                -- OPTION: dropped --clang-tidy to reduce CPU load. add back in if needed.
                 cmd = { 'clangd', '--background-index', '-j=4', "--query-driver=/usr/bin/arm-none-eabi-*" },
                 filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda' },
                 root_markers = { '.git', 'compile_commands.json' },
@@ -401,7 +394,7 @@ return {
             }
 
             require("mason-lspconfig").setup({
-                -- NOTE: gopls, rust_analyzer installed manually via :MasonInstall when needed
+                -- OPTION: gopls, rust_analyzer installed manually via :MasonInstall when needed
                 ensure_installed = { "jdtls", "clangd", "pyright", "lua_ls", "ts_ls", "html", "cssls" },
                 handlers = {
                     function(server_name)

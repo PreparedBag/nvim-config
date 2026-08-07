@@ -70,7 +70,7 @@ return {
             -- Window Navigation
             { "<leader>w",  group = "Window Navigation", mode = "n" },
 
-            -- NOTE: uncomment if needed
+            -- OPTION: uncomment if needed
             -- Table Mode
             -- { "<leader>t",   group = "Table",                        mode = "n" },
             -- NERDTree Commands

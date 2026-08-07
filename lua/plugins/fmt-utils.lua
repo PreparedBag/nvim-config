@@ -73,11 +73,11 @@ return {
         },
         opts = {
             use_default_keymaps = false, -- using our own <leader>J above
-            -- TODO: update max length
+            -- OPTION: update max length
             max_join_length = 500,
         },
     },
-    -- TODO: comment/uncomment for autopairs
+    -- OPTION: comment/uncomment for autopairs
     {
         "windwp/nvim-autopairs",
         event = "InsertEnter",

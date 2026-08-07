@@ -12,7 +12,7 @@ local ns = vim.api.nvim_create_namespace("numbase_preview")
 local augroup = "numbase_preview"
 local enabled = false
 
--- TODO: uncomment for file specific enable
+-- OPTION: uncomment for file specific enable
 -- local filetypes = { c = true, cpp = true, h = true }
 
 -- Find the number token spanning the cursor.
@@ -39,7 +39,7 @@ local function number_under_cursor()
         end
     end
 
-    -- TODO: uncomment for first number
+    -- OPTION: uncomment for first number
     -- 2a. fallback: first number anywhere on the line. Scanned position by
     -- position (rather than per-pattern like above) so e.g. "0x1A" is
     -- matched whole instead of the decimal pattern grabbing just its "0".
@@ -52,7 +52,7 @@ local function number_under_cursor()
     --     end
     -- end
 
-    -- TODO: uncomment for last number
+    -- OPTION: uncomment for last number
     -- 2b. fallback: LAST number anywhere on the line. Scanned position by
     -- position (rather than per-pattern like above) so e.g. "0x1A" is
     -- matched whole instead of the decimal pattern grabbing just its "0".
@@ -132,7 +132,7 @@ local function refresh()
     -- No `enabled` check needed here anymore - refresh() is only ever
     -- invoked by the CursorMoved/CursorMovedI autocmd, and that autocmd
     -- only exists while enabled (see enable_preview/disable_preview below).
-    -- TODO: uncomment for file specific enable
+    -- OPTION: uncomment for file specific enable
     -- if not filetypes[vim.bo.filetype] then return end
     if vim.bo.buftype ~= "" then return end
 
@@ -198,7 +198,7 @@ local function show_and_copy(base)
         return
     end
     local out = format_base(value, base)
-    -- TODO: adjust here for copying to clipboard and/or local
+    -- OPTION: adjust here for copying to clipboard and/or local
     vim.fn.setreg("+", out)
     vim.fn.setreg('"', out)
     vim.notify(str .. " = " .. out)

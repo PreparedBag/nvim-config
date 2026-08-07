@@ -283,6 +283,6 @@ return {
             })
         end
     },
-    -- NOTE: uncomment if needed
+    -- OPTION: uncomment if needed
     -- { 'dhruvasagar/vim-table-mode' },
 }
