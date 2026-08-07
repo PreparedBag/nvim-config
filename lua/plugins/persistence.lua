@@ -82,6 +82,25 @@ local function clean_for_session()
     end
 end
 
+-- Common to every way of LOADING a session (cwd, last, picker): wipe
+-- buffers first (abort if cancelled), run `load_fn` to actually do the
+-- restore, sync _G.session_directory to wherever that left cwd, then
+-- notify with elapsed time. Each caller only supplies how IT loads -
+-- persistence.load(), persistence.load({last=true}), or sourcing a
+-- specific file directly.
+local function switch_session(load_fn)
+    if not wipe_all_buffers() then return end
+
+    local start = vim.loop.hrtime()
+    load_fn()
+    _G.session_directory = vim.fn.getcwd()
+
+    vim.schedule(function()
+        local ms = (vim.loop.hrtime() - start) / 1e6
+        vim.notify(string.format("Session restored in %.1fms", ms))
+    end)
+end
+
 local function save_session()
     clean_for_session()
     local real_cwd = vim.fn.getcwd()
@@ -93,7 +112,6 @@ end
 
 local function save_and_quit_confirmed()
     save_session()
-
     local modified = {}
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].modified then
@@ -180,13 +198,9 @@ local function session_picker()
                 local entry = state.get_selected_entry()
                 actions.close(bufnr)
                 if not entry then return end
-                if not wipe_all_buffers() then return end
-                local start = vim.loop.hrtime()
-                vim.cmd("silent! source " .. vim.fn.fnameescape(entry.value))
-                _G.session_directory = vim.fn.getcwd()
-                vim.schedule(function()
-                    local ms = (vim.loop.hrtime() - start) / 1e6
-                    vim.notify(string.format("Session restored in %.1fms", ms))
+
+                switch_session(function()
+                    vim.cmd("silent! source " .. vim.fn.fnameescape(entry.value))
                 end)
             end)
 
@@ -215,13 +229,6 @@ return {
         -- Disable auto-save-on-exit. Sessions are only written when you
         -- explicitly call save() via <leader>ps or <leader>pq.
         require("persistence").stop()
-
-        vim.api.nvim_create_autocmd("User", {
-            pattern = "PersistenceLoadPost",
-            callback = function()
-                _G.session_directory = vim.fn.getcwd()
-            end,
-        })
     end,
     keys = {
         { "<leader>ps", save_session,  desc = "Save Session" },
@@ -229,15 +236,16 @@ return {
         {
             "<leader>pr",
             function()
-                if not wipe_all_buffers() then return end
-                local start = vim.loop.hrtime()
-                require("persistence").load()
-                vim.schedule(function()
-                    local ms = (vim.loop.hrtime() - start) / 1e6
-                    vim.notify(string.format("Session restored in %.1fms", ms))
-                end)
+                switch_session(function() require("persistence").load() end)
             end,
             desc = "Restore Session (CWD)",
+        },
+        {
+            "<leader>pl",
+            function()
+                switch_session(function() require("persistence").load({ last = true }) end)
+            end,
+            desc = "Restore Last Session",
         },
         {
             "<leader>pp",
