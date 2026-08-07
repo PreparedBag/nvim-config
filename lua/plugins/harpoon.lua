@@ -30,8 +30,10 @@ return {
                         local name = vim.api.nvim_buf_get_name(bufnr)
                         -- Non-empty name that points at an actual file on disk
                         if name ~= "" and vim.fn.filereadable(name) == 1 then
+                            -- Store absolute (matches create_list_item below) -
+                            -- no path math needed here at all.
                             harpoon:list():add({
-                                value = require("config.project").relative_path(vim.loop.cwd(), name),
+                                value = name,
                                 context = { row = 1, col = 0 },
                             })
                             added = added + 1
@@ -74,18 +76,37 @@ return {
 
         local harpoon = require("harpoon")
 
-        -- harpoon's default create_list_item normalizes via plenary's
-        -- Path:make_relative, which only strips a matching cwd prefix and
-        -- falls back to the full absolute path for anything outside cwd
-        -- (e.g. a ../shared file). This override computes a genuine
-        -- ../-relative path instead, same fix as telescope.lua's
-        -- path_display, so <leader>ha stores it correctly too.
         harpoon:setup({
+            settings = {
+                -- Which project's marks - the bucket. Always the stable
+                -- session root, never live cwd.
+                key = function()
+                    return _G.session_directory
+                end,
+            },
             default = {
+                -- Same anchor, used by create_list_item/select/BufLeave
+                -- internally for anything that needs a root.
+                get_root_dir = function()
+                    return _G.session_directory
+                end,
+
+                -- Store the ABSOLUTE path. This is what harpoon's own
+                -- select()/get_by_value/BufLeave all assume `value` is -
+                -- storing anything else means reimplementing all of them.
+                -- Relative is only what a human wants to SEE, so that
+                -- conversion happens in `display` alone, below.
                 create_list_item = function(config, name)
                     name = name or vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
-                    local root = config.get_root_dir()
-                    local rel = require("config.project").relative_path(root, name)
+
+                    -- resolve_displayed() (quick-menu save/sync) can
+                    -- re-invoke this with an already-relative string (the
+                    -- displayed text) - resolve it against root in that
+                    -- case too, so value is always absolute either way.
+                    if not name:match("^/") then
+                        name = config.get_root_dir() .. "/" .. name
+                    end
+                    name = vim.fn.fnamemodify(name, ":p")
 
                     local bufnr = vim.fn.bufnr(name, false)
                     local pos = { 1, 0 }
@@ -94,9 +115,18 @@ return {
                     end
 
                     return {
-                        value = rel,
+                        value = name,
                         context = { row = pos[1], col = pos[2] },
                     }
+                end,
+
+                -- The only place relative display actually matters -
+                -- computed fresh from the absolute value each time, for
+                -- the quick-menu. select() is left as harpoon's own
+                -- default: it already works correctly once value is
+                -- absolute, cwd or no cwd, so there's nothing to override.
+                display = function(list_item)
+                    return require("config.project").relative_path(_G.session_directory, list_item.value)
                 end,
             },
         })

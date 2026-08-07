@@ -7,6 +7,11 @@
 -- telescope is guaranteed loaded here via the spec's `dependencies`.
 -- ---------------------------------------------------------------
 
+local function dap_session_active()
+    local dap = package.loaded['dap']
+    return dap ~= nil and dap.session() ~= nil
+end
+
 local function confirm(question)
     return vim.fn.confirm(question, "&Yes\n&No", 2) == 1
 end
@@ -79,18 +84,16 @@ end
 
 local function save_session()
     clean_for_session()
+    local real_cwd = vim.fn.getcwd()
+    vim.cmd('cd ' .. vim.fn.fnameescape(_G.session_directory))
     require("persistence").save()
+    vim.cmd('cd ' .. vim.fn.fnameescape(real_cwd))
     vim.notify("Session saved", vim.log.levels.INFO)
 end
 
-local function dap_session_active()
-    local dap = package.loaded['dap']
-    return dap ~= nil and dap.session() ~= nil
-end
-
 local function save_and_quit_confirmed()
-    clean_for_session()
-    require("persistence").save()
+    save_session()
+
     local modified = {}
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].modified then
@@ -180,7 +183,7 @@ local function session_picker()
                 if not wipe_all_buffers() then return end
                 local start = vim.loop.hrtime()
                 vim.cmd("silent! source " .. vim.fn.fnameescape(entry.value))
-                _G.original_working_directory = vim.fn.getcwd()
+                _G.session_directory = vim.fn.getcwd()
                 vim.schedule(function()
                     local ms = (vim.loop.hrtime() - start) / 1e6
                     vim.notify(string.format("Session restored in %.1fms", ms))
@@ -212,6 +215,13 @@ return {
         -- Disable auto-save-on-exit. Sessions are only written when you
         -- explicitly call save() via <leader>ps or <leader>pq.
         require("persistence").stop()
+
+        vim.api.nvim_create_autocmd("User", {
+            pattern = "PersistenceLoadPost",
+            callback = function()
+                _G.session_directory = vim.fn.getcwd()
+            end,
+        })
     end,
     keys = {
         { "<leader>ps", save_session,  desc = "Save Session" },

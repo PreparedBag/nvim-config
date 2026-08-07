@@ -4,7 +4,7 @@ vim.keymap.set("n", "<leader>nt", function()
     local preview_bufnr = vim.g.binary_preview_bufnr
     local preview_winid = vim.g.binary_preview_winid
 
-    -- If we're IN the preview buffer, close it and return to original
+    -- If we're IN the preview buffer, close it and return to session
     if preview_bufnr and current_bufnr == preview_bufnr then
         if preview_winid and vim.api.nvim_win_is_valid(preview_winid) then
             vim.api.nvim_win_close(preview_winid, true)

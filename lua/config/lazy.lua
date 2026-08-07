@@ -1,5 +1,5 @@
--- Store the original working directory when Neovim starts
-_G.original_working_directory = vim.fn.getcwd()
+-- Store the session directory when Neovim starts
+_G.session_directory = vim.fn.getcwd()
 
 -- Dev mode marker: default minimal (no marker), marker file with "true" enables dev
 local marker = vim.fn.stdpath("data") .. "/nvim-dev"
@@ -57,9 +57,12 @@ require("lazy").setup({
         { import = "plugins.surround" },
         { import = "plugins.tabout" },
         { import = "plugins.telescope" },
+        { import = "plugins.toggle-term" },
         { import = "plugins.treesitter" },
         { import = "plugins.undotree" },
         { import = "plugins.which-key" },
+        -- NOTE: uncomment for yazi integration
+        -- { import = "plugins.yazi" },
     },
 
     -- Lazy.nvim options

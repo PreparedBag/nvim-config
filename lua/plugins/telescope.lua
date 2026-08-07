@@ -25,13 +25,13 @@ return {
                 end
             end
 
-            -- Function to set the working directory to the original one
-            local set_telescope_cwd_to_original = function()
-                if _G.original_working_directory then
-                    vim.cmd('cd ' .. vim.fn.fnameescape(_G.original_working_directory))
-                    print('Changed working directory to original: ' .. _G.original_working_directory)
+            -- Function to set the working directory to the session one
+            local set_telescope_cwd_to_session = function()
+                if _G.session_directory then
+                    vim.cmd('cd ' .. vim.fn.fnameescape(_G.session_directory))
+                    print('Changed working directory to session: ' .. _G.session_directory)
                 else
-                    print('Error: Original working directory is not set.')
+                    print('Error: Session directory is not set.')
                 end
             end
 
@@ -303,8 +303,8 @@ return {
             vim.keymap.set("n", "<leader>fd", function() set_telescope_cwd_to_updated() end,
                 { noremap = true, silent = true, desc = "Set Telescope CWD Here" })
 
-            vim.keymap.set("n", "<leader>fo", function() set_telescope_cwd_to_original() end,
-                { noremap = true, silent = true, desc = "Set Telescope CWD to Original" })
+            vim.keymap.set("n", "<leader>fo", function() set_telescope_cwd_to_session() end,
+                { noremap = true, silent = true, desc = "Set Telescope CWD to Session Dir" })
         end
     },
     {
