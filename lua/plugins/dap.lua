@@ -11,17 +11,18 @@ return {
 
     -- These load the plugin lazily; the real handlers are set in config().
     keys = {
-        { '<Leader>ds',  desc = 'Start Debug Session' },
-        { '<Leader>dc',  desc = 'Continue' },
-        { '<Leader>dtp', desc = 'Pick Target' },
-        { '<Leader>dte', desc = 'Set ELF' },
-        { '<Leader>dtf', desc = 'Flash ELF' },
+        -- { '<Leader>d',   desc = 'Start DAP' },
+        -- { '<Leader>ds',  desc = 'Start Debug Session' },
+        -- { '<Leader>dc',  desc = 'Continue' },
+        -- { '<Leader>dtp', desc = 'Pick Target' },
+        -- { '<Leader>dte', desc = 'Set ELF' },
+        -- { '<Leader>dtf', desc = 'Flash ELF' },
         -- { '<Leader>dts', desc = 'Start Server' },
         -- { '<Leader>dtc', desc = 'Stop Server' },
-        { '<Leader>dtr', desc = 'Recover Target' },
-        { '<Leader>dtt', desc = 'Terminate' },
-        { '<Leader>dq',  desc = 'Stop Debug Session' },
-        { '<Leader>db',  desc = 'Toggle Breakpoint' },
+        -- { '<Leader>dtr', desc = 'Recover Target' },
+        -- { '<Leader>dtt', desc = 'Terminate' },
+        -- { '<Leader>dq',  desc = 'Stop Debug Session' },
+        -- { '<Leader>db',  desc = 'Toggle Breakpoint' },
     },
 
     config = function()
@@ -94,31 +95,14 @@ return {
 
         -- --- Visual: dapui window titles + REPL state label --------------------
         local titles = {
-            dapui_scopes = 'SCOPES',
-            dapui_breakpoints = 'BREAKPOINTS',
-            dapui_stacks = 'STACKS',
-            dapui_watches = 'WATCHES',
-            dapui_console = 'CONSOLE',
+            dapui_scopes = 'Scopes',
+            dapui_breakpoints = 'Breakpoints',
+            dapui_stacks = 'Stacks',
+            dapui_watches = 'Watches',
+            dapui_console = 'Console',
             ['dap-repl'] = 'REPL',
         }
         local function is_repl(ft) return ft == 'dap-repl' end
-
-        local theme = require("after.theme-utils")
-
-        theme.on_colorscheme(function()
-            vim.api.nvim_set_hl(0, "DapUIWindowSeparator", { fg = "NONE", bg = "NONE" })
-            vim.api.nvim_set_hl(0, 'DapStateRun', { fg = COL.run, bold = true })
-            vim.api.nvim_set_hl(0, 'DapStatePause', { fg = COL.pause, bold = true })
-            vim.api.nvim_set_hl(0, 'DapStateOff', { fg = COL.off, bold = true })
-            vim.api.nvim_set_hl(0, "DapWinBar", { link = 'Title', fg = "#89b4fa", bold = true })
-            vim.api.nvim_set_hl(0, "DapWinBarNC", { fg = "#6c7086" })
-
-            vim.schedule(function()
-                for _, win in ipairs(vim.api.nvim_list_wins()) do
-                    theme.style_win(win)
-                end
-            end)
-        end)
 
         local function winbar_for(ft)
             local base = titles[ft]
@@ -161,6 +145,16 @@ return {
                 end
             end)
         end
+
+        local theme = require("after.theme-utils")
+
+        theme.on_colorscheme(function()
+            vim.api.nvim_set_hl(0, "DapUIWindowSeparator", { fg = "none", bg = "none" })
+            vim.api.nvim_set_hl(0, 'DapStateRun', { fg = COL.run, bold = true })
+            vim.api.nvim_set_hl(0, 'DapStatePause', { fg = COL.pause, bold = true })
+            vim.api.nvim_set_hl(0, 'DapStateOff', { fg = COL.off, bold = true })
+            vim.api.nvim_set_hl(0, "DapWinBar", { fg = "#759ba9", bold = true })
+        end)
 
         -- --- State listeners (the actual sync) --------------------------------
         local function mark(v)

@@ -21,6 +21,7 @@ require("lazy").setup({
         { import = "plugins.blink" },
         -- { import = "plugins.bracey" },
         { import = "plugins.colorschemes" },
+        { import = "plugins.ccc" },
         { import = "plugins.comment" },
         { import = "plugins.dap" },
         { import = "plugins.gitsigns" },

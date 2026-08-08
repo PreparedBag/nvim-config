@@ -39,15 +39,14 @@ return {
                 },
                 all = {
                     view = "popup",
-                }
-            }
+                },
+            },
         })
         local theme = require("after.theme-utils")
 
         theme.on_colorscheme(function()
             vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorder", {
                 fg = theme.theme_fg("Title"),
-                bg = "none",
                 bold = true,
                 italic = true,
             })
