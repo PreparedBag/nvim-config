@@ -48,7 +48,8 @@ return {
                 function()
                     require("telescope").extensions["todo-comments"].todo({
                         keywords = "TODO,FIXME,TEST,REVIEW",
-                        initial_mode = "normal",
+                        -- TEST: start in normal or insert mode
+                        -- initial_mode = "normal",
                     })
                 end,
                 desc = "Pending Tasks",
@@ -57,7 +58,8 @@ return {
                 "<leader>fT",
                 function()
                     require("telescope").extensions["todo-comments"].todo({
-                        initial_mode = "normal",
+                        -- TEST: start in normal or insert mode
+                        -- initial_mode = "normal",
                     })
                 end,
                 desc = "All Annotations",

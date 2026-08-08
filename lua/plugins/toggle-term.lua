@@ -8,8 +8,8 @@ return {
         },
     },
     keys = {
-        { "<leader>t", desc = "Toggle Terminal (CWD / Oil Dir)" },
-        { "<leader>T", desc = "Toggle Terminal (Session Dir)" },
+        { "<leader>tt", desc = "Toggle Terminal (CWD / Oil Dir)" },
+        { "<leader>ts", desc = "Toggle Terminal (Session Dir)" },
     },
     config = function(_, opts)
         require("toggleterm").setup(opts)
@@ -45,7 +45,7 @@ return {
             on_open = attach_close_keymap,
         })
 
-        vim.keymap.set("n", "<leader>t", function()
+        vim.keymap.set("n", "<leader>tt", function()
             if vim.bo.filetype == "oil" then
                 -- Deliberately NOT cwd_term: a fresh, disposable terminal
                 -- for this one directory, gone once you exit it. Doing
@@ -63,7 +63,7 @@ return {
             cwd_term:toggle()
         end, { noremap = true, silent = true, desc = "Toggle Terminal (CWD / Oil Dir)" })
 
-        vim.keymap.set("n", "<leader>T", function()
+        vim.keymap.set("n", "<leader>ts", function()
             original_term:toggle()
         end, { noremap = true, silent = true, desc = "Toggle Terminal (Session Dir)" })
     end,
