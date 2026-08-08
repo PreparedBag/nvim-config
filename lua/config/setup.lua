@@ -5,14 +5,18 @@ _G.session_directory = vim.fn.getcwd()
 local marker = vim.fn.stdpath("data") .. "/nvim-dev"
 
 _G.DEV_ENABLED = false
-if vim.fn.filereadable(marker) == 1 then
-    local lines = vim.fn.readfile(marker)
-    local content = vim.trim(lines[1] or "")
-    _G.DEV_ENABLED = (content == "true")
-end
 
--- DEBUG: Uncomment to debug what the marker resolves to:
--- vim.notify("DEV_ENABLED = " .. tostring(_G.DEV_ENABLED) .. " (marker: " .. marker .. ")")
+if vim.fn.filereadable(marker) == 1 then
+    local flags = {}
+    for _, line in ipairs(vim.fn.readfile(marker)) do
+        local key, value = line:match("^%s*([%w_]+)%s*=%s*(%S+)%s*$")
+        if key then
+            flags[key] = (value == "true")
+        end
+    end
+
+    _G.DEV_ENABLED = flags.DEV_ENABLED or false
+end
 
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
