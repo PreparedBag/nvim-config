@@ -29,12 +29,6 @@ return {
         local dapui = require('dapui')
         local dapvt = require('nvim-dap-virtual-text')
 
-        -- ========================================================================
-        -- 1. TARGET PRESETS
-        --    * One preset  -> used silently.
-        --    * Two or more -> picker on start (<Leader>dtp to re-pick).
-        --    * ./.nvim-dap.lua returning a table overrides everything (per-repo).
-        -- ========================================================================
         local presets = {
             ['STM32L433CC'] = {
                 device    = 'STM32L433CC',
@@ -48,7 +42,6 @@ return {
 
         local active = nil       -- resolved config table
         local selected_elf = nil -- path to ELF being debugged
-
         local I, W, E = vim.log.levels.INFO, vim.log.levels.WARN, vim.log.levels.ERROR
         local function notify(msg, lvl) vim.notify(msg, lvl or I) end
 
@@ -59,24 +52,20 @@ return {
                 return
             end
 
-            local project = require('config.project').section('dap')
-            if project then
-                active = project
-                notify('DAP config: .nvim-config.lua [dap]')
-                if cb then cb() end
-                return
-            end
+            local project_dap = require('config.project').section('dap')
+            local available = project_dap or presets
 
-            local names = vim.tbl_keys(presets)
+            local names = vim.tbl_keys(available)
             if #names == 1 then
-                active = presets[names[1]]
+                active = available[names[1]]
+                notify('DAP config: ' .. names[1])
                 if cb then cb() end
                 return
             end
 
             vim.ui.select(names, { prompt = 'Debug target:' }, function(choice)
                 if not choice then return end
-                active = presets[choice]
+                active = available[choice]
                 notify('DAP config: ' .. choice)
                 if cb then cb() end
             end)

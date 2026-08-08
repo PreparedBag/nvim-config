@@ -11,7 +11,7 @@ return {
         dim = { enabled = false },
         explorer = { enabled = false },
         gh = { enabled = false },
-        git = { enabled = false },
+        git = { enabled = true },
         gitbrowse = { enabled = false },
         image = { enabled = false },
         indent = { enabled = false },
@@ -34,8 +34,12 @@ return {
             },
         },
         lazygit = { enabled = false },
-        notifier = { enabled = true },
-        notify = { enabled = true },
+        notifier = {
+            enabled = true,
+        },
+        notify = {
+            enabled = true,
+        },
         picker = {
             enabled = false,
             ui_select = true,
@@ -53,8 +57,10 @@ return {
         scroll = { enabled = false },
         statuscolumn = { enabled = false },
         terminal = { enabled = false },
-        toggle = { enabled = false },
-        win = { enabled = false },
+        toggle = {
+            enabled = true,
+        },
+        win = { enabled = true },
         words = { enabled = false },
         zen = { enabled = false },
     },

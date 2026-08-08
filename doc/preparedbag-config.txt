@@ -38,16 +38,25 @@ consumed independently by one part of the config.
 Example: >lua
     return {
         dap = {
-            device    = 'STM32L433CC',
-            interface = 'SWD',
-            speed     = '4000',
-            gdb_port  = 2331,
+            ['<target-name>'] = {
+                device    = '<target>',
+                interface = 'swd',
+                speed     = '4000',
+                gdb_port  = 2331,
+            },
+            ['STM32L433CC'] = {
+                device    = 'stm32l433cc',
+                interface = 'swd',
+                speed     = '4000',
+                gdb_port  = 2331,
+            },
         },
         telescope = {
             extra_dirs = { '../shared' },
+            exclude = { },
         },
     }
-<
+
 Since it's a real `.lua` file evaluated with `dofile()`, it can contain any
 valid Lua — computed values, conditionals, `os.getenv()`, etc. — not just a
 static table.
