@@ -1,15 +1,7 @@
 -- store configuration (minimal vs full dev)
 vim.keymap.set("n", "<leader>M", function()
-    local marker = vim.fn.stdpath("data") .. "/nvim-dev"
-    local now_dev = vim.fn.filereadable(marker) == 1
-        and vim.trim(vim.fn.readfile(marker)[1] or "") == "true"
-    local next_dev = not now_dev
-    vim.fn.writefile({ tostring(next_dev) }, marker)
-    vim.notify(
-        ("Dev mode %s — restart nvim to apply")
-        :format(next_dev and "ON" or "OFF"),
-        vim.log.levels.INFO
-    )
+    local on = require("config.flags").toggle("DEV_ENABLED")
+    vim.notify(("Dev mode %s — restart nvim to apply"):format(on and "ON" or "OFF"), vim.log.levels.INFO)
 end, { desc = "Toggle Dev Mode" })
 
 vim.keymap.set("n", "Q", "<nop>", { noremap = true, silent = true, desc = "Useless" })
