@@ -105,8 +105,8 @@ main() {
         [[ ! $REPLY =~ ^[Yy]$ ]] && { info "Cancelled"; exit 0; }
     fi
 
-    # install_node       || { err "Node install failed"; exit 1; }
-    # install_yarn       || { err "yarn setup failed"; exit 1; }
+    install_node       || { err "Node install failed"; exit 1; }
+    install_yarn       || { err "yarn setup failed"; exit 1; }
     install_c_embedded || { err "C/embedded setup failed"; exit 1; }
 
     step "Done!"

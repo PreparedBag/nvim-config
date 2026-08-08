@@ -19,7 +19,6 @@ require("lazy").setup({
     -- Include plugins from the lua/plugins/ folder
     spec = {
         { import = "plugins.blink" },
-        -- { import = "plugins.bracey" },
         { import = "plugins.colorschemes" },
         { import = "plugins.ccc" },
         { import = "plugins.comment" },
