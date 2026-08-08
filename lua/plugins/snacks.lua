@@ -44,6 +44,12 @@ return {
         picker = {
             enabled = false,
             ui_select = true,
+            win = {
+                keys = {
+                    i_ctrl_u = { "<c-u>", { "preview_scroll_up" }, mode = { "i", "n" } },
+                    i_ctrl_d = { "<c-d>", { "preview_scroll_down" }, mode = { "i", "n" } },
+                },
+            },
             sources = {
                 select = {
                     focus = "list",
