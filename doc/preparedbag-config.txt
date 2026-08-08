@@ -59,7 +59,7 @@ Example: >lua
 
 Since it's a real `.lua` file evaluated with `dofile()`, it can contain any
 valid Lua — computed values, conditionals, `os.getenv()`, etc. — not just a
-static table.
+static table. The last item on the table will show up first in the list.
 
 ==============================================================================
 3. Sections                                            *project-config-sections*
