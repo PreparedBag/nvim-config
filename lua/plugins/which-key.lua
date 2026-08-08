@@ -23,54 +23,57 @@ return {
 
         local mappings = {
             -- Buffers
-            { "<leader>b",  group = "Buffers",           mode = "n" },
+            { "<leader>b",   group = "Buffers",           mode = "n" },
 
             -- Comment
-            { "<leader>c",  group = "Comment",           mode = { "n", "v" } },
+            { "<leader>c",   group = "Comment",           mode = { "n", "v" } },
 
             -- Find (Telescope)
-            { "<leader>f",  group = "Find",              mode = { "n", "v" } },
+            { "<leader>f",   group = "Find",              mode = { "n", "v" } },
 
             -- Fold
-            { "<leader>z",  group = "Fold",              mode = "n" },
+            { "<leader>z",   group = "Fold",              mode = "n" },
 
             -- Git Integration
-            { "<leader>g",  group = "Git",               mode = { "n", "v" } },
-            { "<leader>gh", group = "Hunks",             mode = { "n", "v" } },
-            { "<leader>gb", group = "Branch",            mode = "n" },
+            { "<leader>g",   group = "Git",               mode = { "n", "v" } },
+            { "<leader>gh",  group = "Hunks",             mode = { "n", "v" } },
+            { "<leader>gb",  group = "Branch",            mode = "n" },
 
             -- Harpoon
-            { "<leader>h",  group = "Harpoon",           mode = "n" },
-            { "<leader>1",  hidden = true },
-            { "<leader>2",  hidden = true },
-            { "<leader>3",  hidden = true },
-            { "<leader>4",  hidden = true },
-            { "<leader>5",  hidden = true },
-            { "<leader>6",  hidden = true },
-            { "<leader>7",  hidden = true },
-            { "<leader>8",  hidden = true },
+            { "<leader>h",   group = "Harpoon",           mode = "n" },
+            { "<leader>1",   hidden = true },
+            { "<leader>2",   hidden = true },
+            { "<leader>3",   hidden = true },
+            { "<leader>4",   hidden = true },
+            { "<leader>5",   hidden = true },
+            { "<leader>6",   hidden = true },
+            { "<leader>7",   hidden = true },
+            { "<leader>8",   hidden = true },
+
+            -- Information
+            { "<leader>I",   group = "Information",       mode = "n" },
 
             -- Insert
-            { "<leader>i",  group = "Insert",            mode = "n" },
-            { "<leader>ii", group = "Image",             mode = "n" },
+            { "<leader>mi",  group = "Insert",            mode = "n" },
+            { "<leader>mii", group = "Image",             mode = "n" },
 
             -- Number
-            { "<leader>n",  group = "Number",            mode = "n" },
+            { "<leader>n",   group = "Number",            mode = "n" },
 
             -- Oil
-            { "<leader>o",  group = "Oil",               mode = "n" },
+            { "<leader>o",   group = "Oil",               mode = "n" },
 
             -- Persistence
-            { "<leader>p",  group = "Project",           mode = "n" },
+            { "<leader>p",   group = "Project",           mode = "n" },
 
             -- Splits
-            { "<leader>s",  group = "Split",             mode = "n" },
+            { "<leader>s",   group = "Split",             mode = "n" },
 
             -- Terminal/Nerdtree
-            { "<leader>t",  group = "Terminal/Nerdtree", mode = "n" },
+            { "<leader>t",   group = "Terminal/Nerdtree", mode = "n" },
 
             -- Window Navigation
-            { "<leader>w",  group = "Window Navigation", mode = "n" },
+            { "<leader>w",   group = "Window Navigation", mode = "n" },
         }
 
         -- Dev-only groups (LSP, debugger, markdown/html) — only shown when the

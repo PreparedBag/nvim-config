@@ -191,11 +191,11 @@ function Register_Markdown_Helpers(buf)
             vim.cmd("LivePreview " .. (vim.g.livepreview_on and "start" or "close"))
         end
     end, "Toggle Markdown Preview")
-    bufmap('<leader>if', insert_flowchart_template, "Insert Flowchart Template")
-    bufmap('<leader>ig', insert_gantt_template, "Insert Gantt Chart Template")
-    bufmap('<leader>it', insert_table, "Insert Table Template")
-    bufmap('<leader>ii1', insert_image_link, "Insert Image")
-    bufmap('<leader>ii2', insert_two_image_links, "Insert 2 Images")
+    bufmap('<leader>mif', insert_flowchart_template, "Insert Flowchart Template")
+    bufmap('<leader>mig', insert_gantt_template, "Insert Gantt Chart Template")
+    bufmap('<leader>mit', insert_table, "Insert Table Template")
+    bufmap('<leader>mii1', insert_image_link, "Insert Image")
+    bufmap('<leader>mii2', insert_two_image_links, "Insert 2 Images")
 end
 
 -- Register helpers only in markdown buffers
