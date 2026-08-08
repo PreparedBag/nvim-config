@@ -1,4 +1,5 @@
 require("config.setup")
 require("config.keymaps")
+require("config.markdown-utils")
 require("config.numbase").setup()
 require("config.lazy")

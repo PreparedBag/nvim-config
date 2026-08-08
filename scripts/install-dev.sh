@@ -98,14 +98,15 @@ main() {
     command_exists nvim || warn "Neovim not found - run install-minimal.sh first."
 
     echo ""
-    warn "Dev mode installs: Node.js v${NODE_MAJOR}.x, yarn ${YARN_VERSION}, clang/clangd, arm-none-eabi-gcc."
+    # warn "Dev mode installs: Node.js v${NODE_MAJOR}.x, yarn ${YARN_VERSION}, clang/clangd, arm-none-eabi-gcc."
+    warn "Dev mode installs: clang/clangd, arm-none-eabi-gcc."
     if [ "$AUTO_YES" = false ]; then
         read -p "Continue? (y/N) " -n 1 -r; echo ""
         [[ ! $REPLY =~ ^[Yy]$ ]] && { info "Cancelled"; exit 0; }
     fi
 
-    install_node       || { err "Node install failed"; exit 1; }
-    install_yarn       || { err "yarn setup failed"; exit 1; }
+    # install_node       || { err "Node install failed"; exit 1; }
+    # install_yarn       || { err "yarn setup failed"; exit 1; }
     install_c_embedded || { err "C/embedded setup failed"; exit 1; }
 
     step "Done!"

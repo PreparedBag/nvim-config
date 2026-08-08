@@ -13,6 +13,7 @@ The installer handles everything: the latest Neovim, `git`, `curl`, `ripgrep`,
 
 ## Install
 
+
 ```bash
 cd scripts/
 ./install-minimal.sh
