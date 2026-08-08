@@ -6,8 +6,8 @@ return {
     config = function()
         vim.g.bracey_server_port = 3000
         vim.g.bracey_auto_start_browser = 1
-        vim.g.bracey_browser_command = "xdg-open http://localhost:3000"
-        vim.g.bracey_refresh_on_save = 1
+        vim.g.bracey_browser_command = "firefox"
+        vim.g.bracey_refresh_on_save = 0
 
         -- Kill any running HTML/Flask server and free the ports
         local function stop_servers()
@@ -26,10 +26,8 @@ return {
                     local current_file = vim.fn.expand('%:p')
                     local current_filename = vim.fn.expand('%:t')
                     local current_dir = vim.fn.expand('%:p:h')
-
                     -- Clean any existing server first (prevents stale-asset / port-bind issues)
                     stop_servers()
-
                     -- Check if file contains Flask syntax
                     local lines = vim.fn.readfile(current_file)
                     local uses_flask = false
@@ -41,7 +39,6 @@ return {
                             break
                         end
                     end
-
                     if uses_flask then
                         -- Use Flask server
                         vim.notify("Flask imports detected...running local Flask dev server...", vim.log.levels.INFO)
@@ -54,15 +51,11 @@ return {
                             vim.fn.jobstart({ 'xdg-open', 'http://localhost:5000' }, { detach = true })
                         end, 1000)
                     else
-                        -- Use Bracey for regular HTML
+                        -- Use Bracey for regular HTML (opens default browser and live-reloads CSS)
                         vim.notify("Starting HTML server...", vim.log.levels.INFO)
                         vim.cmd('Bracey')
-                        vim.defer_fn(function()
-                            vim.fn.jobstart({ 'xdg-open', 'http://localhost:3000' }, { detach = true })
-                        end, 500)
                     end
                 end, { buffer = ev.buf, noremap = true, silent = true, desc = "Start/Restart HTML Server" })
-
                 -- Stop any running HTML/Flask server cleanly
                 vim.keymap.set('n', '<leader>mH', function()
                     stop_servers()

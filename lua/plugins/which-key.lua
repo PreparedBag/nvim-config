@@ -81,7 +81,7 @@ return {
         if _G.DEV_ENABLED then
             vim.list_extend(mappings, {
                 -- Debugger
-                { "<leader>d",  group = "Debugger",        mode = { "n", "v" } },
+                { "<leader>d",  group = "DAP",        mode = { "n", "v" } },
                 { "<leader>dt", group = "Target Actions",  mode = "n" },
 
                 -- LSP

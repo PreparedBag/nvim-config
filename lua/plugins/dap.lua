@@ -37,7 +37,12 @@ return {
                 gdb_port  = 2331,
             },
             -- Add more to enable the picker, e.g.:
-            -- ['STM32F411CE'] = { device = 'STM32F411CE', interface = 'SWD', speed = '4000', gdb_port = 2331 },
+            -- ['STM32F411CE'] = {
+            --     device = 'STM32F411CE',
+            --     interface = 'SWD',
+            --     speed = '4000',
+            --     gdb_port = 2331,
+            -- },
         }
 
         local active = nil       -- resolved config table
@@ -98,13 +103,22 @@ return {
         }
         local function is_repl(ft) return ft == 'dap-repl' end
 
-        local function define_hl()
-            vim.api.nvim_set_hl(0, 'DapWinBar', { link = 'Title' })
+        local theme = require("after.theme-utils")
+
+        theme.on_colorscheme(function()
+            vim.api.nvim_set_hl(0, "DapUIWindowSeparator", { fg = "NONE", bg = "NONE" })
             vim.api.nvim_set_hl(0, 'DapStateRun', { fg = COL.run, bold = true })
             vim.api.nvim_set_hl(0, 'DapStatePause', { fg = COL.pause, bold = true })
             vim.api.nvim_set_hl(0, 'DapStateOff', { fg = COL.off, bold = true })
-        end
-        define_hl()
+            vim.api.nvim_set_hl(0, "DapWinBar", { link = 'Title', fg = "#89b4fa", bold = true })
+            vim.api.nvim_set_hl(0, "DapWinBarNC", { fg = "#6c7086" })
+
+            vim.schedule(function()
+                for _, win in ipairs(vim.api.nvim_list_wins()) do
+                    theme.style_win(win)
+                end
+            end)
+        end)
 
         local function winbar_for(ft)
             local base = titles[ft]
@@ -169,12 +183,15 @@ return {
         vim.api.nvim_create_autocmd({ 'BufWinEnter', 'WinEnter', 'FileType' }, {
             callback = function() style_win(vim.api.nvim_get_current_win()) end,
         })
-        vim.api.nvim_create_autocmd('ColorScheme', {
+
+        vim.api.nvim_create_autocmd("FileType", {
+            pattern = { "dapui_scopes", "dapui_breakpoints", "dapui_stacks", "dapui_watches", "dapui_repl", "dapui_console" },
             callback = function()
-                define_hl()
-                refresh()
+                vim.opt_local.cursorline = false
+                vim.opt_local.cursorcolumn = false
             end,
         })
+
 
         -- ========================================================================
         -- dap-virtual-text

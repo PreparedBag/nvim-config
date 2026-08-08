@@ -14,14 +14,6 @@ vim.api.nvim_create_autocmd("VimResized", {
     desc = "Auto-resize windows on terminal buffer resize.",
 })
 
-vim.api.nvim_create_autocmd("FileType", {
-    pattern = { "dapui_scopes", "dapui_breakpoints", "dapui_stacks", "dapui_watches", "dapui_repl", "dapui_console" },
-    callback = function()
-        vim.opt_local.cursorline = false
-        vim.opt_local.cursorcolumn = false
-    end,
-})
-
 local function sudo_write()
     local path = vim.fn.expand('%:p')
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)

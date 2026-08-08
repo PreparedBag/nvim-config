@@ -295,10 +295,19 @@ return {
                 })
             end, { noremap = true, silent = true, desc = "View Quickfix History" })
 
-            -- vim.keymap.set('n', '<leader>fc', function()
-            --     local config_path = vim.fn.expand('~/.config/nvim')
-            --     vim.cmd.ex(config_path)
-            -- end, { noremap = true, silent = true, desc = 'Open Nvim Config Folder' })
+            local theme = require("after.theme-utils")
+
+            theme.on_colorscheme(function()
+                local hl = { fg = theme.theme_fg("Title"), bg = "none", bold = true, italic = true }
+                vim.api.nvim_set_hl(0, "TelescopePromptTitle", hl)
+                vim.api.nvim_set_hl(0, "TelescopeResultsTitle", hl)
+                vim.api.nvim_set_hl(0, "TelescopePreviewTitle", hl)
+            end)
+
+            vim.keymap.set('n', '<leader>fc', function()
+                local config_path = vim.fn.expand('~/.config/nvim')
+                vim.cmd.ex(config_path)
+            end, { noremap = true, silent = true, desc = 'Open Nvim Config Folder' })
 
             vim.keymap.set("n", "<leader>fd", function() set_telescope_cwd_to_updated() end,
                 { noremap = true, silent = true, desc = "Set Telescope CWD Here" })
