@@ -45,12 +45,8 @@ return {
         local theme = require("after.theme-utils")
 
         theme.on_colorscheme(function()
-            vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorder", {
-                fg = theme.theme_fg("Title"),
-                bold = true,
-                italic = true,
-            })
-            vim.api.nvim_set_hl(0, "NoiceCmdlineIcon", { link = "Normal" })
+            vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorder", { link = "FloatTitle" })
+            vim.api.nvim_set_hl(0, "NoiceCmdlineIcon", { link = "FloatBorder" })
         end)
     end,
 }
