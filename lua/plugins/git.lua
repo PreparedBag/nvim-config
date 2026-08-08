@@ -172,8 +172,22 @@ local function prompt(label, fn)
     end)
 end
 
-local function confirm(question)
-    return vim.fn.confirm(question, "&Yes\n&No", 2) == 1
+local function confirm(question, on_confirm)
+    local text = question .. " (y/n)"
+    Snacks.input({
+        prompt = text,
+        win = {
+            width = math.min(math.max(#text + 4, 40), vim.o.columns - 4),
+            keys = {
+                y = { "y", "confirm", mode = { "n", "i" } },
+                n = { "n", "cancel", mode = { "n", "i" } },
+            },
+        },
+    }, function(value)
+        if value then
+            on_confirm()
+        end
+    end)
 end
 
 
@@ -521,9 +535,9 @@ end
 
 local function stash_drop(root)
     stash_action_picker(root, function(ref)
-        if confirm("Drop " .. ref .. "?") then
+        confirm("Drop " .. ref .. "?", function()
             run({ "stash", "drop", ref }, root)
-        end
+        end)
     end)
 end
 
@@ -599,17 +613,17 @@ end
 
 local function branch_force_delete(root)
     branch_action_picker(root, function(branch)
-        if confirm("Force delete local branch '" .. branch .. "'?") then
+        confirm("Force delete local branch '" .. branch .. "'?", function()
             run({ "branch", "-D", branch }, root)
-        end
+        end)
     end)
 end
 
 local function branch_delete_origin(root)
     branch_action_picker(root, function(branch)
-        if confirm("Delete '" .. branch .. "' on origin?") then
+        confirm("Delete '" .. branch .. "' on origin?", function()
             run_auth({ "push", "origin", "--delete", branch }, root, "Delete Branch")
-        end
+        end)
     end)
 end
 
@@ -675,14 +689,12 @@ local function discard_file(root)
 
     local rel = vim.fn.fnamemodify(file, ":.")
 
-    if not confirm("Discard all changes to '" .. rel .. "'?") then
-        return
-    end
+    confirm("Restore '" .. rel .. "' from HEAD?", function()
+        run({ "restore", "--staged", "--worktree", "--", file }, root)
 
-    run({ "restore", "--staged", "--worktree", "--", file }, root)
-
-    vim.schedule(function()
-        vim.cmd("edit!")
+        vim.schedule(function()
+            vim.cmd("edit!")
+        end)
     end)
 end
 
@@ -701,12 +713,11 @@ local function discard_all(root)
                     vim.schedule(function() vim.cmd("checktime") end)
                     return
                 end
-                if not confirm("Will also permanently delete:\n" .. table.concat(preview, "\n")) then
-                    return
-                end
-                run({ "restore", "--staged", "--worktree", "--", "." }, root)
-                run({ "clean", "-fd" }, root)
-                vim.schedule(function() vim.cmd("checktime") end)
+                confirm("Will also permanently delete:\n" .. table.concat(preview, "\n"), function()
+                    run({ "restore", "--staged", "--worktree", "--", "." }, root)
+                    run({ "clean", "-fd" }, root)
+                    vim.schedule(function() vim.cmd("checktime") end)
+                end)
             end
             -- Cancel or dismiss: do nothing
         end

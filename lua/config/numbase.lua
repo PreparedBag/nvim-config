@@ -12,7 +12,7 @@ local ns = vim.api.nvim_create_namespace("numbase_preview")
 local augroup = "numbase_preview"
 local enabled = false
 
--- OPTION: uncomment for file specific enable
+-- OPTION: numbase file specific enable
 -- local filetypes = { c = true, cpp = true, h = true }
 
 -- Find the number token spanning the cursor.
@@ -39,7 +39,7 @@ local function number_under_cursor()
         end
     end
 
-    -- OPTION: uncomment for first number
+    -- OPTION: numbase first number
     -- 2a. fallback: first number anywhere on the line. Scanned position by
     -- position (rather than per-pattern like above) so e.g. "0x1A" is
     -- matched whole instead of the decimal pattern grabbing just its "0".
@@ -52,7 +52,7 @@ local function number_under_cursor()
     --     end
     -- end
 
-    -- OPTION: uncomment for last number
+    -- OPTION: numbase last number
     -- 2b. fallback: LAST number anywhere on the line. Scanned position by
     -- position (rather than per-pattern like above) so e.g. "0x1A" is
     -- matched whole instead of the decimal pattern grabbing just its "0".
@@ -132,7 +132,7 @@ local function refresh()
     -- No `enabled` check needed here anymore - refresh() is only ever
     -- invoked by the CursorMoved/CursorMovedI autocmd, and that autocmd
     -- only exists while enabled (see enable_preview/disable_preview below).
-    -- OPTION: uncomment for file specific enable
+    -- OPTION: numbase file specific enable
     -- if not filetypes[vim.bo.filetype] then return end
     if vim.bo.buftype ~= "" then return end
 

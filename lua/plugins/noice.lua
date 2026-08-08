@@ -26,10 +26,22 @@ return {
             presets = {
                 bottom_search = false,
                 command_palette = true,
-                long_message_to_split = true,
+                long_message_to_split = false,
                 inc_rename = false,
                 lsp_doc_border = true,
             },
+            messages = {
+                view_history = "popup",
+            },
+            commands = {
+                history = {
+                    view = "popup",
+                },
+                all = {
+                    view = "popup",
+                }
+            }
         })
-    end
+    end,
+
 }

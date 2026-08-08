@@ -5,8 +5,10 @@ vim.g.loaded_ruby_provider = 0
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
+vim.g.health = { style = 'float' }
+
 vim.g.netrw_banner = 0
-vim.o.sessionoptions = "buffers,curdir,folds,globals,help,tabpages,winsize,winpos,localoptions"
+vim.o.sessionoptions = 'buffers,curdir,folds,globals,help,tabpages,winsize,winpos,localoptions'
 vim.o.showmode = false
 vim.o.guicursor = ""
 vim.o.number = true
@@ -21,7 +23,7 @@ vim.o.wrap = false
 vim.o.swapfile = false
 vim.o.backup = false
 vim.o.writebackup = false
-vim.o.undodir = vim.fn.stdpath('state') .. '/undo//'  -- ~/.local/state/nvim/undo
+vim.o.undodir = vim.fn.stdpath('state') .. '/undo//' -- ~/.local/state/nvim/undo
 vim.o.undofile = true
 vim.o.hlsearch = false
 vim.o.incsearch = true
@@ -39,11 +41,11 @@ vim.o.splitright = true
 vim.o.modeline = false
 
 vim.opt.isfname:append("@-@")
-vim.opt.completeopt = { "menu", "menuone", "noselect" }
+vim.opt.completeopt = { 'menu', 'menuone', 'noselect' }
 
 -- Treesitter-based folding
 vim.o.foldmethod = "expr"
-vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+vim.o.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
 vim.o.foldenable = false
 vim.o.foldlevel = 99
 vim.o.foldlevelstart = 99

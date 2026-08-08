@@ -14,7 +14,7 @@ return {
             },
             triggers = {
                 { "<leader>", mode = "n" },
-                { "g", mode = "n" },
+                { "g",        mode = "n" },
                 -- { "y", mode = "n" },
                 -- { "d", mode = "n" },
                 -- { c", mode = "n" },"
@@ -67,15 +67,11 @@ return {
             -- Splits
             { "<leader>s",  group = "Split",             mode = "n" },
 
+            -- Terminal/Nerdtree
+            { "<leader>t",  group = "Terminal/Nerdtree", mode = "n" },
+
             -- Window Navigation
             { "<leader>w",  group = "Window Navigation", mode = "n" },
-
-            -- OPTION: uncomment if needed
-            -- Table Mode
-            -- { "<leader>t",   group = "Table",                        mode = "n" },
-            -- NERDTree Commands
-            -- { "<leader>N",   desc = "Toggle NERDTree Focus",         mode = "n" },
-            -- { "<leader>n",   desc = "Toggle NERDTree",               mode = "n" },
         }
 
         -- Dev-only groups (LSP, debugger, markdown/html) — only shown when the

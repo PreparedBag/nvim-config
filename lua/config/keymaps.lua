@@ -98,8 +98,8 @@ end, { silent = true, desc = "Quit with Confirm" })
 -- buffers
 vim.keymap.set("n", "<C-s>", "<cmd>w<cr>", { noremap = true, silent = true, desc = "Save current buffer" })
 vim.keymap.set("n", "<leader><Tab>", "<cmd>bnext<cr>", { noremap = true, silent = true, desc = "Next buffer" })
--- OPTION: uncomment for previous buffer navigation
--- vim.keymap.set("n", "<leader><S-Tab>", "<cmd>bprevious<cr>", { noremap = true, silent = true, desc = "Prev buffer" })
+-- OPTION: previous buffer navigation
+vim.keymap.set("n", "<leader><S-Tab>", "<cmd>bprevious<cr>", { noremap = true, silent = true, desc = "Prev buffer" })
 local function delete_buffers()
     local builtin = require('telescope.builtin')
     local actions = require('telescope.actions')

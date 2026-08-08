@@ -159,6 +159,7 @@ return {
                     require('telescope.builtin').lsp_document_symbols()
                 end, "Document Symbols")
 
+                -- OPTION: lsp format on save
                 -- Enable formatting on save if supported
                 -- if client.server_capabilities.documentFormattingProvider then
                 --     local group = vim.api.nvim_create_augroup("LspFormat_" .. bufnr, { clear = true })
