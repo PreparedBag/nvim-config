@@ -53,6 +53,9 @@ return {
             -- Information
             { "<leader>I",   group = "Information",       mode = "n" },
 
+            -- Modes
+            { "<leader>M",  group = "Modes",              mode = "n" },
+
             -- Insert
             { "<leader>mi",  group = "Insert",            mode = "n" },
             { "<leader>mii", group = "Image",             mode = "n" },

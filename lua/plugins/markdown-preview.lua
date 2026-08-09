@@ -1,7 +1,7 @@
 return {
     {
         "iamcco/markdown-preview.nvim",
-        enabled = _G.DEV_ENABLED,
+        enabled = _G.FULL_MARKDOWN,
         cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
         build = "cd app && yarn install",
         ft = { "markdown" },

@@ -1,6 +1,6 @@
 return {
     "brianhuster/live-preview.nvim",
-    enabled = not _G.DEV_ENABLED,
+    enabled = not _G.FULL_MARKDOWN,
     dependencies = { "folke/snacks.nvim" },
     ft = { "markdown" },
     cmd = { "LivePreview" },

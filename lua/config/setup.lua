@@ -7,9 +7,11 @@ local marker = vim.fn.stdpath("data") .. "/nvim-dev"
 local flags = require("config.flags")
 
 _G.DEV_ENABLED = flags.get("DEV_ENABLED")
+_G.FULL_MARKDOWN = flags.get("FULL_MARKDOWN")
 
 -- DEBUG: Uncomment to debug what the marker resolves to:
 vim.notify("DEV_ENABLED = " .. tostring(_G.DEV_ENABLED) .. " (marker: " .. marker .. ")")
+vim.notify("FULL_MARKDOWN = " .. tostring(_G.FULL_MARKDOWN) .. " (marker: " .. marker .. ")")
 
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
