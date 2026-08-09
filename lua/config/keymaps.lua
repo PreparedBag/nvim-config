@@ -19,7 +19,7 @@ vim.keymap.set("n", "<leader>Ms", function()
     local lines = {}
     for _, name in ipairs(names) do
         local on = flags.get(name)
-        lines[#lines + 1] = ("- %s: %s"):format(name, on and "ON" or "off")
+        lines[#lines + 1] = ("- %s: %s"):format(name, on and "ON" or "OFF")
     end
 
     Snacks.win({
