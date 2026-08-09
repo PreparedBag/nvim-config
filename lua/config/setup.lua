@@ -23,7 +23,7 @@ vim.g.maplocalleader = " "
 vim.g.health = { style = 'float' }
 
 vim.g.netrw_banner = 0
-vim.o.sessionoptions = 'buffers,curdir,folds,globals,help,tabpages,winsize,winpos,localoptions'
+vim.o.sessionoptions = 'buffers,curdir,folds,help,tabpages,winsize,localoptions,terminal'
 vim.o.showmode = false
 vim.o.guicursor = ""
 vim.o.number = true

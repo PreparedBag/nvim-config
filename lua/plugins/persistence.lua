@@ -1,12 +1,3 @@
--- ---------------------------------------------------------------
--- telescope picker over persistence's saved session files
---
--- session filenames encode the project path with % as the
--- separator; decode it back for display. selecting an entry
--- sources that session file to restore its buffers and layout.
--- telescope is guaranteed loaded here via the spec's `dependencies`.
--- ---------------------------------------------------------------
-
 local function dap_session_active()
     local dap = package.loaded['dap']
     return dap ~= nil and dap.session() ~= nil
@@ -16,10 +7,6 @@ local function confirm(question)
     return vim.fn.confirm(question, "&Yes\n&No", 2) == 1
 end
 
--- Wipes every buffer before loading a different session, so the new
--- session starts clean instead of the old one's buffers hanging around
--- hidden. Returns false (caller should abort the switch) if the user
--- cancels out of the unsaved-changes prompt.
 local function wipe_all_buffers()
     local modified = {}
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
@@ -50,16 +37,14 @@ local function wipe_all_buffers()
     return true
 end
 
-local function clean_for_session()
-    -- dap UI (only if loaded)
-    if package.loaded["dap"] then
-        pcall(function() require("dap").repl.close() end)
-    end
-    if package.loaded["dapui"] then
-        pcall(function() require("dapui").close() end)
-    end
+-- DAP UI buffers: repl + all nvim-dap-ui panels + floats
+local function is_dap_buf(buf)
+    local ft = vim.bo[buf].filetype
+    return ft == "dap-repl" or ft:match("^dapui_") ~= nil or ft == "dap-float"
+end
 
-    -- Buffers actually visible in a window right now (any tab).
+local function clean_for_session()
+    -- Buffers currently shown in a window (any tab).
     local visible = {}
     for _, win in ipairs(vim.api.nvim_list_wins()) do
         visible[vim.api.nvim_win_get_buf(win)] = true
@@ -67,27 +52,22 @@ local function clean_for_session()
 
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         if vim.api.nvim_buf_is_valid(buf) then
-            local bt = vim.bo[buf].buftype
-            local name = vim.api.nvim_buf_get_name(buf)
-            local is_special = bt ~= "" or name == "" or name:match("^%w+://")
+            local drop
+            if is_dap_buf(buf) or vim.bo[buf].filetype == "oil" then
+                drop = true
+            elseif not visible[buf] then
+                drop = not vim.bo[buf].modified -- wipe hidden, but never lose unsaved work
+            else
+                drop = false                    -- visible & non-DAP -> keep (help, oil, term, files)
+            end
 
-            if is_special then
-                pcall(vim.api.nvim_buf_delete, buf, { force = true })
-            elseif not visible[buf] and not vim.bo[buf].modified then
-                -- a real file buffer, but not currently on screen -> drop it
-                -- from the session (it just won't be restored)
+            if drop then
                 pcall(vim.api.nvim_buf_delete, buf, { force = true })
             end
         end
     end
 end
 
--- Common to every way of LOADING a session (cwd, last, picker): wipe
--- buffers first (abort if cancelled), run `load_fn` to actually do the
--- restore, sync _G.session_directory to wherever that left cwd, then
--- notify with elapsed time. Each caller only supplies how IT loads -
--- persistence.load(), persistence.load({last=true}), or sourcing a
--- specific file directly.
 local function switch_session(load_fn)
     if not wipe_all_buffers() then return end
 
