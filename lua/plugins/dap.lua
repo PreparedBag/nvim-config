@@ -149,11 +149,11 @@ return {
         local theme = require("after.theme-utils")
 
         theme.on_colorscheme(function()
+            vim.api.nvim_set_hl(0, "DapWinBar", { fg = "#759ba9", bold = true })
             vim.api.nvim_set_hl(0, "DapUIWindowSeparator", { fg = "none", bg = "none" })
             vim.api.nvim_set_hl(0, 'DapStateRun', { fg = COL.run, bold = true })
             vim.api.nvim_set_hl(0, 'DapStatePause', { fg = COL.pause, bold = true })
             vim.api.nvim_set_hl(0, 'DapStateOff', { fg = COL.off, bold = true })
-            vim.api.nvim_set_hl(0, "DapWinBar", { fg = "#759ba9", bold = true })
         end)
 
         -- --- State listeners (the actual sync) --------------------------------
@@ -224,10 +224,10 @@ return {
             layouts = {
                 {
                     elements = {
-                        { id = 'breakpoints', size = 0.25 },
-                        { id = 'watches',     size = 0.25 },
-                        { id = 'scopes',      size = 0.25 },
-                        { id = 'stacks',      size = 0.25 },
+                        { id = 'breakpoints', size = 0.15 },
+                        { id = 'watches',     size = 0.55 },
+                        { id = 'scopes',      size = 0.15 },
+                        { id = 'stacks',      size = 0.15 },
                     },
                     size = 0.25,
                     position = 'left',
@@ -643,8 +643,8 @@ return {
         end, 'Print Variable')
 
         -- Stack navigation
-        map('<Leader>dk', dap.up, 'Stack Up')
-        map('<Leader>dj', dap.down, 'Stack Down')
+        map('<Leader>dj', dap.up, 'Stack Up')
+        map('<Leader>dk', dap.down, 'Stack Down')
 
         -- UI toggle
         map('<Leader>du', function()
