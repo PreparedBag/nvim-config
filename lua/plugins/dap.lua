@@ -95,11 +95,11 @@ return {
 
         -- --- Visual: dapui window titles + REPL state label --------------------
         local titles = {
-            dapui_scopes = 'Scopes',
-            dapui_breakpoints = 'Breakpoints',
-            dapui_stacks = 'Stacks',
-            dapui_watches = 'Watches',
-            dapui_console = 'Console',
+            dapui_scopes = 'SCOPES',
+            dapui_breakpoints = 'BREAKPOINTS',
+            dapui_stacks = 'STACKS',
+            dapui_watches = 'WATCHES',
+            dapui_console = 'CONSOLE',
             ['dap-repl'] = 'REPL',
         }
         local function is_repl(ft) return ft == 'dap-repl' end
@@ -149,7 +149,7 @@ return {
         local theme = require("after.theme-utils")
 
         theme.on_colorscheme(function()
-            vim.api.nvim_set_hl(0, "DapWinBar", { fg = "#759ba9", bold = true })
+            vim.api.nvim_set_hl(0, "DapWinBar", { fg = COL.off, bold = true })
             vim.api.nvim_set_hl(0, "DapUIWindowSeparator", { fg = "none", bg = "none" })
             vim.api.nvim_set_hl(0, 'DapStateRun', { fg = COL.run, bold = true })
             vim.api.nvim_set_hl(0, 'DapStatePause', { fg = COL.pause, bold = true })
