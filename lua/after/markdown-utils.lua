@@ -183,16 +183,7 @@ function Register_Markdown_Helpers(buf)
     bufcmd('InsertHeader', insert_header)
     bufcmd('InsertPageBreak', insert_page_break)
 
-    bufmap('<leader>mp', function()
-        if _G.FULL_MARKDOWN then
-            vim.cmd("MarkdownPreviewToggle")
-        else
-            vim.g.livepreview_on = not vim.g.livepreview_on
-            vim.cmd("LivePreview " .. (vim.g.livepreview_on and "start" or "close"))
-        end
-    end, "Toggle Markdown Preview")
-
-    if _G.FULL_MARKDOWN then
+    if require("config.flags").get("FULL_MARKDOWN") then
         bufmap('<leader>mif', insert_flowchart_template, "Insert Flowchart Template")
         bufmap('<leader>mig', insert_gantt_template, "Insert Gantt Chart Template")
     end

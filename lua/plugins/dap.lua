@@ -1,6 +1,6 @@
 return {
     'mfussenegger/nvim-dap',
-    enabled = _G.DEV_ENABLED,
+    enabled = require("config.flags").get("DEV_ENABLED"),
     ft = { 'c', 'cpp' },
     dependencies = {
         'rcarriga/nvim-dap-ui',

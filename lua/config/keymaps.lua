@@ -1,37 +1,3 @@
--- store configuration (minimal vs full dev)
-vim.keymap.set("n", "<leader>Md", function()
-    local on = require("config.flags").toggle("DEV_ENABLED")
-    vim.notify(("Dev mode %s — restart nvim to apply"):format(on and "ON" or "OFF"), vim.log.levels.INFO)
-end, { desc = "Toggle Dev Mode" })
-
--- store configuration (minimal vs full dev)
-vim.keymap.set("n", "<leader>Mm", function()
-    local on = require("config.flags").toggle("FULL_MARKDOWN")
-    vim.notify(("Full markdown mode %s — restart nvim to apply"):format(on and "ON" or "OFF"), vim.log.levels.INFO)
-end, { desc = "Toggle Markdown Mode" })
-
--- show the current flag states
-vim.keymap.set("n", "<leader>Ms", function()
-    local flags = require("config.flags")
-    local names = flags.names()
-    table.sort(names)
-
-    local lines = {}
-    for _, name in ipairs(names) do
-        local on = flags.get(name)
-        lines[#lines + 1] = ("- %s: %s"):format(name, on and "ON" or "OFF")
-    end
-
-    Snacks.win({
-        text = table.concat(lines, "\n"),
-        border = "rounded",
-        title = " Feature Flags ",
-        width = 0.3,
-        height = 0.3,
-        keys = { q = "close" },
-    })
-end, { desc = "Show Flags" })
-
 vim.keymap.set("n", "Q", "<nop>", { noremap = true, silent = true, desc = "Useless" })
 
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { noremap = true, silent = true, desc = "Move selection up" })

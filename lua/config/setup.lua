@@ -1,17 +1,6 @@
 -- Store the session directory when Neovim starts
 _G.session_directory = vim.fn.getcwd()
 
--- Dev mode marker: default minimal (no marker), marker file with "true" enables dev
-local marker = vim.fn.stdpath("data") .. "/nvim-dev"
-
-local flags = require("config.flags")
-
-_G.DEV_ENABLED = flags.get("DEV_ENABLED")
-_G.FULL_MARKDOWN = flags.get("FULL_MARKDOWN")
-
--- DEBUG: Uncomment to debug what the marker resolves to:
--- vim.notify("Marker: " .. marker .. ")")
-
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
 

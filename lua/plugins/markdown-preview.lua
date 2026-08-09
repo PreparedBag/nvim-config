@@ -1,10 +1,16 @@
 return {
     {
         "iamcco/markdown-preview.nvim",
-        enabled = _G.FULL_MARKDOWN,
+        enabled = require("config.flags").get("FULL_MARKDOWN"),
         cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
-        build = "cd app && yarn install",
+        build = function()
+            require("lazy").load({ plugins = { "markdown-preview.nvim" } })
+            vim.fn["mkdp#util#install"]()
+        end,
         ft = { "markdown" },
+        keys = {
+            { "<leader>mp", "<cmd>MarkdownPreviewToggle<cr>", ft = "markdown", desc = "Toggle Markdown Preview" },
+        },
         config = function()
             vim.g.mkdp_preview_options = {
                 maid = {
