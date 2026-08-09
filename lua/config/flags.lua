@@ -28,6 +28,12 @@ function M.get(name)
     return read()[name] or false
 end
 
+function M.names()
+    local names = vim.tbl_keys(read())
+    table.sort(names)
+    return names
+end
+
 function M.set(name, value)
     value = value and true or false
     local flags = read()

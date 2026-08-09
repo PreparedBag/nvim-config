@@ -10,6 +10,28 @@ vim.keymap.set("n", "<leader>Mm", function()
     vim.notify(("Full markdown mode %s — restart nvim to apply"):format(on and "ON" or "OFF"), vim.log.levels.INFO)
 end, { desc = "Toggle Markdown Mode" })
 
+-- show the current flag states
+vim.keymap.set("n", "<leader>Ms", function()
+    local flags = require("config.flags")
+    local names = flags.names()
+    table.sort(names)
+
+    local lines = {}
+    for _, name in ipairs(names) do
+        local on = flags.get(name)
+        lines[#lines + 1] = ("- %s: %s"):format(name, on and "ON" or "off")
+    end
+
+    Snacks.win({
+        text = table.concat(lines, "\n"),
+        border = "rounded",
+        title = " Feature Flags ",
+        width = 0.3,
+        height = 0.3,
+        keys = { q = "close" },
+    })
+end, { desc = "Show Flags" })
+
 vim.keymap.set("n", "Q", "<nop>", { noremap = true, silent = true, desc = "Useless" })
 
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { noremap = true, silent = true, desc = "Move selection up" })
@@ -17,8 +39,10 @@ vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { noremap = true, silent = true, de
 vim.keymap.set('i', '<C-l>', '<Right>', { noremap = true, silent = true, desc = 'Move cursor right in insert mode' })
 vim.keymap.set('i', '<C-h>', '<Left>', { noremap = true, silent = true, desc = 'Move cursor left in insert mode' })
 vim.keymap.set("n", "J", "mzJ`z", { noremap = true, silent = true, desc = "Join lines" })
-vim.keymap.set("n", "<C-d>", function() vim.cmd("normal! \4zz") end, { noremap = true, silent = true, desc = "Jump half-page down" })
-vim.keymap.set("n", "<C-u>", function() vim.cmd("normal! \21zz") end, { noremap = true, silent = true, desc = "Jump half-page up" })
+vim.keymap.set("n", "<C-d>", function() vim.cmd("normal! \4zz") end,
+    { noremap = true, silent = true, desc = "Jump half-page down" })
+vim.keymap.set("n", "<C-u>", function() vim.cmd("normal! \21zz") end,
+    { noremap = true, silent = true, desc = "Jump half-page up" })
 -- vim.keymap.set("n", "<C-d>", "<C-d>zz", { noremap = true, silent = true, desc = "Jump half-page down" })
 -- vim.keymap.set("n", "<C-u>", "<C-u>zz", { noremap = true, silent = true, desc = "Jump half-page up" })
 vim.keymap.set("n", "n", "nzzzv", { noremap = true, silent = true, desc = "Next result" })
