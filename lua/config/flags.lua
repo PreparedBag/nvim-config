@@ -3,7 +3,7 @@ local marker = vim.fn.stdpath("data") .. "/nvim-dev"
 
 -- Known flags and their fallback values. Flags show up in the float as
 -- soon as they're listed here, even before they've ever been toggled.
-M.defaults = { DEV_ENABLED = false, FULL_MARKDOWN = false }
+M.defaults = { DAP_ENABLED = false, LSP_ENABLED = false, HTML_VIEWER = false, FULL_MARKDOWN = false }
 
 -- Float styling: bold/blue/italic name, colored checkbox icons, dim hint.
 vim.api.nvim_set_hl(0, "FlagName", { fg = "#89b4fa", bold = true, italic = true, default = true })
@@ -148,7 +148,7 @@ function M.open()
                 -- window never resizes as `dirty` flips on and off)
                 local vlines = blanks(PAD_BOTTOM)
                 vlines[#vlines + 1] = dirty()
-                    and { { "    restart required for changes", "FlagHint" } }
+                    and { { "    restart and ':Lazy sync' required", "FlagHint" } }
                     or { { "", "Normal" } }
                 vim.api.nvim_buf_set_extmark(buf, ns, lnum, 0, { virt_lines = vlines })
             end
@@ -180,7 +180,7 @@ function M.open()
         },
         bo = { filetype = "flags", modifiable = false },
         keys = {
-            q = "close",
+            ["<esc>"] = "close",
             ["<cr>"] = toggle,
             ["<Tab>"] = toggle,
         },

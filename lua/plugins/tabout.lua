@@ -1,5 +1,6 @@
 return {
     "abecodes/tabout.nvim",
+    enabled = require("config.flags").get("LSP_ENABLED"),
     dependencies = { "nvim-treesitter/nvim-treesitter", "L3MON4D3/LuaSnip" },
     opts = {
         tabkey = "<Tab>",

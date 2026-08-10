@@ -1,5 +1,6 @@
 return {
     'saghen/blink.cmp',
+    enabled = require("config.flags").get("LSP_ENABLED"),
     dependencies = { 'rafamadriz/friendly-snippets' },
     version = '1.*',
     opts = {

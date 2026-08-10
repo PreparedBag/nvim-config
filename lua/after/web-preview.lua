@@ -1,4 +1,4 @@
-if not require("config.flags").get("DEV_ENABLED") then
+if not require("config.flags").get("HTML_VIEWER") then
     return
 end
 

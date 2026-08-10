@@ -57,6 +57,9 @@ return {
             { "<leader>mi",  group = "Insert",            mode = "n" },
             { "<leader>mii", group = "Image",             mode = "n" },
 
+            -- Markdown
+            { "<leader>m", group = "Markdown",            mode = "n" },
+
             -- Number
             { "<leader>n",   group = "Number",            mode = "n" },
 
@@ -78,17 +81,21 @@ return {
 
         -- Dev-only groups (LSP, debugger, markdown/html) — only shown when the
         -- heavy plugins are actually loaded, so no dead keymaps appear.
-        if require("config.flags").get("DEV_ENABLED") then
+        if require("config.flags").get("DAP_ENABLED") then
             vim.list_extend(mappings, {
-                -- Debugger
-                { "<leader>d",  group = "DAP",        mode = { "n", "v" } },
-                { "<leader>dt", group = "Target Actions",  mode = "n" },
+                { "<leader>d",  group = "DAP",            mode = { "n", "v" } },
+                { "<leader>dt", group = "Target Actions", mode = "n" },
+            })
+        end
+        if require("config.flags").get("LSP_ENABLED") then
+            vim.list_extend(mappings, {
+                { "<leader>l", group = "LSP", mode = "n" },
+            })
+        end
 
-                -- LSP
-                { "<leader>l",  group = "LSP",             mode = "n" },
-
-                -- Markdown & HTML
-                { "<leader>m",  group = "Markdown & HTML", mode = "n" },
+        if require("config.flags").get("HTML_VIEWER") then
+            vim.list_extend(mappings, {
+                { "<leader>m", group = "Markdown & HTML", mode = "n" },
             })
         end
 

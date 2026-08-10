@@ -66,7 +66,7 @@ end, { noremap = true, silent = true, desc = "Toggle Binary Preview" })
 return {
     {
         "Wansmer/treesj",
-        enabled = require("config.flags").get("DEV_ENABLED"),
+        enabled = require("config.flags").get("LSP_ENABLED"),
         dependencies = { "nvim-treesitter/nvim-treesitter" },
         keys = {
             { "<leader>J", "<cmd>TSJToggle<cr>", desc = "Toggle Split/Join" },
@@ -81,7 +81,7 @@ return {
     {
         "windwp/nvim-autopairs",
         event = "InsertEnter",
-        enabled = require("config.flags").get("DEV_ENABLED"),
+        enabled = require("config.flags").get("LSP_ENABLED"),
         opts = {
             check_ts = true, -- treesitter-aware: skip pairing inside strings/comments
             fast_wrap = {},  -- <M-e> fast-wraps the next node in a pair

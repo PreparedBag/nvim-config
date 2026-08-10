@@ -2,7 +2,7 @@ return {
     {
         "williamboman/mason.nvim",
         cmd = "Mason",
-        enabled = require("config.flags").get("DEV_ENABLED"),
+        enabled = require("config.flags").get("LSP_ENABLED"),
         build = ":MasonUpdate",
         config = function()
             require("mason").setup()
@@ -10,7 +10,7 @@ return {
     },
     {
         "williamboman/mason-lspconfig.nvim",
-        enabled = require("config.flags").get("DEV_ENABLED"),
+        enabled = require("config.flags").get("LSP_ENABLED"),
         event = { "BufReadPost", "BufNewFile" },
         dependencies = { "neovim/nvim-lspconfig" },
         config = function()
