@@ -25,37 +25,6 @@ return {
                 end
             end
 
-            -- Function to set the working directory to the session one
-            local set_telescope_cwd_to_session = function()
-                if _G.session_directory then
-                    vim.cmd('cd ' .. vim.fn.fnameescape(_G.session_directory))
-                    print('Changed working directory to session: ' .. _G.session_directory)
-                else
-                    print('Error: Session directory is not set.')
-                end
-            end
-
-            -- Function to set the working directory to the updated Netrw directory
-            local set_telescope_cwd_to_updated = function()
-                local oil = require("oil") -- Assuming Oil is loaded and required
-
-                -- Check if Oil is active and set the directory accordingly
-                local oil_dir = oil.get_current_dir() -- This is an Oil-specific function
-                if oil_dir and vim.fn.isdirectory(oil_dir) == 1 then
-                    vim.cmd('cd ' .. vim.fn.fnameescape(oil_dir))
-                    print('Changed working directory to Oil path: ' .. oil_dir)
-                else
-                    -- Fallback to regular Netrw behavior
-                    local netrw_dir = vim.fn.fnamemodify(vim.fn.expand('%:p:h'), ':p')
-                    if vim.fn.isdirectory(netrw_dir) == 1 then
-                        vim.cmd('lcd ' .. vim.fn.fnameescape(netrw_dir))
-                        print('Changed working directory to Netrw path: ' .. netrw_dir)
-                    else
-                        print('Error: Invalid directory')
-                    end
-                end
-            end
-
             -- Reads optional .nvim-project-settings.lua from the project root for extra
             -- search directories (e.g. a sibling ../shared library outside cwd).
             -- Returns nil (telescope's own default: just cwd) if the file isn't there.
@@ -309,11 +278,6 @@ return {
                 vim.cmd.ex(config_path)
             end, { noremap = true, silent = true, desc = 'Open Nvim Config Folder' })
 
-            vim.keymap.set("n", "<leader>fd", function() set_telescope_cwd_to_updated() end,
-                { noremap = true, silent = true, desc = "Set Telescope CWD Here" })
-
-            vim.keymap.set("n", "<leader>fo", function() set_telescope_cwd_to_session() end,
-                { noremap = true, silent = true, desc = "Set Telescope CWD to Session Dir" })
         end
     },
     {
