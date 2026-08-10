@@ -666,8 +666,8 @@ return {
             end
         end, 'Toggle UI')
 
-        -- Jump to watches window (toggle back)
-        map('<Leader>dg', function()
+        -- Jump to watches winow (toggle back)
+        map('<Leader>ww', function()
             if vim.bo.filetype == 'dapui_watches' then
                 if vim.g.dap_return_win and vim.api.nvim_win_is_valid(vim.g.dap_return_win) then
                     vim.api.nvim_set_current_win(vim.g.dap_return_win)
