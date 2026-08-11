@@ -6,10 +6,6 @@ return {
             { "gbc",        mode = "n", desc = "Block Comment Line" },
             { "gc",         mode = "v", desc = "Comment Selection" },
             { "gb",         mode = "v", desc = "Block Comment Selection" },
-            { "<leader>cc", mode = "n", desc = "Comment Line" },
-            { "<leader>cb", mode = "n", desc = "Block Comment Line" },
-            { "<leader>cc", mode = "v", desc = "Comment Selection" },
-            { "<leader>cb", mode = "v", desc = "Block Comment Selection" },
         },
         config = function()
             require('Comment').setup()
@@ -78,7 +74,7 @@ return {
         dependencies = "nvim-treesitter/nvim-treesitter",
         keys = {
             {
-                "<leader>cd",
+                "<leader>lg",
                 function() require("neogen").generate() end,
                 desc = "Generate Doc Comment",
             },

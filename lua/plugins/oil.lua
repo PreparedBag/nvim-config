@@ -70,10 +70,10 @@ return {
             },
         })
 
-        vim.keymap.set("n", "<leader>oa", function() set_telescope_cwd_to_updated() end,
+        vim.keymap.set("n", "<leader>od", function() set_telescope_cwd_to_updated() end,
             { noremap = true, silent = true, desc = "Set Telescope CWD Here" })
 
-        vim.keymap.set("n", "<leader>oA", function() set_telescope_cwd_to_session() end,
+        vim.keymap.set("n", "<leader>oo", function() set_telescope_cwd_to_session() end,
             { noremap = true, silent = true, desc = "Set Telescope CWD to Session Dir" })
 
         vim.keymap.set("n", "<leader>fe", ":Oil<CR>", { noremap = true, silent = true, desc = "File Explorer (Oil)" })

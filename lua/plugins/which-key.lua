@@ -25,9 +25,6 @@ return {
             -- Buffers
             { "<leader>b",   group = "Buffers",           mode = "n" },
 
-            -- Comment
-            { "<leader>c",   group = "Comment",           mode = { "n", "v" } },
-
             -- Find (Telescope)
             { "<leader>f",   group = "Find",              mode = { "n", "v" } },
 
@@ -51,17 +48,17 @@ return {
             { "<leader>8",   hidden = true },
 
             -- Information
-            { "<leader>I",   group = "Information",       mode = "n" },
+            { "<leader>i",   group = "Information",       mode = "n" },
 
             -- Insert
             { "<leader>mi",  group = "Insert",            mode = "n" },
             { "<leader>mii", group = "Image",             mode = "n" },
 
             -- Markdown
-            { "<leader>m", group = "Markdown",            mode = "n" },
+            { "<leader>m",   group = "Markdown",          mode = "n" },
 
-            -- Number
-            { "<leader>n",   group = "Number",            mode = "n" },
+            -- Numbase
+            { "<leader>n",   group = "Numbase",           mode = "n" },
 
             -- Oil
             { "<leader>o",   group = "Oil",               mode = "n" },
@@ -92,7 +89,6 @@ return {
                 { "<leader>l", group = "LSP", mode = "n" },
             })
         end
-
         if require("config.flags").get("HTML_VIEWER") then
             vim.list_extend(mappings, {
                 { "<leader>m", group = "Markdown & HTML", mode = "n" },

@@ -60,10 +60,10 @@ vim.keymap.set("n", "<leader>we", "<C-w>=", { noremap = true, silent = true, des
 vim.keymap.set("x", "<leader>p", [["_dP]], { noremap = true, silent = true, desc = "Paste Without Yank" })
 vim.keymap.set("x", "<leader>y", [["+y]], { noremap = true, silent = true, desc = "Yank selection to clipboard" })
 vim.keymap.set("n", "<leader>Y", [["+Y]], { noremap = true, silent = true, desc = "Yank Line to Clipboard" })
-vim.keymap.set("n", "<leader>Is", ":NoiceSnacks<CR><ESC>", { noremap = true, silent = true, desc = "Open Noice Snacks" })
-vim.keymap.set("n", "<leader>In", ":Noice<CR>", { noremap = true, silent = true, desc = "Open Noice" })
-vim.keymap.set("n", "<leader>Ia", ":NoiceAll<CR>", { noremap = true, silent = true, desc = "Open Noice" })
-vim.keymap.set("n", "<leader>Im", ":messages<CR>", { noremap = true, silent = true, desc = "Open Messages" })
+vim.keymap.set("n", "<leader>is", ":NoiceSnacks<CR><ESC>", { noremap = true, silent = true, desc = "Open Noice Snacks" })
+vim.keymap.set("n", "<leader>in", ":Noice<CR>", { noremap = true, silent = true, desc = "Open Noice" })
+vim.keymap.set("n", "<leader>ia", ":NoiceAll<CR>", { noremap = true, silent = true, desc = "Open Noice (All)" })
+vim.keymap.set("n", "<leader>im", ":messages<CR>", { noremap = true, silent = true, desc = "Open Messages" })
 
 -- quit current buffer without saving
 vim.keymap.set("n", "<leader>q", function()

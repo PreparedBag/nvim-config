@@ -1,8 +1,7 @@
 -- lua/config/numbase.lua
 -- Self-contained number-base tooling for C (no external plugins):
---   <leader>np       toggle inline overlay showing the other two bases
---   <leader>nc       rewrite the number under the cursor in place (hex->dec->bin)
---   <leader>n{h,d,b,o}  show a conversion as a message AND copy it to clipboard
+--   <leader>np        toggle inline overlay showing the other two bases
+--   <leader>n{h,d,b}  convert the number under the cursor in place -> hex/dec/bin
 
 vim.opt.nrformats = { "alpha", "hex", "bin" }
 
@@ -130,6 +129,7 @@ local function refresh()
     vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
 
     -- No `enabled` check needed here anymore - refresh() is only ever
+
     -- invoked by the CursorMoved/CursorMovedI autocmd, and that autocmd
     -- only exists while enabled (see enable_preview/disable_preview below).
     -- OPTION: numbase file specific enable
@@ -167,28 +167,11 @@ local function disable_preview()
     vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
 end
 
--- In-place base cycle: hex -> dec -> bin -> hex -------------------------------
+-- Convert the number under the cursor in place --------------------------------
 
-local next_base = { hex = "dec", dec = "bin", bin = "hex" }
-
-local function cycle_base()
-    local str, base, s, e = number_under_cursor()
+local function convert_to(base)
+    local str, cur_base, s, e = number_under_cursor()
     if not (str and s and e) then
-        vim.notify("No number under cursor", vim.log.levels.WARN)
-        return
-    end
-    local value = to_value(str, base)
-    if not value then return end
-    local row = vim.api.nvim_win_get_cursor(0)[1] - 1
-    -- set_text cols are 0-indexed, end-exclusive: [s-1, e)
-    vim.api.nvim_buf_set_text(0, row, s - 1, row, e, { format_base(value, next_base[base]) })
-end
-
--- Show a conversion as a message and copy it to the clipboard -----------------
-
-local function show_and_copy(base)
-    local str, cur_base = number_under_cursor()
-    if not str then
         vim.notify("No number under cursor", vim.log.levels.WARN)
         return
     end
@@ -197,11 +180,14 @@ local function show_and_copy(base)
         vim.notify("Could not parse: " .. str, vim.log.levels.WARN)
         return
     end
-    local out = format_base(value, base)
-    -- OPTION: adjust here for copying to clipboard and/or local
-    vim.fn.setreg("+", out)
-    vim.fn.setreg('"', out)
-    vim.notify(str .. " = " .. out)
+    local row = vim.api.nvim_win_get_cursor(0)[1] - 1
+    -- set_text cols are 0-indexed, end-exclusive: [s-1, e)
+    vim.api.nvim_buf_set_text(0, row, s - 1, row, e, { format_base(value, base) })
+
+    -- OPTION: also copy the converted value to the clipboard
+    -- local out = format_base(value, base)
+    -- vim.fn.setreg("+", out)
+    -- vim.fn.setreg('"', out)
 end
 
 -- Setup -----------------------------------------------------------------------
@@ -222,16 +208,13 @@ function M.setup()
         vim.notify("Number base preview: " .. (enabled and "on" or "off"))
     end, { desc = "Toggle Number Base Preview" })
 
-    vim.keymap.set("n", "<leader>nc", cycle_base,
-        { desc = "Cycle Number Base (Hex/Dec/Bin)" })
-
     local conv = {
-        nh = "hex", nd = "dec", nb = "bin", no = "oct",
+        nh = "hex", nd = "dec", nb = "bin",
     }
     for suffix, base in pairs(conv) do
         local label = base:sub(1, 1):upper() .. base:sub(2)
-        vim.keymap.set("n", "<leader>" .. suffix, function() show_and_copy(base) end,
-            { desc = "Base: " .. label .. " (Show + Copy)" })
+        vim.keymap.set("n", "<leader>" .. suffix, function() convert_to(base) end,
+            { desc = "Convert Number to " .. label })
     end
 end
 

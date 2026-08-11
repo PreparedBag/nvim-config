@@ -70,6 +70,7 @@ return {
         notifier = {
             enabled = true,
             top_down = false,
+            sort = { "added" }
         },
         notify = {
             enabled = true,
