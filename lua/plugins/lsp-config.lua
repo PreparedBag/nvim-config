@@ -35,9 +35,6 @@ return {
                 return true
             end
 
-            -- Track signature-help window state (used by the insert-mode <C-h> map)
-            local signature_active = true
-
             -- ============================================================================
             -- LSP ON_ATTACH - BUFFER-LOCAL KEYMAPS
             -- ============================================================================
@@ -57,10 +54,15 @@ return {
                 end
 
                 -- Navigation
-                map("n", "gd", function() require("telescope.builtin").lsp_definitions({ initial_mode = "normal" }) end, "Go to Definition")
+                map("n", "gd", function() require("telescope.builtin").lsp_definitions({ initial_mode = "normal" }) end,
+                    "Go to Definition")
                 map("n", "gD", vim.lsp.buf.declaration, "Go to Declaration")
-                map("n", "gi", function() require("telescope.builtin").lsp_implementations({ initial_mode = "normal" }) end, "Go to Implementation")
-                map("n", "gt", function() require("telescope.builtin").lsp_type_definitions({ initial_mode = "normal" }) end, "Go to Type Definition")
+                map("n", "gi",
+                    function() require("telescope.builtin").lsp_implementations({ initial_mode = "normal" }) end,
+                    "Go to Implementation")
+                map("n", "gt",
+                    function() require("telescope.builtin").lsp_type_definitions({ initial_mode = "normal" }) end,
+                    "Go to Type Definition")
 
                 map("n", "<leader>lq", function() vim.diagnostic.setqflist({ open = false }) end,
                     "Diagnostics to quickfix");
@@ -173,47 +175,9 @@ return {
                 -- end
             end
 
-            -- Keep signature_active in sync with whether a signature float is open
-            vim.api.nvim_create_autocmd({ "InsertCharPre", "CursorMoved" }, {
-                callback = function()
-                    local active = false
-                    for _, win in ipairs(vim.api.nvim_list_wins()) do
-                        local config = vim.api.nvim_win_get_config(win)
-                        if config.relative == "cursor" and config.anchor == "NW" then
-                            active = true
-                            break
-                        end
-                    end
-                    signature_active = active
-                end,
-            })
-
             -- ============================================================================
             -- GLOBAL LSP KEYMAPS
             -- ============================================================================
-
-            -- Toggle blink.cmp autocomplete for the current buffer
-            vim.keymap.set('n', '<leader>lA', function()
-                local ok, _ = pcall(require, 'blink.cmp')
-                if not ok then
-                    vim.notify("blink.cmp not installed", vim.log.levels.WARN)
-                    return
-                end
-
-                local bufnr = vim.api.nvim_get_current_buf()
-                local current_state = vim.b[bufnr].blink_cmp_enabled
-
-                if current_state == false then
-                    vim.b[bufnr].blink_cmp_enabled = nil
-                    vim.notify("Autocomplete enabled")
-                else
-                    vim.b[bufnr].blink_cmp_enabled = false
-                    vim.notify("Autocomplete disabled")
-                    vim.api.nvim_input('<C-e>') -- force-close any open menu
-                end
-
-                vim.cmd('doautocmd TextChanged') -- re-evaluate enabled state
-            end, { noremap = true, silent = true, desc = 'Toggle Blink Autocomplete' })
 
             -- Detach LSP from current buffer only
             vim.keymap.set('n', '<leader>lc', function()
