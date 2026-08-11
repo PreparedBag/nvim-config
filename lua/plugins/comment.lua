@@ -13,25 +13,6 @@ return {
             local ft = require('Comment.ft')
             ft.c = { '//%s', '/* ---%s--- */' }
             ft.cpp = ft.c
-
-            local api = require('Comment.api')
-
-            -- Leader equivalents of the g-prefixed defaults
-            vim.keymap.set("n", "<leader>cc", api.toggle.linewise.current,
-                { desc = "Comment Line" })
-            vim.keymap.set("n", "<leader>cb", api.toggle.blockwise.current,
-                { desc = "Block Comment Line" })
-
-            -- Visual: toggle over the selection, then leave visual mode cleanly
-            local esc = vim.api.nvim_replace_termcodes("<ESC>", true, false, true)
-            vim.keymap.set("x", "<leader>cc", function()
-                vim.api.nvim_feedkeys(esc, "nx", false)
-                api.toggle.linewise(vim.fn.visualmode())
-            end, { desc = "Comment Selection" })
-            vim.keymap.set("x", "<leader>cb", function()
-                vim.api.nvim_feedkeys(esc, "nx", false)
-                api.toggle.blockwise(vim.fn.visualmode())
-            end, { desc = "Block Comment Selection" })
         end
     },
     {

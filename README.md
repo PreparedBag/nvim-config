@@ -144,14 +144,6 @@ are omitted.
 | `<leader>ghp` | Preview hunk |
 | `<leader>ghb` | Blame line |
 
-### Comments - `<leader>c`
-
-| Key | Action |
-| --- | --- |
-| `<leader>cc` | Comment line (or selection) |
-| `<leader>cb` | Block comment line (or selection) |
-| `<leader>cd` | Generate doc comment |
-
 ### Sessions - `<leader>p` (persistence)
 
 | Key | Action |
