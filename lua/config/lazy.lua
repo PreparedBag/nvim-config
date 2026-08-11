@@ -18,14 +18,12 @@ vim.opt.rtp:prepend(lazypath)
 require("lazy").setup({
     -- Include plugins from the lua/plugins/ folder
     spec = {
-        { import = "plugins.blink" },
         { import = "plugins.colorschemes" },
         { import = "plugins.ccc" },
         { import = "plugins.comment" },
         { import = "plugins.dap" },
         { import = "plugins.gitsigns" },
         { import = "plugins.flash" },
-        { import = "plugins.fmt-utils" },
         { import = "plugins.git" },
         { import = "plugins.harpoon" },
         { import = "plugins.lualine" },
@@ -38,9 +36,7 @@ require("lazy").setup({
         { import = "plugins.oil" },
         { import = "plugins.persistence" },
         { import = "plugins.snacks" },
-        { import = "plugins.snippets" },
         { import = "plugins.surround" },
-        { import = "plugins.tabout" },
         { import = "plugins.telescope" },
         { import = "plugins.toggle-term" },
         { import = "plugins.treesitter" },
@@ -65,3 +61,4 @@ require("after.autocmds")
 require("after.markdown-utils")
 require("after.numbase").setup()
 require("after.web-preview")
+require("after.fmt-utils")

@@ -1,5 +1,68 @@
 return {
     {
+        'saghen/blink.cmp',
+        enabled = require("config.flags").get("LSP_ENABLED"),
+        dependencies = { 'rafamadriz/friendly-snippets' },
+        version = '1.*',
+        opts = {
+            keymap = {
+                preset = 'none',
+                ['<C-space>'] = { 'show', 'hide' },
+                ['<C-s>'] = { function(cmp) cmp.show({ providers = { 'snippets' } }) end },
+                ['<C-j>'] = { 'select_next', 'fallback' },
+                ['<C-k>'] = { 'select_prev', 'fallback' },
+                ['<CR>'] = { 'accept', 'fallback' },
+                ['<C-e>'] = { 'hide', 'fallback' },
+                ['<C-y>'] = { 'accept', 'fallback' },
+                ['<Tab>'] = { 'snippet_forward', 'fallback' },
+                ['<S-Tab>'] = { 'snippet_backward', 'fallback' },
+            },
+            snippets = { preset = 'luasnip' },
+            appearance = {
+                nerd_font_variant = 'mono'
+            },
+            completion = {
+                documentation = { auto_show = true }
+            },
+            sources = {
+                default = function(ctx)
+                    local bufnr = ctx and ctx.bufnr or vim.api.nvim_get_current_buf()
+                    if #vim.lsp.get_clients({ bufnr = bufnr }) > 0 then
+                        return { 'lsp', 'path', 'snippets', 'buffer' }
+                    end
+                    return { 'path', 'snippets', 'buffer' }
+                end,
+            },
+            fuzzy = {
+                implementation = "prefer_rust_with_warning"
+            }
+        },
+        opts_extend = { "sources.default" }
+    },
+    {
+        "Wansmer/treesj",
+        enabled = require("config.flags").get("LSP_ENABLED"),
+        dependencies = { "nvim-treesitter/nvim-treesitter" },
+        keys = {
+            { "<leader>J", "<cmd>TSJToggle<cr>", desc = "Toggle Split/Join" },
+        },
+        opts = {
+            use_default_keymaps = false, -- using our own <leader>J above
+            -- OPTION: update max length
+            max_join_length = 500,
+        },
+    },
+    -- OPTION: comment/uncomment for autopairs
+    {
+        "windwp/nvim-autopairs",
+        event = "InsertEnter",
+        enabled = require("config.flags").get("LSP_ENABLED"),
+        opts = {
+            check_ts = true, -- treesitter-aware: skip pairing inside strings/comments
+            fast_wrap = {},  -- <M-e> fast-wraps the next node in a pair
+        },
+    },
+    {
         "williamboman/mason.nvim",
         cmd = "Mason",
         enabled = require("config.flags").get("LSP_ENABLED"),
@@ -7,6 +70,42 @@ return {
         config = function()
             require("mason").setup()
         end
+    },
+    {
+        "L3MON4D3/LuaSnip",
+        version = "v2.*",
+        build = "make install_jsregexp",
+        enabled = require("config.flags").get("LSP_ENABLED"),
+        dependencies = { "rafamadriz/friendly-snippets" },
+        config = function()
+            require("luasnip.loaders.from_vscode").lazy_load()
+            require("luasnip.loaders.from_lua").lazy_load({
+                paths = vim.fn.stdpath("config") .. "/snippets",
+            })
+        end,
+    },
+    {
+        "abecodes/tabout.nvim",
+        enabled = require("config.flags").get("LSP_ENABLED"),
+        dependencies = { "nvim-treesitter/nvim-treesitter", "L3MON4D3/LuaSnip" },
+        opts = {
+            tabkey = "<Tab>",
+            backwards_tabkey = "<S-Tab>",
+            act_as_tab = true,
+            act_as_shift_tab = true,
+            enable_backwards = true,
+            completion = false,
+            tabouts = {
+                { open = "'", close = "'" },
+                { open = '"', close = '"' },
+                { open = "`", close = "`" },
+                { open = "(", close = ")" },
+                { open = "[", close = "]" },
+                { open = "{", close = "}" },
+            },
+            ignore_beginning = true,
+            exclude = {},
+        },
     },
     {
         "williamboman/mason-lspconfig.nvim",

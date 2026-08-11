@@ -37,8 +37,7 @@ cd scripts/
 
 Adds the prerequisites for LSP, debugging, and markdown preview - Node.js,
 `clang` + `arm-none-eabi-gcc`, and `yarn`. The language servers, formatters, and
-debug adapters themselves are installed in-editor by Mason. Dev-only plugins
-activate when `DEV_ENABLED` is set; toggle it with `<leader>M` (restart to
+debug adapters themselves are installed in-editor by Mason. Use `<leader>M` to toggle feature flags (restart to
 apply). Not covered further here.
 
 ## Plugins
