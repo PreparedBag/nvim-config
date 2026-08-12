@@ -139,6 +139,47 @@ local function status_picker(root)
     Snacks.picker.git_status({ cwd = root, on_show = normal_mode })
 end
 
+local function stash_action_picker(root, fn)
+    Snacks.picker.git_stash({
+        cwd = root,
+        on_show = normal_mode,
+        confirm = function(picker, item)
+            picker:close()
+            if item then
+                fn(item.stash)
+            end
+        end,
+    })
+end
+
+local function stash_apply(root)
+    stash_action_picker(root, function(stash)
+        run({ "stash", "apply", stash }, root)
+    end)
+end
+
+local function stash_pop(root)
+    stash_action_picker(root, function(stash)
+        run({ "stash", "pop", stash }, root)
+    end)
+end
+
+local function stash_drop(root)
+    stash_action_picker(root, function(stash)
+        ask("Drop " .. stash .. "?", function()
+            run({ "stash", "drop", stash }, root)
+        end, true)
+    end)
+end
+
+local function stash_branch(root)
+    stash_action_picker(root, function(stash)
+        ask("Branch from " .. stash .. ": ", function(name)
+            run({ "stash", "branch", name, stash }, root)
+        end)
+    end)
+end
+
 local function branch_action_picker(root, fn)
     Snacks.picker.git_branches({
         cwd = root,
@@ -426,6 +467,20 @@ return {
 
             { "<leader>gFb", git_guard(checkout_file_from_branch), desc = "File From Branch" },
             { "<leader>gFc", git_guard(checkout_file_from_commit), desc = "File From Commit" },
+
+            { "<leader>gzs", git_guard(stash_apply),  desc = "Select / Apply" },
+            { "<leader>gzp", git_guard(stash_pop),    desc = "Pop" },
+            { "<leader>gzd", git_guard(stash_drop),   desc = "Drop" },
+            { "<leader>gzb", git_guard(stash_branch), desc = "Branch from Stash" },
+            {
+                "<leader>gzc",
+                git_guard(function(root)
+                    ask("Stash message: ", function(msg)
+                        run({ "stash", "push", "-m", msg }, root)
+                    end)
+                end),
+                desc = "Stash Changes",
+            },
         },
     },
 }
