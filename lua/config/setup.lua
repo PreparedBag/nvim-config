@@ -11,6 +11,7 @@ vim.g.maplocalleader = " "
 vim.g.health = { style = 'float' }
 
 vim.g.netrw_banner = 0
+
 vim.o.sessionoptions = 'buffers,curdir,folds,help,tabpages,winsize,localoptions,terminal'
 vim.o.showmode = false
 vim.o.guicursor = ""
@@ -42,6 +43,7 @@ vim.o.cursorline = true
 vim.o.splitbelow = true
 vim.o.splitright = true
 vim.o.modeline = false
+vim.o.winbar = ""
 
 vim.opt.isfname:append("@-@")
 vim.opt.completeopt = { 'menu', 'menuone', 'noselect' }
