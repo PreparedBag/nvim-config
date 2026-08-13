@@ -34,8 +34,8 @@ return {
                     strings = {},
                     variables = {},
                     numbers = {},
-                    booleans = {},
-                    properties = {},
+                    booleans = { },
+                    properties = { },
                     types = {},
                     operators = {},
                     -- miscs = {}, -- Uncomment to turn off hard-coded styles
@@ -62,12 +62,14 @@ return {
     },
     {
         "folke/tokyonight.nvim",
-        lazy = true, -- Only load if you switch to it
-        priority = 1000,
-        opts = {},
+        lazy = false,
     },
     {
-        'lunarvim/colorschemes',
-        lazy = true, -- Only load if you switch to it
+        "lunarvim/colorschemes",
+        lazy = false,
     },
+    {
+        "rebelot/kanagawa.nvim",
+        lazy = false,
+    }
 }

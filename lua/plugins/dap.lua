@@ -81,11 +81,6 @@ return {
         -- 2. STATE  (single source of truth)
         --    active/inactive = dap.session()  |  running/paused = listeners
         -- ========================================================================
-        local COL = {
-            run = '#98c379',
-            pause = '#e5c07b',
-            off = '#9ca3b0',
-        }
         local running = false
 
         local function state()
@@ -126,7 +121,6 @@ return {
             local ft = vim.bo[buf].filetype
             local wb = winbar_for(ft)
             if not wb then return end
-
             local opt = vim.api.nvim_set_option_value
             opt('winbar', wb, { win = win })
             opt('winhighlight', 'WinBar:CursorLine,WinBarNC:CursorLine', { win = win })
@@ -135,6 +129,18 @@ return {
             end
             opt('signcolumn', 'no', { win = win })
         end
+
+        vim.api.nvim_create_autocmd({ 'BufWinEnter', 'WinEnter', 'FileType' }, {
+            callback = function() style_win(vim.api.nvim_get_current_win()) end,
+        })
+
+        vim.api.nvim_create_autocmd("FileType", {
+            pattern = { "dapui_scopes", "dapui_breakpoints", "dapui_stacks", "dapui_watches", "dapui_repl", "dapui_console" },
+            callback = function()
+                vim.opt_local.cursorline = false
+                vim.opt_local.cursorcolumn = false
+            end,
+        })
 
         -- Re-read truth and repaint everything. Scheduled so dap.session()
         -- reflects post-event state (terminate/exit/restart/attach).
@@ -146,14 +152,23 @@ return {
             end)
         end
 
-        local theme = require("after.theme-utils")
+        local COL = {
+            run = '#98c379',
+            pause = '#e5c07b',
+        }
 
+        local function hl_fg(name)
+            local hl = vim.api.nvim_get_hl(0, { name = name, link = false })
+            return hl and hl.fg
+        end
+
+        local theme = require("after.theme-utils")
         theme.on_colorscheme(function()
-            vim.api.nvim_set_hl(0, "DapWinBar", { fg = COL.off, bold = true })
+            vim.api.nvim_set_hl(0, "DapWinBar", { fg = hl_fg("Title"), bold = true })
             vim.api.nvim_set_hl(0, "DapUIWindowSeparator", { fg = "none", bg = "none" })
             vim.api.nvim_set_hl(0, 'DapStateRun', { fg = COL.run, bold = true })
             vim.api.nvim_set_hl(0, 'DapStatePause', { fg = COL.pause, bold = true })
-            vim.api.nvim_set_hl(0, 'DapStateOff', { fg = COL.off, bold = true })
+            vim.api.nvim_set_hl(0, 'DapStateOff', { fg = hl_fg("Title"), bold = true })
         end)
 
         -- --- State listeners (the actual sync) --------------------------------
@@ -173,18 +188,6 @@ return {
         for _, req in ipairs({ 'continue', 'next', 'stepIn', 'stepOut', 'stepBack', 'reverseContinue' }) do
             dap.listeners.after[req]['ui'] = function() mark(true) end
         end
-
-        vim.api.nvim_create_autocmd({ 'BufWinEnter', 'WinEnter', 'FileType' }, {
-            callback = function() style_win(vim.api.nvim_get_current_win()) end,
-        })
-
-        vim.api.nvim_create_autocmd("FileType", {
-            pattern = { "dapui_scopes", "dapui_breakpoints", "dapui_stacks", "dapui_watches", "dapui_repl", "dapui_console" },
-            callback = function()
-                vim.opt_local.cursorline = false
-                vim.opt_local.cursorcolumn = false
-            end,
-        })
 
 
         -- ========================================================================

@@ -14,6 +14,19 @@ vim.api.nvim_create_autocmd("VimResized", {
     desc = "Auto-resize windows on terminal buffer resize.",
 })
 
+vim.api.nvim_create_autocmd({ "BufWinEnter", "WinEnter", "FileType" }, {
+    callback = function()
+        local buf = vim.api.nvim_get_current_buf()
+        local special = vim.bo[buf].buftype ~= "" or vim.bo[buf].readonly or not vim.bo[buf].modifiable
+
+        if special then
+            vim.opt_local.fillchars:append({ eob = " " })
+        else
+            vim.opt_local.fillchars:remove("eob")
+        end
+    end,
+})
+
 local function sudo_write()
     local path = vim.fn.expand('%:p')
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
