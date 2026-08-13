@@ -134,6 +134,17 @@ return {
                 return true
             end
 
+            local diag_float_win = nil
+
+            local function toggle_line_diagnostics()
+                if diag_float_win and vim.api.nvim_win_is_valid(diag_float_win) then
+                    vim.api.nvim_win_close(diag_float_win, true)
+                    diag_float_win = nil
+                    return
+                end
+                diag_float_win = vim.diagnostic.open_float()
+            end
+
             -- ============================================================================
             -- LSP ON_ATTACH - BUFFER-LOCAL KEYMAPS
             -- ============================================================================
@@ -164,10 +175,10 @@ return {
                     "Go to Type Definition")
 
                 map("n", "<leader>lq", function() vim.diagnostic.setqflist({ open = false }) end,
-                    "Diagnostics to quickfix");
-                map("n", "<leader>lD",
+                    "Buffer Diagnostics to quickfix");
+                map("n", "<leader>ld",
                     function() require("telescope.builtin").diagnostics({ initial_mode = "normal" }) end,
-                    "Project diagnostics (Telescope)")
+                    "Project Diagnostics")
 
                 -- Information
                 map("n", "K", vim.lsp.buf.hover, "Hover")
@@ -181,7 +192,7 @@ return {
                 end, "Format")
 
                 -- Diagnostics
-                map("n", "<leader>ld", vim.diagnostic.open_float, "Line Diagnostics")
+                map("n", "<leader>ll", vim.diagnostic.open_float, "Line Diagnostics")
                 map("n", "<leader>lk", function() vim.diagnostic.jump({ count = -1 }) end, "Prev Diagnostic")
                 map("n", "<leader>lj", function() vim.diagnostic.jump({ count = 1 }) end, "Next Diagnostic")
                 map("n", "<leader>le", function()
@@ -251,14 +262,14 @@ return {
                 end, "Show References")
 
                 -- Workspace symbols
-                map("n", "<leader>lw", function()
-                    require('telescope.builtin').lsp_dynamic_workspace_symbols()
-                end, "Workspace Symbols")
+                -- map("n", "<leader>lw", function()
+                --     require('telescope.builtin').lsp_dynamic_workspace_symbols()
+                -- end, "Workspace Symbols")
 
                 -- Document symbols
-                map("n", "<leader>lo", function()
-                    require('telescope.builtin').lsp_document_symbols()
-                end, "Document Symbols")
+                -- map("n", "<leader>lo", function()
+                --     require('telescope.builtin').lsp_document_symbols()
+                -- end, "Document Symbols")
 
                 -- OPTION: lsp format on save
                 -- Enable formatting on save if supported
