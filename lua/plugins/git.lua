@@ -52,6 +52,31 @@ local function make_askpass(password)
     end
 end
 
+local function confirm_file_list(title, files, on_confirm)
+    local pickers = require("telescope.pickers")
+    local finders = require("telescope.finders")
+    local conf = require("telescope.config").values
+    local actions = require("telescope.actions")
+
+    pickers.new({
+        initial_mode = "normal",
+        prompt_title = title .. " (y to confirm)",
+    }, {
+        finder = finders.new_table({ results = files }),
+        sorter = conf.generic_sorter({}),
+        attach_mappings = function(_, map)
+            actions.select_default:replace(function(bufnr)
+                actions.close(bufnr)
+            end)
+            map({ "i", "n" }, "y", function(bufnr)
+                actions.close(bufnr)
+                on_confirm()
+            end, { desc = "Confirm" })
+            return true
+        end,
+    }):find()
+end
+
 local function run(args, cwd, password)
     local env = { GIT_TERMINAL_PROMPT = "0" }
     local cleanup = function() end
@@ -146,17 +171,13 @@ local function checkout_file_picker(root, ref)
     local actions = require("telescope.actions")
     local state = require("telescope.actions.state")
     local previewers = require("telescope.previewers")
-
-    local files = vim.fn.systemlist({ "git", "-C", root, "ls-tree", "-r", "--name-only", ref })
-
+    local files = vim.fn.systemlist({ "git", "-C", root, "diff", "--name-only", ref })
     local ref_diff_previewer = previewers.new_buffer_previewer({
         title = "Diff vs " .. ref,
         define_preview = function(self, entry)
             local buf = self.state.bufnr
-
             vim.system({ "git", "diff", "-R", ref, "--", entry[1] }, { text = true, cwd = root }, function(res)
                 local lines = vim.split(res.stdout or "", "\n", { plain = true })
-
                 vim.schedule(function()
                     if vim.api.nvim_buf_is_valid(buf) then
                         vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
@@ -166,7 +187,6 @@ local function checkout_file_picker(root, ref)
             end)
         end,
     })
-
     pickers.new({
         initial_mode = "normal",
         prompt_title = "Checkout File from " .. ref,
@@ -176,21 +196,33 @@ local function checkout_file_picker(root, ref)
         previewer = ref_diff_previewer,
         attach_mappings = function(_, map)
             actions.select_default:replace(function(bufnr)
-                local entry = state.get_selected_entry()
-                actions.close(bufnr)
+                local picker = state.get_current_picker(bufnr)
+                local selections = picker:get_multi_selection()
+                local paths = {}
 
-                if not entry then
-                    return
+                if #selections > 0 then
+                    for _, e in ipairs(selections) do
+                        table.insert(paths, e[1])
+                    end
+                else
+                    local entry = state.get_selected_entry()
+                    if not entry then
+                        actions.close(bufnr)
+                        return
+                    end
+                    table.insert(paths, entry[1])
                 end
 
-                local path = entry[1]
+                actions.close(bufnr)
 
-                ask("Checkout '" .. path .. "' from " .. ref .. "?", function()
-                    run({ "restore", "--source=" .. ref, "--staged", "--worktree", "--", path }, root)
+                local label = #paths == 1 and ("'" .. paths[1] .. "'") or (#paths .. " files")
+                ask("Checkout " .. label .. " from " .. ref .. "?", function()
+                    local args = { "restore", "--source=" .. ref, "--staged", "--worktree", "--" }
+                    vim.list_extend(args, paths)
+                    run(args, root)
                     vim.schedule(function() vim.cmd("checktime") end)
                 end, true)
             end)
-
             return true
         end,
     }):find()
@@ -893,11 +925,17 @@ local function discard_all(root)
                     vim.schedule(function() vim.cmd("checktime") end)
                     return
                 end
-                ask("Will also permanently delete:\n" .. table.concat(preview, "\n"), function()
+
+                local files = {}
+                for _, line in ipairs(preview) do
+                    table.insert(files, (line:gsub("^Would remove ", "")))
+                end
+
+                confirm_file_list("Will also permanently delete", files, function()
                     run({ "restore", "--staged", "--worktree", "--", "." }, root)
                     run({ "clean", "-fd" }, root)
                     vim.schedule(function() vim.cmd("checktime") end)
-                end, true)
+                end)
             end
         end
     )
