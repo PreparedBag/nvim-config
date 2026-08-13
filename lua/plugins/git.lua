@@ -431,7 +431,7 @@ local function branch_picker(root)
 
     pickers.new({
         initial_mode = "normal",
-        prompt_title = "Branches",
+        prompt_title = "Git Branches",
     }, {
         finder = finders.new_table({ results = branches }),
         sorter = conf.generic_sorter({}),
@@ -525,7 +525,7 @@ local function stash_picker(root)
 
     pickers.new({
         initial_mode = "normal",
-        prompt_title = "Stashes",
+        prompt_title = "Git Stashes",
     }, {
         finder = finders.new_table({
             results = lines,
@@ -727,7 +727,7 @@ local function status_picker(root)
     local head = capture({ "symbolic-ref", "--short", "HEAD" }, root)
     local title
     if head == "" then
-        title = "⚠ DETACHED HEAD  (t: Stage/Unstage, s: Stash, S: Stash All)"
+        title = "⚠ DETACHED HEAD"
     else
         local ab = capture({ "rev-list", "--left-right", "--count", "HEAD...@{u}" }, root)
         local tracking = ""
@@ -738,7 +738,7 @@ local function status_picker(root)
             if tonumber(behind) > 0 then table.insert(parts, "↓ " .. behind) end
             if #parts > 0 then tracking = " " .. table.concat(parts, " ") end
         end
-        title = string.format("Git: %s%s (t: Stage/Unstage, s: Stash, S: Stash All)", head, tracking)
+        title = string.format("Git Status: %s%s", head, tracking)
     end
 
     local function refresh(bufnr)
