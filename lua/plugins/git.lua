@@ -357,7 +357,7 @@ local function log_picker(root, ref)
                 end)
             end, { desc = "New Tag on Commit" })
 
-            map("n", "T", function(bufnr)
+            map("n", "d", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
                 local tag_name
@@ -462,7 +462,7 @@ local function branch_picker(root)
                 end, true)
             end, { desc = "Delete Local" })
 
-            map("n", "D", function(bufnr)
+            map("n", "x", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
                 local name = name_of(entry)
