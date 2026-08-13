@@ -130,8 +130,6 @@ local function ask(text, fn, is_confirm)
     end
 end
 
-<<<<<<< HEAD
-=======
 -- ---------------------------------------------------------------
 -- Checkout file from ref
 --
@@ -718,294 +716,11 @@ end
 --        staged or unstaged files, matching `git stash push --`.
 -- ---------------------------------------------------------------
 
->>>>>>> 9b53cf5 (updated git.lua)
 local function status_picker(root)
     local pickers = require("telescope.pickers")
     local state = require("telescope.actions.state")
     local conf = require("telescope.config").values
 
-<<<<<<< HEAD
--- Lists every file that exists at `ref` (branch or commit), each item
--- carrying its own pre-computed diff against the current working copy
--- as its preview, so you can see what checking it out would change
--- before confirming. Invoked as an in-picker action from both the
--- branch and log pickers below (key `f`), not a standalone keymap.
-local function checkout_file_picker(root, ref)
-    local files = vim.fn.systemlist({ "git", "-C", root, "ls-tree", "-r", "--name-only", ref })
-    local items = {}
-
-    for _, path in ipairs(files) do
-        local diff = capture({ "diff", ref, "--", path }, root)
-        table.insert(items, {
-            text = path,
-            preview = { text = diff ~= "" and diff or "(no changes)", ft = "diff" },
-        })
-    end
-
-    Snacks.picker.pick({
-        items = items,
-        title = "Checkout File from " .. ref,
-        format = "text",
-        preview = "preview",
-        on_show = normal_mode,
-        confirm = function(picker, item)
-            picker:close()
-            if not item then return end
-
-            ask("Checkout '" .. item.text .. "' from " .. ref .. "?", function()
-                run({ "restore", "--source=" .. ref, "--staged", "--worktree", "--", item.text }, root)
-                vim.schedule(function() vim.cmd("checktime") end)
-            end, true)
-        end,
-    })
-end
-
--- ---------------------------------------------------------------
--- Log browser
---
--- `ref` optionally scopes history to one branch (via cmd_args,
--- confirmed from source: extra positional args passed straight to
--- `git log`) - called with no ref for the top-level log keymap,
--- and with a branch name from branch_picker's drill-down (key `l`).
---
--- <CR>  Snacks' own default action, left unset here
--- f     checkout a specific file from the selected commit
--- b     new branch from the selected commit
--- t     new tag on the selected commit
--- ---------------------------------------------------------------
-
-local function log_picker(root, ref)
-    Snacks.picker.git_log({
-        cwd = root,
-        cmd_args = ref and { ref } or nil,
-        on_show = normal_mode,
-        actions = {
-            log_checkout_file = function(picker, item)
-                picker:close()
-                if not item then return end
-                checkout_file_picker(root, item.commit)
-            end,
-            log_branch_new = function(picker, item)
-                picker:close()
-                if not item then return end
-                local hash = item.commit
-                ask("New branch from " .. hash .. ": ", function(name)
-                    run({ "checkout", "-b", name, hash }, root)
-                end)
-            end,
-            log_tag_new = function(picker, item)
-                picker:close()
-                if not item then return end
-                local hash = item.commit
-                ask("New tag on " .. hash .. ": ", function(tag)
-                    run({ "tag", "-a", tag, "-m", tag, hash }, root)
-                end)
-            end,
-        },
-        win = {
-            input = {
-                keys = {
-                    ["f"] = { "log_checkout_file", mode = { "n" } },
-                    ["b"] = { "log_branch_new", mode = { "n" } },
-                    ["t"] = { "log_tag_new", mode = { "n" } },
-                },
-            },
-        },
-    })
-end
-
--- ---------------------------------------------------------------
--- Branch browser
---
--- <CR>  checkout (Snacks' own default action, left unset here)
--- m     merge into current branch
--- d     delete (local)
--- D     force delete (local)
--- o     delete on origin
--- f     checkout a specific file from the selected branch
--- l     view this branch's commit log (drill down further to a
---       specific commit, then `f` there for a specific file)
--- ---------------------------------------------------------------
-
-local function branch_picker(root)
-    local function name_of(item)
-        return (item.branch:gsub("^remotes/", ""):gsub("^origin/", ""))
-    end
-
-    Snacks.picker.git_branches({
-        cwd = root,
-        all = true,
-        on_show = normal_mode,
-        actions = {
-            branch_merge = function(picker, item)
-                picker:close()
-                if not item then return end
-                run({ "merge", name_of(item) }, root)
-            end,
-            branch_delete = function(picker, item)
-                picker:close()
-                if not item then return end
-                local name = name_of(item)
-                ask("Delete local branch '" .. name .. "'?", function()
-                    run({ "branch", "-d", name }, root)
-                end, true)
-            end,
-            branch_force_delete = function(picker, item)
-                picker:close()
-                if not item then return end
-                local name = name_of(item)
-                ask("Force delete local branch '" .. name .. "'?", function()
-                    run({ "branch", "-D", name }, root)
-                end, true)
-            end,
-            branch_delete_origin = function(picker, item)
-                picker:close()
-                if not item then return end
-                local name = name_of(item)
-                ask("Delete '" .. name .. "' on origin?", function()
-                    run_auth({ "push", "origin", "--delete", name }, root, "Delete Branch")
-                end, true)
-            end,
-            branch_checkout_file = function(picker, item)
-                picker:close()
-                if not item then return end
-                checkout_file_picker(root, name_of(item))
-            end,
-            branch_log = function(picker, item)
-                picker:close()
-                if not item then return end
-                log_picker(root, name_of(item))
-            end,
-        },
-        win = {
-            input = {
-                keys = {
-                    ["m"] = { "branch_merge", mode = { "n" } },
-                    ["d"] = { "branch_delete", mode = { "n" } },
-                    ["D"] = { "branch_force_delete", mode = { "n" } },
-                    ["o"] = { "branch_delete_origin", mode = { "n" } },
-                    ["f"] = { "branch_checkout_file", mode = { "n" } },
-                    ["l"] = { "branch_log", mode = { "n" } },
-                },
-            },
-        },
-    })
-end
-
--- ---------------------------------------------------------------
--- Stash browser
---
--- <CR>  apply (Snacks' own default action, left unset here)
--- p     pop (apply, then drop if clean)
--- d     drop
--- b     branch from this stash
--- n     new stash from current changes
--- ---------------------------------------------------------------
-
-local function stash_picker(root)
-    Snacks.picker.git_stash({
-        cwd = root,
-        on_show = normal_mode,
-        actions = {
-            stash_pop = function(picker, item)
-                picker:close()
-                if not item then return end
-                run({ "stash", "pop", item.stash }, root)
-            end,
-            stash_drop = function(picker, item)
-                picker:close()
-                if not item then return end
-                ask("Drop " .. item.stash .. "?", function()
-                    run({ "stash", "drop", item.stash }, root)
-                end, true)
-            end,
-            stash_branch = function(picker, item)
-                picker:close()
-                if not item then return end
-                ask("Branch from " .. item.stash .. ": ", function(name)
-                    run({ "stash", "branch", name, item.stash }, root)
-                end)
-            end,
-            stash_new = function(picker)
-                picker:close()
-                ask("Stash message: ", function(msg)
-                    run({ "stash", "push", "-m", msg }, root)
-                end)
-            end,
-        },
-        win = {
-            input = {
-                keys = {
-                    ["p"] = { "stash_pop", mode = { "n" } },
-                    ["d"] = { "stash_drop", mode = { "n" } },
-                    ["b"] = { "stash_branch", mode = { "n" } },
-                    ["n"] = { "stash_new", mode = { "n" } },
-                },
-            },
-        },
-    })
-end
-
--- ---------------------------------------------------------------
--- Tag browser
---
--- No built-in Snacks source for tags exists (confirmed: only log,
--- status, diff, branches, stash are defined) - built the same way
--- as checkout_file_picker, from a plain items list.
---
--- <CR>  checkout
--- d     delete (local)
--- o     delete on origin
--- ---------------------------------------------------------------
-
-local function tag_picker(root)
-    local lines = vim.fn.systemlist({ "git", "-C", root, "tag", "--sort=-creatordate",
-        "--format=%(refname:short)  %(creatordate:short)  %(subject)" })
-
-    local items = {}
-    for _, line in ipairs(lines) do
-        table.insert(items, { text = line })
-    end
-
-    Snacks.picker.pick({
-        items = items,
-        title = "Tags",
-        format = "text",
-        on_show = normal_mode,
-        confirm = function(picker, item)
-            picker:close()
-            if item then
-                run({ "checkout", item.text:match("^(%S+)") }, root)
-            end
-        end,
-        actions = {
-            tag_delete = function(picker, item)
-                picker:close()
-                if not item then return end
-                local name = item.text:match("^(%S+)")
-                ask("Delete tag '" .. name .. "'?", function()
-                    run({ "tag", "-d", name }, root)
-                end, true)
-            end,
-            tag_delete_origin = function(picker, item)
-                picker:close()
-                if not item then return end
-                local name = item.text:match("^(%S+)")
-                ask("Delete tag '" .. name .. "' on origin?", function()
-                    run_auth({ "push", "origin", "--delete", name }, root, "Delete Tag")
-                end, true)
-            end,
-        },
-        win = {
-            input = {
-                keys = {
-                    ["d"] = { "tag_delete", mode = { "n" } },
-                    ["o"] = { "tag_delete_origin", mode = { "n" } },
-                },
-            },
-        },
-    })
-=======
     local head = capture({ "symbolic-ref", "--short", "HEAD" }, root)
     local title
     if head == "" then
@@ -1103,7 +818,6 @@ local function tag_picker(root)
             return true
         end,
     }):find()
->>>>>>> 9b53cf5 (updated git.lua)
 end
 
 local function default_branch(root)
@@ -1194,10 +908,6 @@ return {
             { "<leader>gl", git_guard(log_picker),    desc = "Git Log" },
             { "<leader>gb", git_guard(branch_picker), desc = "Branches" },
             { "<leader>gz", git_guard(stash_picker),  desc = "Stashes" },
-<<<<<<< HEAD
-            { "<leader>gt", git_guard(tag_picker),    desc = "Tags" },
-=======
->>>>>>> 9b53cf5 (updated git.lua)
             { "<leader>gr", git_guard(discard_file),  desc = "Restore Buffer from HEAD" },
             { "<leader>gR", git_guard(discard_all),   desc = "Restore All from HEAD" },
             { "<leader>gI", git_guard(checkout_head), desc = "Checkout Tip" },
@@ -1255,5 +965,5 @@ return {
                 desc = "Add All + Commit",
             },
         },
-     },
+    },
 }
