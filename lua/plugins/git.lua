@@ -154,7 +154,7 @@ local function checkout_file_picker(root, ref)
         define_preview = function(self, entry)
             local buf = self.state.bufnr
 
-            vim.system({ "git", "diff", ref, "--", entry[1] }, { text = true, cwd = root }, function(res)
+            vim.system({ "git", "diff", "-R", ref, "--", entry[1] }, { text = true, cwd = root }, function(res)
                 local lines = vim.split(res.stdout or "", "\n", { plain = true })
 
                 vim.schedule(function()
