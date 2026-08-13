@@ -354,7 +354,7 @@ local function log_picker(root, ref)
                 end)
             end, { desc = "New Tag on Commit" })
 
-            map("n", "T", function(bufnr)
+            map("n", "d", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
                 local tag_name
@@ -459,7 +459,7 @@ local function branch_picker(root)
                 end, true)
             end, { desc = "Delete Local" })
 
-            map("n", "D", function(bufnr)
+            map("n", "x", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
                 local name = name_of(entry)
@@ -571,13 +571,6 @@ local function stash_picker(root)
                     run({ "stash", "branch", name, stash }, root)
                 end)
             end, { desc = "Branch from Stash" })
-
-            map("n", "n", function(bufnr)
-                actions.close(bufnr)
-                ask("Stash message: ", function(msg)
-                    run({ "stash", "push", "-m", msg }, root)
-                end)
-            end, { desc = "New Stash" })
 
             return true
         end,
@@ -724,7 +717,7 @@ local function status_picker(root)
     local head = capture({ "symbolic-ref", "--short", "HEAD" }, root)
     local title
     if head == "" then
-        title = "⚠ DETACHED HEAD  (t: Stage/Unstage, s: Stash, S: Stash All)"
+        title = "⚠ DETACHED HEAD"
     else
         local ab = capture({ "rev-list", "--left-right", "--count", "HEAD...@{u}" }, root)
         local tracking = ""
@@ -735,7 +728,7 @@ local function status_picker(root)
             if tonumber(behind) > 0 then table.insert(parts, "↓ " .. behind) end
             if #parts > 0 then tracking = " " .. table.concat(parts, " ") end
         end
-        title = string.format("Git: %s%s (t: Stage/Unstage, s: Stash, S: Stash All)", head, tracking)
+        title = string.format("Git: %s%s", head, tracking)
     end
 
     local function refresh(bufnr)
@@ -765,44 +758,7 @@ local function status_picker(root)
                 picker:refresh(status_finder(root), { reset_prompt = false })
             end, { desc = "Stage/Unstage" })
 
-            map({ "i", "n" }, "<C-a>", function(bufnr)
-                capture({ "add", "-A" }, root)
-                refresh(bufnr)
-            end, { desc = "Stage All" })
-
-            map({ "i", "n" }, "<C-u>", function(bufnr)
-                capture({ "reset" }, root)
-                refresh(bufnr)
-            end, { desc = "Unstage All (Reset)" })
-
-            map("n", "s", function(bufnr)
-                local picker = state.get_current_picker(bufnr)
-                local selections = picker:get_multi_selection()
-                local paths = {}
-
-                if #selections > 0 then
-                    for _, e in ipairs(selections) do
-                        table.insert(paths, e.path)
-                    end
-                else
-                    local entry = state.get_selected_entry()
-                    if not entry then return end
-                    table.insert(paths, entry.path)
-                end
-
-                ask("Stash message: ", function(msg)
-                    local args = { "stash", "push", "-m", msg, "--" }
-                    vim.list_extend(args, paths)
-                    run(args, root)
-                    vim.schedule(function()
-                        if vim.api.nvim_buf_is_valid(bufnr) then
-                            picker:refresh(status_finder(root), { reset_prompt = false })
-                        end
-                    end)
-                end)
-            end, { desc = "Stash Selected" })
-
-            map("n", "S", function(bufnr)
+            map("n", "z", function(bufnr)
                 local picker = state.get_current_picker(bufnr)
 
                 ask("Stash message: ", function(msg)
