@@ -70,15 +70,8 @@ end
 
 local function switch_session(load_fn)
     if not wipe_all_buffers() then return end
-
-    local start = vim.loop.hrtime()
     load_fn()
     _G.session_directory = vim.fn.getcwd()
-
-    vim.schedule(function()
-        local ms = (vim.loop.hrtime() - start) / 1e6
-        vim.notify(string.format("Session restored in %.1fms", ms))
-    end)
 end
 
 local function save_session()
@@ -198,6 +191,7 @@ local function session_picker()
         end,
     }):find()
 end
+_G.Session_Picker = session_picker
 
 return {
     "folke/persistence.nvim",

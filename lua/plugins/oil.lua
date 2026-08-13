@@ -6,7 +6,16 @@ return {
     config = function()
         local oil = require("oil")
 
-        -- Function to set the working directory to the session one
+        local function set_telescope_cwd_to_git_root()
+            local root = vim.fs.root(0, ".git")
+            if not root then
+                vim.notify("Not a git repository", vim.log.levels.INFO)
+                return
+            end
+            vim.cmd('cd ' .. vim.fn.fnameescape(root))
+            print('Changed working directory to git root: ' .. root)
+        end
+
         local set_telescope_cwd_to_session = function()
             if _G.session_directory then
                 vim.cmd('cd ' .. vim.fn.fnameescape(_G.session_directory))
@@ -16,12 +25,11 @@ return {
             end
         end
 
-        -- Function to set the working directory to the updated Netrw directory
-        local set_telescope_cwd_to_updated = function()
-            local oil = require("oil")     -- Assuming Oil is loaded and required
+        local set_telescope_cwd_to_current = function()
+            local oil = require("oil") -- Assuming Oil is loaded and required
 
             -- Check if Oil is active and set the directory accordingly
-            local oil_dir = oil.get_current_dir()     -- This is an Oil-specific function
+            local oil_dir = oil.get_current_dir() -- This is an Oil-specific function
             if oil_dir and vim.fn.isdirectory(oil_dir) == 1 then
                 vim.cmd('cd ' .. vim.fn.fnameescape(oil_dir))
                 print('Changed working directory to Oil path: ' .. oil_dir)
@@ -70,7 +78,10 @@ return {
             },
         })
 
-        vim.keymap.set("n", "<leader>od", function() set_telescope_cwd_to_updated() end,
+        vim.keymap.set("n", "<leader>og", function() set_telescope_cwd_to_git_root() end,
+            { noremap = true, silent = true, desc = "Set Telescope CWD to Git Root" })
+
+        vim.keymap.set("n", "<leader>od", function() set_telescope_cwd_to_current() end,
             { noremap = true, silent = true, desc = "Set Telescope CWD Here" })
 
         vim.keymap.set("n", "<leader>oo", function() set_telescope_cwd_to_session() end,
