@@ -26,7 +26,7 @@ return {
             { "<leader>b",   group = "Buffers",           mode = "n" },
 
             -- Color Picker
-            { "<leader>c",   name = "Color Picker",       mode = "n" },
+            { "<leader>c",   group = "Color",             mode = "n" },
 
             -- Find (Telescope)
             { "<leader>f",   group = "Find",              mode = { "n", "v" } },
