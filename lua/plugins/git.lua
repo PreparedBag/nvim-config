@@ -950,8 +950,8 @@ return {
             { "<leader>gb", git_guard(branch_picker), desc = "Branches" },
             { "<leader>gz", git_guard(stash_picker),  desc = "Stashes" },
             { "<leader>gr", git_guard(discard_file),  desc = "Restore Buffer from HEAD" },
-            { "<leader>gR", git_guard(discard_all),   desc = "Restore All from HEAD" },
-            { "<leader>gI", git_guard(checkout_head), desc = "Checkout Tip" },
+            { "<leader>gx", git_guard(discard_all),   desc = "Restore All from HEAD" },
+            { "<leader>gi", git_guard(checkout_head), desc = "Checkout Tip" },
             {
                 "<leader>gp",
                 git_guard(function(root)

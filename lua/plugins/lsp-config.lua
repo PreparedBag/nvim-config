@@ -175,7 +175,7 @@ return {
                     "Go to Type Definition")
 
                 map("n", "<leader>lq", function() vim.diagnostic.setqflist({ open = false }) end,
-                    "Buffer Diagnostics to quickfix");
+                    "Buffer Diagnostics to Quickfix");
                 map("n", "<leader>ld",
                     function() require("telescope.builtin").diagnostics({ initial_mode = "normal" }) end,
                     "Project Diagnostics")

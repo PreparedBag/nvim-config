@@ -68,7 +68,7 @@ return {
                 map("n", "<leader>ghp", gs.preview_hunk, "Preview Hunk")
 
                 -- Whole-buffer stage / reset
-                map("n", "<leader>gS", gs.stage_buffer, "Stage Buffer")
+                -- map("n", "<leader>gS", gs.stage_buffer, "Stage Buffer")
 
                 -- Blame current line
                 map("n", "<leader>ge", function()
