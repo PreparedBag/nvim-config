@@ -5,14 +5,30 @@ return {
     config = function()
         local lualine = require('lualine')
 
-        local session_component = {
-            function()
-                if not _G.session_directory then
-                    return ""
-                end
-                return " " .. vim.fn.fnamemodify(_G.session_directory, ":t") .. " "
-            end,
-        }
+        local function session_component()
+            if not _G.session_directory then
+                return ""
+            end
+            return " " .. vim.fn.fnamemodify(_G.session_directory, ":t") .. " "
+        end
+
+        local function session_relative_filename()
+            local path = vim.api.nvim_buf_get_name(0)
+            if path == "" then
+                return "[No Name]"
+            end
+
+            local base = _G.session_directory or vim.fn.getcwd()
+            local rel = require("config.project").relative_path(base, path)
+
+            if vim.bo.modified then
+                rel = rel .. " [+]"
+            elseif vim.bo.readonly or not vim.bo.modifiable then
+                rel = rel .. " [RO]"
+            end
+
+            return rel
+        end
 
         lualine.setup({
             options = {
@@ -48,7 +64,7 @@ return {
             sections = {
                 lualine_a = { 'mode' },
                 lualine_b = { 'branch', 'diff', 'diagnostics' },
-                lualine_c = { 'filename' },
+                lualine_c = { session_relative_filename },
                 lualine_x = { 'filetype' },
                 lualine_y = { 'progress' },
                 lualine_z = { session_component }
@@ -56,7 +72,7 @@ return {
             inactive_sections = {
                 lualine_a = { 'mode' },
                 lualine_b = { 'branch', 'diff', 'diagnostics' },
-                lualine_c = { 'filename' },
+                lualine_c = { session_relative_filename },
                 lualine_x = { 'filetype' },
                 lualine_y = { 'progress' },
                 lualine_z = { session_component }

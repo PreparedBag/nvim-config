@@ -43,7 +43,7 @@ vim.o.cursorline = true
 vim.o.splitbelow = true
 vim.o.splitright = true
 vim.o.modeline = false
-vim.o.winbar = ""
+-- vim.o.winbar = ""
 
 vim.opt.isfname:append("@-@")
 vim.opt.completeopt = { 'menu', 'menuone', 'noselect' }

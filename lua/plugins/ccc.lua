@@ -11,8 +11,10 @@ return {
         vim.api.nvim_create_autocmd("FileType", {
             -- pattern = "css",
             callback = function(ev)
-                vim.keymap.set("n", "<leader>c", "<cmd>CccPick<cr>",
-                    { buffer = ev.buf, desc = "Color Picker" })
+                if vim.bo[ev.buf].buftype ~= "" then
+                    return
+                end
+                vim.keymap.set("n", "<leader>c", "<cmd>CccPick<cr>", { noremap = true, silent = true, desc = "Color Picker" })
             end,
         })
     end,
