@@ -13,7 +13,7 @@ return {
                 wo = { winblend = 0 },
             },
             triggers = {
-                { "<leader>", mode = "n" },
+                { "<leader>", mode = { "n", "v" } },
                 { "g",        mode = "n" },
                 -- { "y", mode = "n" },
                 -- { "d", mode = "n" },
@@ -32,8 +32,8 @@ return {
             { "<leader>z",   group = "Fold",              mode = "n" },
 
             -- Git Integration
-            { "<leader>g",   group = "Git",               mode = { "n", "v" } },
-            { "<leader>gh",  group = "Hunks",             mode = { "n", "v" } },
+            { "<leader>g",   group = "Git",               mode = "n" },
+            { "<leader>gh",  group = "Hunks",             mode = "n" },
             -- { "<leader>gb",  group = "Branch",            mode = "n" },
             -- { "<leader>gF",  group = "Fetch File",        mode = "n" },
             -- { "<leader>gz",  group = "Stash",             mode = "n" },

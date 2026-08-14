@@ -51,15 +51,15 @@ return {
 
                 -- Stage hunk (normal + visual range)
                 map("n", "<leader>ghs", gs.stage_hunk, "Stage Hunk")
-                map("v", "<leader>ghs", function()
-                    gs.stage_hunk({ vim.fn.line("."), vim.fn.line("v") })
-                end, "Stage Selected Hunk")
+                -- map("v", "<leader>ghs", function()
+                --     gs.stage_hunk({ vim.fn.line("."), vim.fn.line("v") })
+                -- end, "Stage Selected Hunk")
 
                 -- Discard/reset hunk (normal + visual range)
                 map("n", "<leader>ghr", gs.reset_hunk, "Discard Hunk")
-                map("v", "<leader>ghr", function()
-                    gs.reset_hunk({ vim.fn.line("."), vim.fn.line("v") })
-                end, "Discard Selected Hunk")
+                -- map("v", "<leader>ghr", function()
+                --     gs.reset_hunk({ vim.fn.line("."), vim.fn.line("v") })
+                -- end, "Discard Selected Hunk")
 
                 -- Undo the last stage
                 map("n", "<leader>ghu", gs.undo_stage_hunk, "Undo Stage Hunk")

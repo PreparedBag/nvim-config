@@ -30,7 +30,7 @@ return {
                     vim.cmd('NERDTreeFocus')
                 end
             end,
-            desc = 'Focus NERDTree or return to previous buffer',
+            desc = 'Toggle NERDTree Focus',
         },
         { '<leader>tn', ':NERDTreeToggle<CR>', desc = 'Toggle NERDTree' },
     },

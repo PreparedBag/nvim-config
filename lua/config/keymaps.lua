@@ -48,8 +48,8 @@ vim.keymap.set('n', '<leader>wh', '<C-w>h', { noremap = true, silent = true, des
 vim.keymap.set('n', '<leader>wl', '<C-w>l', { noremap = true, silent = true, desc = "Focus Right" })
 vim.keymap.set('n', '<leader>wj', '<C-w>j', { noremap = true, silent = true, desc = "Focus Down" })
 vim.keymap.set('n', '<leader>wk', '<C-w>k', { noremap = true, silent = true, desc = "Focus Up" })
-vim.keymap.set("n", "<C-Up>", "<cmd>resize +2<cr>", { noremap = true, silent = true, desc = "Increase vertical (+2)" })
-vim.keymap.set("n", "<C-Down>", "<cmd>resize -2<cr>", { noremap = true, silent = true, desc = "Decrease vertical (-2)" })
+vim.keymap.set("n", "<C-Up>", "<cmd>resize +2<cr>", { noremap = true, silent = true, desc = "Increase Vertical (+2)" })
+vim.keymap.set("n", "<C-Down>", "<cmd>resize -2<cr>", { noremap = true, silent = true, desc = "Decrease Vertical (-2)" })
 vim.keymap.set("n", "<C-Left>", "<cmd>vertical resize -2<cr>",
     { noremap = true, silent = true, desc = "Decrease Horizontal (-2)" })
 vim.keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<cr>",
@@ -57,9 +57,9 @@ vim.keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<cr>",
 vim.keymap.set("n", "<leader>we", "<C-w>=", { noremap = true, silent = true, desc = "Equalize All" })
 
 -- copy/paste
-vim.keymap.set("x", "<leader>p", [["_dP]], { noremap = true, silent = true, desc = "Paste Without Yank" })
-vim.keymap.set("x", "<leader>y", [["+y]], { noremap = true, silent = true, desc = "Yank selection to clipboard" })
-vim.keymap.set("n", "<leader>Y", [["+Y]], { noremap = true, silent = true, desc = "Yank Line to Clipboard" })
+vim.keymap.set("x", "<leader>p", [["_dP]], { noremap = true, silent = true, desc = "Paste Without Yank" }) 
+vim.keymap.set("x", "<leader>y", [["+y]], { noremap = true, silent = true, desc = "Yank to Clipboard" })
+-- vim.keymap.set("n", "<leader>Y", [["+Y]], { noremap = true, silent = true, desc = "Yank Line to Clipboard" })
 vim.keymap.set("n", "<leader>is", ":NoiceSnacks<CR><ESC>", { noremap = true, silent = true, desc = "Open Noice Snacks" })
 vim.keymap.set("n", "<leader>in", ":Noice<CR>", { noremap = true, silent = true, desc = "Open Noice" })
 vim.keymap.set("n", "<leader>ia", ":NoiceAll<CR>", { noremap = true, silent = true, desc = "Open Noice (All)" })
@@ -88,10 +88,10 @@ vim.keymap.set("n", "<leader>q", function()
 end, { silent = true, desc = "Quit with Confirm" })
 
 -- buffers
-vim.keymap.set("n", "<C-s>", "<cmd>w<cr>", { noremap = true, silent = true, desc = "Save current buffer" })
-vim.keymap.set("n", "<leader><Tab>", "<cmd>bnext<cr>", { noremap = true, silent = true, desc = "Next buffer" })
+vim.keymap.set("n", "<C-s>", "<cmd>w<cr>", { noremap = true, silent = true, desc = "Save Current Buffer" })
+vim.keymap.set("n", "<leader><Tab>", "<cmd>bnext<cr>", { noremap = true, silent = true, desc = "Next Buffer" })
 -- OPTION: previous buffer navigation
-vim.keymap.set("n", "<leader><S-Tab>", "<cmd>bprevious<cr>", { noremap = true, silent = true, desc = "Prev buffer" })
+vim.keymap.set("n", "<leader><S-Tab>", "<cmd>bprevious<cr>", { noremap = true, silent = true, desc = "Prev Buffer" })
 local function delete_buffers()
     local builtin = require('telescope.builtin')
     local actions = require('telescope.actions')
@@ -150,8 +150,8 @@ vim.keymap.set('n', '<leader>br', function()
 end, { noremap = true, silent = true, desc = 'Reload Buffer from File' })
 
 vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { noremap = true, silent = true, desc = "Make File Executable" })
-vim.keymap.set('v', '<Tab>', '>gv', { noremap = true, silent = true, desc = "Indent right" })
-vim.keymap.set('v', '<S-Tab>', '<gv', { noremap = true, silent = true, desc = "Indent left" })
+vim.keymap.set('v', '<Tab>', '>gv', { noremap = true, silent = true, desc = "Indent Right" })
+vim.keymap.set('v', '<S-Tab>', '<gv', { noremap = true, silent = true, desc = "Indent Left" })
 vim.keymap.set('i', 'jk', '<Esc>', { noremap = true, silent = true, desc = "ESC" })
 
 -- folding
