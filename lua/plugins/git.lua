@@ -159,9 +159,13 @@ end
 -- ---------------------------------------------------------------
 -- Checkout file from ref
 --
--- Lists every file at `ref` (branch or commit), with a live diff
--- against the current working copy. Invoked from both the log and
+-- Lists files that differ between the current working copy and
+-- `ref` (branch or commit), each with a live reversed diff showing
+-- what checking it out would apply. Invoked from both the log and
 -- branch pickers below (key `f`), not a standalone keymap.
+--
+-- <Tab> to multi-select several files before confirming; with
+-- nothing marked, acts on just the file under the cursor.
 -- ---------------------------------------------------------------
 
 local function checkout_file_picker(root, ref)
@@ -172,8 +176,9 @@ local function checkout_file_picker(root, ref)
     local state = require("telescope.actions.state")
     local previewers = require("telescope.previewers")
     local files = vim.fn.systemlist({ "git", "-C", root, "diff", "--name-only", ref })
+    local display_ref = ref:gsub("^refs/heads/", ""):gsub("^refs/remotes/", "")
     local ref_diff_previewer = previewers.new_buffer_previewer({
-        title = "Diff vs " .. ref,
+        title = "Diff vs " .. display_ref,
         define_preview = function(self, entry)
             local buf = self.state.bufnr
             vim.system({ "git", "diff", "-R", ref, "--", entry[1] }, { text = true, cwd = root }, function(res)
@@ -189,7 +194,7 @@ local function checkout_file_picker(root, ref)
     })
     pickers.new({
         initial_mode = "normal",
-        prompt_title = "Checkout File from " .. ref,
+        prompt_title = "Checkout File from " .. display_ref,
     }, {
         finder = finders.new_table({ results = files }),
         sorter = conf.generic_sorter({}),
@@ -240,7 +245,7 @@ end
 -- f     checkout a specific file from the selected commit
 -- b     new branch from the selected commit
 -- t     new tag on the selected commit
--- T     delete the tag on the selected commit (local)
+-- d     delete the tag on the selected commit (local)
 -- o     delete the tag on the selected commit (origin)
 -- ---------------------------------------------------------------
 
@@ -333,6 +338,31 @@ local function log_entry(line)
     }
 end
 
+local function get_tags(entry)
+    local tags = {}
+    for _, ref in ipairs(entry.refs) do
+        if ref:match("^tag:") then
+            table.insert(tags, (ref:gsub("^tag:%s*", "")))
+        end
+    end
+    return tags
+end
+
+local function pick_tag(entry, cb)
+    local tags = get_tags(entry)
+    if #tags == 0 then
+        notify("No tag on this commit", vim.log.levels.WARN)
+        return
+    end
+    if #tags == 1 then
+        cb(tags[1])
+        return
+    end
+    vim.ui.select(tags, { prompt = "Which tag?" }, function(choice)
+        if choice then cb(choice) end
+    end)
+end
+
 local function log_picker(root, ref)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -347,14 +377,18 @@ local function log_picker(root, ref)
     end
     vim.list_extend(git_command, { "--", "." })
 
+    local display_ref = ref and ref:gsub("^refs/heads/", ""):gsub("^refs/remotes/", "")
+
     pickers.new({
         initial_mode = "normal",
-        prompt_title = "Git Log" .. (ref and (" (" .. ref .. ")") or ""),
+        prompt_title = "Git Log" .. (display_ref and (" (" .. display_ref .. ")") or ""),
     }, {
         finder = finders.new_oneshot_job(git_command, { cwd = root, entry_maker = log_entry }),
         sorter = conf.generic_sorter({}),
         previewer = previewers.git_commit_diff_to_parent.new({ cwd = root }),
         attach_mappings = function(_, map)
+            -- Checks out the selected commit directly (detached HEAD),
+            -- explicitly replacing Telescope's default action.
             actions.select_default:replace(function(bufnr)
                 local entry = state.get_selected_entry()
                 actions.close(bufnr)
@@ -392,41 +426,23 @@ local function log_picker(root, ref)
             map("n", "d", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
-                local tag_name
-                for _, ref in ipairs(entry.refs) do
-                    if ref:match("^tag:") then
-                        tag_name = ref:gsub("^tag:%s*", "")
-                        break
-                    end
-                end
-                if not tag_name then
-                    notify("No tag on this commit", vim.log.levels.WARN)
-                    return
-                end
                 actions.close(bufnr)
-                ask("Delete tag '" .. tag_name .. "'?", function()
-                    run({ "tag", "-d", tag_name }, root)
-                end, true)
+                pick_tag(entry, function(tag_name)
+                    ask("Delete tag '" .. tag_name .. "'?", function()
+                        run({ "tag", "-d", tag_name }, root)
+                    end, true)
+                end)
             end, { desc = "Delete Tag" })
 
             map("n", "o", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
-                local tag_name
-                for _, ref in ipairs(entry.refs) do
-                    if ref:match("^tag:") then
-                        tag_name = ref:gsub("^tag:%s*", "")
-                        break
-                    end
-                end
-                if not tag_name then
-                    notify("No tag on this commit", vim.log.levels.WARN)
-                    return
-                end
                 actions.close(bufnr)
-                ask("Delete tag '" .. tag_name .. "' on origin?", function()
-                    run_auth({ "push", "origin", "--delete", tag_name }, root, "Delete Tag")
-                end, true)
+                pick_tag(entry, function(tag_name)
+                    ask("Delete tag '" .. tag_name .. "' on origin?", function()
+                        run_auth({ "push", "origin", "--delete", "refs/tags/" .. tag_name }, root, "Delete Tag")
+                    end, true)
+                end)
             end, { desc = "Delete Tag on Origin" })
 
             return true
@@ -437,11 +453,14 @@ end
 -- ---------------------------------------------------------------
 -- Branch browser
 --
--- <CR>  checkout (Telescope's own default action, left unset here)
+-- <CR>  checkout, explicitly replacing Telescope's default action
 -- m     merge into current branch
--- d     delete (local)
--- D     force delete (local)
--- o     delete on origin
+-- d     delete - local branch: safe delete (-d); remote-tracking
+--       entry: delete on origin. Detected from the ref itself
+--       (refs/heads/... vs refs/remotes/...), no separate keys.
+-- x     force delete (local branches only; -D instead of -d).
+--       Remote deletion has no force/non-force distinction, so on
+--       a remote entry this does the same thing as `d`.
 -- f     checkout a specific file from the selected branch
 -- l     view this branch's commit log (drill down further to a
 --       specific commit, then `f` there for a specific file)
@@ -455,11 +474,48 @@ local function branch_picker(root)
     local state = require("telescope.actions.state")
     local previewers = require("telescope.previewers")
 
-    local function name_of(entry)
-        return (entry[1]:gsub("^remotes/", ""):gsub("^origin/", ""))
+    -- Refs come from %(refname) (full form, e.g. refs/heads/x or
+    -- refs/remotes/origin/x) rather than %(refname:short), so every
+    -- git command built from them targets an unambiguous ref even
+    -- when a branch and tag happen to share the same short name -
+    -- except checkout, which needs the short form specifically:
+    -- a full ref always detaches HEAD instead of attaching to the
+    -- branch, and only the short remote form (origin/x) triggers
+    -- git's auto-create-local-tracking-branch behavior.
+    local function is_remote(entry)
+        return entry[1]:match("^refs/remotes/") ~= nil
     end
 
-    local branches = vim.fn.systemlist({ "git", "-C", root, "branch", "-a", "--format=%(refname:short)" })
+    local function short_name(entry)
+        return (entry[1]:gsub("^refs/heads/", ""):gsub("^refs/remotes/origin/", ""))
+    end
+
+    local function checkout_ref(entry)
+        if is_remote(entry) then
+            return "origin/" .. short_name(entry)
+        end
+        return short_name(entry)
+    end
+
+    local function branch_delete(entry, force)
+        local ref = entry[1]
+
+        if is_remote(entry) then
+            local name = short_name(entry)
+            ask("Delete '" .. name .. "' on origin?", function()
+                run_auth({ "push", "origin", "--delete", "refs/heads/" .. name }, root, "Delete Branch")
+            end, true)
+        else
+            local name = short_name(entry)
+            local flag = force and "-D" or "-d"
+            local verb = force and "Force delete" or "Delete"
+            ask(verb .. " local branch '" .. name .. "'?", function()
+                run({ "branch", flag, name }, root)
+            end, true)
+        end
+    end
+
+    local branches = vim.fn.systemlist({ "git", "-C", root, "branch", "-a", "--format=%(refname)" })
 
     pickers.new({
         initial_mode = "normal",
@@ -473,61 +529,45 @@ local function branch_picker(root)
                 local entry = state.get_selected_entry()
                 actions.close(bufnr)
                 if not entry then return end
-                run({ "checkout", name_of(entry) }, root)
+                run({ "checkout", checkout_ref(entry) }, root)
             end)
 
             map("n", "m", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
-                local name = name_of(entry)
+                local ref = entry[1]
                 actions.close(bufnr)
-                run({ "merge", name }, root)
+                run({ "merge", ref }, root)
             end, { desc = "Merge" })
 
             map("n", "d", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
-                local name = name_of(entry)
                 actions.close(bufnr)
-                ask("Delete local branch '" .. name .. "'?", function()
-                    run({ "branch", "-d", name }, root)
-                end, true)
-            end, { desc = "Delete Local" })
+                branch_delete(entry, false)
+            end, { desc = "Delete" })
 
             map("n", "x", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
-                local name = name_of(entry)
                 actions.close(bufnr)
-                ask("Force delete local branch '" .. name .. "'?", function()
-                    run({ "branch", "-D", name }, root)
-                end, true)
-            end, { desc = "Force Delete Local" })
-
-            map("n", "o", function(bufnr)
-                local entry = state.get_selected_entry()
-                if not entry then return end
-                local name = name_of(entry)
-                actions.close(bufnr)
-                ask("Delete '" .. name .. "' on origin?", function()
-                    run_auth({ "push", "origin", "--delete", name }, root, "Delete Branch")
-                end, true)
-            end, { desc = "Delete on Origin" })
+                branch_delete(entry, true)
+            end, { desc = "Force Delete" })
 
             map("n", "f", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
-                local name = name_of(entry)
+                local ref = entry[1]
                 actions.close(bufnr)
-                checkout_file_picker(root, name)
+                checkout_file_picker(root, ref)
             end, { desc = "Checkout File from Branch" })
 
             map("n", "l", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
-                local name = name_of(entry)
+                local ref = entry[1]
                 actions.close(bufnr)
-                log_picker(root, name)
+                log_picker(root, ref)
             end, { desc = "View Commit Log" })
 
             return true
@@ -538,7 +578,7 @@ end
 -- ---------------------------------------------------------------
 -- Stash browser
 --
--- <CR>  apply (Telescope's own default action, left unset here)
+-- <CR>  apply, explicitly replacing Telescope's default action
 -- p     pop (apply, then drop if clean)
 -- d     drop
 -- b     branch from this stash
@@ -613,6 +653,84 @@ local function stash_picker(root)
                     run({ "stash", "push", "-m", msg }, root)
                 end)
             end, { desc = "New Stash" })
+
+            return true
+        end,
+    }):find()
+end
+
+-- ---------------------------------------------------------------
+-- Tag browser
+--
+-- Pure browsing - add/delete tags live in the log picker (b/t/d/o
+-- there), tied to a specific commit. This is just for scanning
+-- release history with a diff preview per tag.
+--
+-- <CR>   checkout the selected tag (detached)
+-- d      delete the selected tag(s) (local) - <Tab> to multi-select
+--        several first; with nothing marked, acts on the tag
+--        under the cursor
+-- ---------------------------------------------------------------
+
+local function tag_picker(root)
+    local pickers = require("telescope.pickers")
+    local finders = require("telescope.finders")
+    local conf = require("telescope.config").values
+    local actions = require("telescope.actions")
+    local state = require("telescope.actions.state")
+    local previewers = require("telescope.previewers")
+
+    local lines = vim.fn.systemlist({ "git", "-C", root, "tag", "--sort=-creatordate",
+        "--format=%(refname:short)  %(creatordate:short)  %(subject)" })
+
+    pickers.new({
+        initial_mode = "normal",
+        prompt_title = "Tags",
+    }, {
+        finder = finders.new_table({
+            results = lines,
+            entry_maker = function(line)
+                return {
+                    value = line:match("^(%S+)"),
+                    display = line,
+                    ordinal = line,
+                }
+            end,
+        }),
+        sorter = conf.generic_sorter({}),
+        previewer = previewers.git_commit_diff_to_parent.new({ cwd = root }),
+        attach_mappings = function(_, map)
+            actions.select_default:replace(function(bufnr)
+                local entry = state.get_selected_entry()
+                actions.close(bufnr)
+                if not entry then return end
+                run({ "checkout", entry.value }, root)
+            end)
+
+            map("n", "d", function(bufnr)
+                local picker = state.get_current_picker(bufnr)
+                local selections = picker:get_multi_selection()
+                local names = {}
+
+                if #selections > 0 then
+                    for _, e in ipairs(selections) do
+                        table.insert(names, e.value)
+                    end
+                else
+                    local entry = state.get_selected_entry()
+                    if not entry then return end
+                    table.insert(names, entry.value)
+                end
+
+                actions.close(bufnr)
+
+                local label = #names == 1 and ("'" .. names[1] .. "'") or (#names .. " tags")
+                ask("Delete " .. label .. "?", function()
+                    local args = { "tag", "-d" }
+                    vim.list_extend(args, names)
+                    run(args, root)
+                end, true)
+            end, { desc = "Delete Tag(s)" })
 
             return true
         end,
@@ -737,7 +855,7 @@ end
 -- ---------------------------------------------------------------
 -- Status browser
 --
--- Unlike the branch/stash/tag/log pickers (verb chosen by key, one
+-- Unlike the branch/stash/log pickers (verb chosen by key, one
 -- action per keypress), staging is iterative: you stay in the
 -- list, toggle several files against the live diff preview, then
 -- leave to commit. Actions live inside the picker itself.
@@ -749,6 +867,7 @@ end
 --        multi-select (<Tab> to mark several) when present,
 --        otherwise just the file under the cursor. Works on
 --        staged or unstaged files, matching `git stash push --`.
+-- S      stash everything (no pathspec - matches plain `git stash`)
 -- ---------------------------------------------------------------
 
 local function status_picker(root)
@@ -949,6 +1068,7 @@ return {
             { "<leader>gl", git_guard(log_picker),    desc = "Git Log" },
             { "<leader>gb", git_guard(branch_picker), desc = "Branches" },
             { "<leader>gz", git_guard(stash_picker),  desc = "Stashes" },
+            { "<leader>gt", git_guard(tag_picker),    desc = "Tags" },
             { "<leader>gr", git_guard(discard_file),  desc = "Restore Buffer from HEAD" },
             { "<leader>gx", git_guard(discard_all),   desc = "Restore All from HEAD" },
             { "<leader>gi", git_guard(checkout_head), desc = "Checkout Tip" },

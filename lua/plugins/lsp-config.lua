@@ -134,17 +134,6 @@ return {
                 return true
             end
 
-            local diag_float_win = nil
-
-            local function toggle_line_diagnostics()
-                if diag_float_win and vim.api.nvim_win_is_valid(diag_float_win) then
-                    vim.api.nvim_win_close(diag_float_win, true)
-                    diag_float_win = nil
-                    return
-                end
-                diag_float_win = vim.diagnostic.open_float()
-            end
-
             -- ============================================================================
             -- LSP ON_ATTACH - BUFFER-LOCAL KEYMAPS
             -- ============================================================================
@@ -260,29 +249,6 @@ return {
                         end
                     end)
                 end, "Show References")
-
-                -- Workspace symbols
-                -- map("n", "<leader>lw", function()
-                --     require('telescope.builtin').lsp_dynamic_workspace_symbols()
-                -- end, "Workspace Symbols")
-
-                -- Document symbols
-                -- map("n", "<leader>lo", function()
-                --     require('telescope.builtin').lsp_document_symbols()
-                -- end, "Document Symbols")
-
-                -- OPTION: lsp format on save
-                -- Enable formatting on save if supported
-                -- if client.server_capabilities.documentFormattingProvider then
-                --     local group = vim.api.nvim_create_augroup("LspFormat_" .. bufnr, { clear = true })
-                --     vim.api.nvim_create_autocmd("BufWritePre", {
-                --         group = group,
-                --         buffer = bufnr,
-                --         callback = function()
-                --             vim.lsp.buf.format({ bufnr = bufnr })
-                --         end,
-                --     })
-                -- end
             end
 
             -- ============================================================================
@@ -352,16 +318,16 @@ return {
                 capabilities = require('blink.cmp').get_lsp_capabilities(capabilities)
             end)
 
-            vim.lsp.config.jdtls = {
-                cmd = { 'jdtls' },
-                filetypes = { 'java' },
-                root_markers = {
-                    '.git', 'pom.xml', 'build.gradle',
-                    'build.gradle.kts', 'settings.gradle',
-                },
-                on_attach = on_attach,
-                capabilities = capabilities,
-            }
+            -- vim.lsp.config.jdtls = {
+            --     cmd = { 'jdtls' },
+            --     filetypes = { 'java' },
+            --     root_markers = {
+            --         '.git', 'pom.xml', 'build.gradle',
+            --         'build.gradle.kts', 'settings.gradle',
+            --     },
+            --     on_attach = on_attach,
+            --     capabilities = capabilities,
+            -- }
 
             vim.lsp.config.clangd = {
                 -- OPTION: dropped --clang-tidy to reduce CPU load. add back in if needed.
@@ -470,7 +436,7 @@ return {
 
             require("mason-lspconfig").setup({
                 -- OPTION: gopls, rust_analyzer installed manually via :MasonInstall when needed
-                ensure_installed = { "jdtls", "clangd", "pyright", "lua_ls", "ts_ls", "html", "cssls" },
+                ensure_installed = { "clangd", "pyright", "lua_ls", "ts_ls", "html", "cssls" },
                 handlers = {
                     function(server_name)
                         vim.lsp.enable(server_name)
