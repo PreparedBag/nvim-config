@@ -1,3 +1,4 @@
+local ui = require("config.utils")
 local ASK_PASSWORD = true
 local LOG_LIMIT = 300
 local SEP = "\31"
@@ -113,24 +114,15 @@ local function run_auth(args, root, title, on_success)
     end
     run(args, root, pw, on_success)
 end
+-- Confirms go through ui.confirm (config.utils): a locked-down
+-- Telescope picker matching the browsers, answering only to
+-- j/k/<CR>. Free-text prompts use vim.ui.input, which stays on the
+-- command line unless a vim.ui.input provider is added (dressing).
 local function ask(text, fn, is_confirm)
     if is_confirm then
-        Snacks.input({
-            prompt = text .. " (y/n)",
-            win = {
-                width = 80,
-                keys = {
-                    y = { "y", "confirm", mode = { "n", "i" } },
-                    n = { "n", "cancel", mode = { "n", "i" } },
-                },
-            },
-        }, function(value)
-            if value then
-                fn()
-            end
-        end)
+        ui.confirm(text, fn)
     else
-        Snacks.input({ prompt = text }, function(answer)
+        vim.ui.input({ prompt = text }, function(answer)
             if answer and answer ~= "" then
                 fn(answer)
             end
@@ -211,13 +203,14 @@ local function checkout_file_picker(root, ref)
                     table.insert(paths, entry[1])
                 end
                 actions.close(bufnr)
-                local label = #paths == 1 and ("'" .. paths[1] .. "'") or (#paths .. " files")
-                ask("Checkout " .. label .. " from " .. ref .. "?", function()
+                local n = #paths
+                local title = ("Checkout %d file%s from %s"):format(n, n == 1 and "" or "s", display_ref)
+                ui.confirm_list(title, paths, function()
                     local args = { "restore", "--source=" .. ref, "--staged", "--worktree", "--" }
                     vim.list_extend(args, paths)
                     run(args, root)
                     vim.schedule(function() vim.cmd("checktime") end)
-                end, true)
+                end)
             end)
             return true
         end,
@@ -329,7 +322,7 @@ local function pick_tag(entry, cb)
         cb(tags[1])
         return
     end
-    vim.ui.select(tags, { prompt = "Which tag?" }, function(choice)
+    ui.select(tags, { prompt = "Which tag?" }, function(choice)
         if choice then cb(choice) end
     end)
 end
@@ -427,7 +420,7 @@ end
 -- x     force delete (local branches only; -D instead of -d).
 --       Remote deletion has no force/non-force distinction, so on
 --       a remote entry this does the same thing as `d`.
--- c     checkout a specific file from the selected branch
+-- f     checkout a specific file from the selected branch
 -- l     view this branch's commit log (drill down further to a
 --       specific commit, then `f` there for a specific file)
 -- ---------------------------------------------------------------
@@ -507,7 +500,7 @@ local function branch_picker(root)
                 actions.close(bufnr)
                 branch_delete(entry, true)
             end, { desc = "Force Delete" })
-            map("n", "c", function(bufnr)
+            map("n", "f", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
                 local ref = entry[1]
@@ -949,7 +942,7 @@ local function discard_file(root)
     end, true)
 end
 local function discard_all(root)
-    vim.ui.select(
+    ui.select(
         { "Discard all tracked changes", "Discard tracked changes + remove untracked files", "Cancel" },
         { prompt = "Restore repo from HEAD:" },
         function(choice)

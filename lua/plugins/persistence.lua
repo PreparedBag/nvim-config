@@ -1,13 +1,14 @@
+local ui = require("config.utils")
+
 local function dap_session_active()
     local dap = package.loaded['dap']
     return dap ~= nil and dap.session() ~= nil
 end
 
-local function confirm(question)
-    return vim.fn.confirm(question, "&Yes\n&No", 2) == 1
-end
-
-local function wipe_all_buffers()
+-- Async. Prompts (only if there are unsaved buffers), wipes every
+-- buffer, then calls on_done(). Cancelling the prompt skips both
+-- the wipe and on_done, so the caller's follow-up never runs.
+local function wipe_all_buffers(on_done)
     local modified = {}
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].modified then
@@ -15,26 +16,33 @@ local function wipe_all_buffers()
         end
     end
 
-    if #modified > 0 then
-        local choice = vim.fn.confirm(
-            #modified .. " buffer(s) have unsaved changes. Save before switching sessions?",
-            "&Save all\n&Discard\n&Cancel", 3
-        )
-        if choice == 0 or choice == 3 then
-            return false
-        elseif choice == 1 then
-            vim.cmd("wall")
+    local function wipe()
+        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+            if vim.api.nvim_buf_is_valid(buf) then
+                pcall(vim.api.nvim_buf_delete, buf, { force = true })
+            end
         end
-        -- choice == 2 (Discard): fall through
+        on_done()
     end
 
-    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.api.nvim_buf_is_valid(buf) then
-            pcall(vim.api.nvim_buf_delete, buf, { force = true })
-        end
+    if #modified == 0 then
+        wipe()
+        return
     end
 
-    return true
+    ui.select(
+        { "Save all", "Discard", "Cancel" },
+        { prompt = #modified .. " buffer(s) have unsaved changes. Save before switching sessions?" },
+        function(choice)
+            if choice == "Save all" then
+                vim.cmd("wall")
+                wipe()
+            elseif choice == "Discard" then
+                wipe()
+            end
+            -- Cancel or Esc: do nothing, leave the session as-is.
+        end
+    )
 end
 
 -- DAP UI buffers: repl + all nvim-dap-ui panels + floats
@@ -69,9 +77,10 @@ local function clean_for_session()
 end
 
 local function switch_session(load_fn)
-    if not wipe_all_buffers() then return end
-    load_fn()
-    _G.session_directory = vim.fn.getcwd()
+    wipe_all_buffers(function()
+        load_fn()
+        _G.session_directory = vim.fn.getcwd()
+    end)
 end
 
 local function save_session()
@@ -95,7 +104,7 @@ local function save_and_quit_confirmed()
         vim.cmd("qa")
         return
     end
-    vim.ui.select(
+    ui.select(
         { "Save all and quit", "Quit without saving", "Cancel" },
         { prompt = #modified .. " buffer(s) have unsaved changes:" },
         function(choice)
@@ -110,7 +119,7 @@ end
 
 local function save_and_quit()
     if dap_session_active() then
-        vim.ui.select(
+        ui.select(
             { "Quit anyway", "Cancel" },
             { prompt = "Debug session still active — stop it with <Leader>dq first?" },
             function(choice)
@@ -177,14 +186,17 @@ local function session_picker()
                 end)
             end)
 
-            -- <C-d>: delete the session under the cursor, then refresh the list
+            -- <C-d>: delete the session under the cursor, then refresh
+            -- the list. entry + picker are grabbed up front because
+            -- the confirm is async and selection could otherwise move.
             map({ "i", "n" }, "<C-d>", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
-                if not confirm("Delete session '" .. entry.display .. "'?") then return end
-
-                vim.fn.delete(entry.value)
-                state.get_current_picker(bufnr):refresh(make_finder(), { reset_prompt = false })
+                local picker = state.get_current_picker(bufnr)
+                ui.confirm("Delete session '" .. entry.display .. "'?", function()
+                    vim.fn.delete(entry.value)
+                    picker:refresh(make_finder(), { reset_prompt = false })
+                end)
             end, { desc = "Delete Session" })
 
             return true

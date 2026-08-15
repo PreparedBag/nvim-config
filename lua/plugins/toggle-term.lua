@@ -8,63 +8,50 @@ return {
         },
     },
     keys = {
-        { "<leader>tt", desc = "Toggle Terminal (CWD / Oil Dir)" },
-        { "<leader>ts", desc = "Toggle Terminal (Session Dir)" },
+        { "<leader>tt", desc = "Show Terminal (CWD / Oil Dir)" },
+        { "<leader>ts", desc = "Show Terminal (Session Dir)" },
+        { "<leader>tg", desc = "Show Terminal (Git Dir)" },
     },
     config = function(_, opts)
         require("toggleterm").setup(opts)
 
-        local Terminal = require("toggleterm.terminal").Terminal
+        local terminal = require("toggleterm.terminal").Terminal
 
-        -- <C-q> force-closes whichever terminal this is attached to,
-        -- regardless of mode or prompt text - unlike <C-d>, which only
-        -- closes on an empty prompt (that's just normal shell EOF, not
-        -- something toggleterm controls). Set on `t` and `n` mode buffer-
-        -- locally since terminal buffers support both.
         local function attach_close_keymap(term)
             local map_opts = { buffer = term.bufnr, noremap = true, silent = true, desc = "Close Terminal" }
             vim.keymap.set("t", "<C-d>", function() term:close() end, map_opts)
             vim.keymap.set("n", "<C-d>", function() term:close() end, map_opts)
         end
 
-        -- Persistent, cwd-anchored terminal. Directory is fixed once, at
-        -- creation - never changed afterward, so this never touches a
-        -- running shell's channel (no more change_dir/chansend errors).
-        local cwd_term = Terminal:new({
-            direction = "float",
-            hidden = true,
-            dir = vim.fn.getcwd(),
-            on_open = attach_close_keymap,
-        })
-
-        -- Persistent, anchored to wherever this session originally started.
-        local original_term = Terminal:new({
-            direction = "float",
-            hidden = true,
-            dir = _G.session_directory or vim.fn.getcwd(),
-            on_open = attach_close_keymap,
-        })
+        local function open_term(dir)
+            terminal:new({
+                direction = "float",
+                hidden = true,
+                dir = dir,
+                on_open = attach_close_keymap,
+            }):toggle()
+        end
 
         vim.keymap.set("n", "<leader>tt", function()
+            local dir = vim.fn.getcwd()
             if vim.bo.filetype == "oil" then
-                -- Deliberately NOT cwd_term: a fresh, disposable terminal
-                -- for this one directory, gone once you exit it. Doing
-                -- file stuff here never touches cwd_term's state at all.
-                local oil_term = Terminal:new({
-                    direction = "float",
-                    dir = require("oil").get_current_dir(),
-                    close_on_exit = true, -- wipe itself once the shell exits
-                    on_open = attach_close_keymap,
-                })
-                oil_term:toggle()
-                return
+                dir = require("oil").get_current_dir()
             end
-
-            cwd_term:toggle()
-        end, { noremap = true, silent = true, desc = "Toggle Terminal (CWD / Oil Dir)" })
+            open_term(dir)
+        end, { noremap = true, silent = true, desc = "Show Terminal (CWD / Oil Dir)" })
 
         vim.keymap.set("n", "<leader>ts", function()
-            original_term:toggle()
-        end, { noremap = true, silent = true, desc = "Toggle Terminal (Session Dir)" })
+            open_term(_G.session_directory or vim.fn.getcwd())
+        end, { noremap = true, silent = true, desc = "Show Terminal (Session Dir)" })
+
+        vim.keymap.set("n", "<leader>tg", function()
+            local root = vim.fs.root(0, ".git")
+            if not root then
+                vim.notify("Not a git repository", vim.log.levels.INFO)
+                open_term(vim.fn.getcwd())
+                return
+            end
+            open_term(root)
+        end, { noremap = true, silent = true, desc = "Show Terminal (Git Dir)" })
     end,
 }

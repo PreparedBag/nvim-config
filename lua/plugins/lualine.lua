@@ -19,7 +19,7 @@ return {
             end
 
             local base = _G.session_directory or vim.fn.getcwd()
-            local rel = require("config.project").relative_path(base, path)
+            local rel = require("config.utils").relative_path(base, path)
 
             if vim.bo.modified then
                 rel = rel .. " [+]"

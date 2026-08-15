@@ -38,5 +38,5 @@ M.on_colorscheme(function()
     })
     vim.api.nvim_set_hl(0, "Folded", { link = "CursorLine" })
 end)
-vim.opt.winborder = "rounded"
+
 return M

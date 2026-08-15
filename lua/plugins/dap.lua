@@ -58,7 +58,7 @@ return {
                 return
             end
 
-            local project_dap = require('config.project').section('dap')
+            local project_dap = require('config.utils').section('dap')
             local available = project_dap or presets
 
             local names = vim.tbl_keys(available)

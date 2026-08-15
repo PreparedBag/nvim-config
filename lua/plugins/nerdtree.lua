@@ -3,8 +3,8 @@ return {
     -- OPTION: enable/disable nerdtree
     enabled = true,
     init = function()
-        vim.g.NERDTreeQuitOnOpen = 1
-        vim.g.NERDTreeMinimalUI = 1
+        vim.g.NERDTreeQuitOnOpen = false
+        vim.g.NERDTreeMinimalUI = true
 
         vim.cmd([[
             autocmd BufEnter * if tabpagenr('$') == 1 && winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
@@ -16,13 +16,13 @@ return {
             pattern = 'nerdtree',
             callback = function()
                 vim.keymap.set('n', 't', '<Nop>', { buffer = true, noremap = true, silent = true })
-                vim.keymap.set('n', 'T', '<Nop>', { buffer = true, noremap = true, silent = true })
+                vim.keymap.set('n', 'e', '<Nop>', { buffer = true, noremap = true, silent = true })
             end,
         })
     end,
     keys = {
         {
-            '<leader>tN',
+            '<leader>e',
             function()
                 if vim.bo.filetype == 'nerdtree' then
                     vim.cmd('wincmd p')

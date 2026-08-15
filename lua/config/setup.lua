@@ -43,12 +43,13 @@ vim.o.cursorline = true
 vim.o.splitbelow = true
 vim.o.splitright = true
 vim.o.modeline = false
-vim.o.timeout = true
-vim.o.timeoutlen = 250
+-- vim.o.timeout = true
+-- vim.o.timeoutlen = 250
 -- vim.o.winbar = ""
 
 vim.opt.isfname:append("@-@")
 vim.opt.completeopt = { 'menu', 'menuone', 'noselect' }
+vim.opt.winborder = "rounded"
 
 -- Treesitter-based folding
 vim.o.foldmethod = "expr"
