@@ -125,7 +125,7 @@ return {
 
         harpoon:extend({
             UI_CREATE = function(cx)
-                vim.keymap.set("n", "<leader>hs", function()
+                vim.keymap.set({ "n", "v" }, "<leader>hs", function()
                     vim.cmd("w")
                 end, { buffer = cx.bufnr, desc = "Save Quick List" })
             end,

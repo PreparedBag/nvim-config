@@ -1,20 +1,16 @@
 local ASK_PASSWORD = true
 local LOG_LIMIT = 300
-
 local SEP = "\31"
 local LOG_PRETTY = "--pretty=%h" .. SEP .. "%d" .. SEP .. "%s" .. SEP .. "%cr" .. SEP .. "%an"
-
 local function notify(msg, level)
     if not msg or msg == "" then
         return
     end
     vim.notify(vim.trim(msg), level or vim.log.levels.INFO, { title = "git" })
 end
-
 local function buf_root()
     return vim.fs.root(0, ".git")
 end
-
 local function git_guard(fn)
     return function()
         local root = buf_root()
@@ -25,7 +21,6 @@ local function git_guard(fn)
         fn(root)
     end
 end
-
 local function capture(args, cwd)
     local res = vim.system(vim.list_extend({ "git" }, args), {
         text = true,
@@ -33,31 +28,24 @@ local function capture(args, cwd)
     }):wait()
     return vim.trim(res.stdout or ""), res.code
 end
-
 local function make_askpass(password)
     local dir = vim.fn.tempname()
     vim.fn.mkdir(dir, "p", "0700")
-
     local pw_file = dir .. "/pw"
     local script = dir .. "/askpass.sh"
-
     vim.fn.writefile({ password }, pw_file)
     vim.fn.writefile({ "#!/bin/sh", "cat " .. vim.fn.shellescape(pw_file) }, script)
-
     vim.fn.setfperm(pw_file, "rw-------")
     vim.fn.setfperm(script, "rwx------")
-
     return script, function()
         vim.fn.delete(dir, "rf")
     end
 end
-
 local function confirm_file_list(title, files, on_confirm)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
     local conf = require("telescope.config").values
     local actions = require("telescope.actions")
-
     pickers.new({
         initial_mode = "normal",
         prompt_title = title .. " (y to confirm)",
@@ -76,12 +64,13 @@ local function confirm_file_list(title, files, on_confirm)
         end,
     }):find()
 end
-
-local function run(args, cwd, password)
+-- run: async git command. on_success (optional) fires only after a
+-- zero exit code, so callers can chain a follow-up step that must
+-- not run if the first command failed or was cancelled.
+local function run(args, cwd, password, on_success)
     local env = { GIT_TERMINAL_PROMPT = "0" }
     local cleanup = function() end
     cwd = cwd or buf_root()
-
     if password and password ~= "" then
         local script, rm = make_askpass(password)
         cleanup = rm
@@ -89,9 +78,7 @@ local function run(args, cwd, password)
         env.SSH_ASKPASS_REQUIRE = "force"
         env.DISPLAY = os.getenv("DISPLAY") or ":0"
     end
-
     notify("git " .. table.concat(args, " "))
-
     vim.system(vim.list_extend({ "git" }, args), {
         text = true,
         cwd = cwd,
@@ -99,38 +86,33 @@ local function run(args, cwd, password)
     }, function(res)
         vim.schedule(function()
             cleanup()
-
             local out = (res.stdout or "") .. (res.stderr or "")
-
             notify(
                 out ~= "" and out or "ok",
                 res.code == 0 and vim.log.levels.INFO or vim.log.levels.ERROR
             )
-
             if res.code == 0 then
                 vim.cmd("checktime")
+                if on_success then
+                    on_success()
+                end
             end
         end)
     end)
 end
-
-local function run_auth(args, root, title)
+local function run_auth(args, root, title, on_success)
     if not ASK_PASSWORD then
-        run(args, root)
+        run(args, root, nil, on_success)
         return
     end
-
     local ok, pw = pcall(vim.fn.inputsecret, title .. ": Enter Password (Esc to cancel): ")
     vim.cmd("redraw")
-
     if not ok or pw == "" then
         notify("cancelled", vim.log.levels.WARN)
         return
     end
-
-    run(args, root, pw)
+    run(args, root, pw, on_success)
 end
-
 local function ask(text, fn, is_confirm)
     if is_confirm then
         Snacks.input({
@@ -155,7 +137,20 @@ local function ask(text, fn, is_confirm)
         end)
     end
 end
-
+-- Delete a tag on origin first, then drop the local copy only once
+-- the origin delete succeeds. Ordering matters: with the local tag
+-- still present until origin confirms, a cancelled/failed push can't
+-- leave a one-sided state, and neither fetch (--tags) nor push can
+-- resurrect a tag that is gone from both sides.
+local function delete_tag_everywhere(root, tag)
+    ask("Delete tag '" .. tag .. "' on origin and locally?", function()
+        run_auth(
+            { "push", "origin", "--delete", "refs/tags/" .. tag },
+            root, "Delete Tag",
+            function() capture({ "tag", "-d", tag }, root) end
+        )
+    end, true)
+end
 -- ---------------------------------------------------------------
 -- Checkout file from ref
 --
@@ -167,7 +162,6 @@ end
 -- <Tab> to multi-select several files before confirming; with
 -- nothing marked, acts on just the file under the cursor.
 -- ---------------------------------------------------------------
-
 local function checkout_file_picker(root, ref)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -204,7 +198,6 @@ local function checkout_file_picker(root, ref)
                 local picker = state.get_current_picker(bufnr)
                 local selections = picker:get_multi_selection()
                 local paths = {}
-
                 if #selections > 0 then
                     for _, e in ipairs(selections) do
                         table.insert(paths, e[1])
@@ -217,9 +210,7 @@ local function checkout_file_picker(root, ref)
                     end
                     table.insert(paths, entry[1])
                 end
-
                 actions.close(bufnr)
-
                 local label = #paths == 1 and ("'" .. paths[1] .. "'") or (#paths .. " files")
                 ask("Checkout " .. label .. " from " .. ref .. "?", function()
                     local args = { "restore", "--source=" .. ref, "--staged", "--worktree", "--" }
@@ -232,7 +223,6 @@ local function checkout_file_picker(root, ref)
         end,
     }):find()
 end
-
 -- ---------------------------------------------------------------
 -- Log browser
 --
@@ -242,23 +232,21 @@ end
 -- with a branch name from branch_picker's drill-down, key `l`).
 --
 -- <CR>  checkout the selected commit (detached)
--- f     checkout a specific file from the selected commit
+-- c     checkout a specific file from the selected commit
 -- b     new branch from the selected commit
 -- t     new tag on the selected commit
--- d     delete the tag on the selected commit (local)
--- o     delete the tag on the selected commit (origin)
+-- p     push the tag on the selected commit to origin
+-- d     delete the tag on the selected commit (local only)
+-- o     delete the tag on the selected commit (origin + local)
 -- ---------------------------------------------------------------
-
 -- ---------------------------------------------------------------
 -- Log highlights
 -- ---------------------------------------------------------------
-
 local function define_log_hl()
     local function fg(name)
         local hl = vim.api.nvim_get_hl(0, { name = name, link = false })
         return hl and hl.fg or nil
     end
-
     vim.api.nvim_set_hl(0, "GitLogHash", { fg = fg("Identifier"), bold = true })
     vim.api.nvim_set_hl(0, "GitLogTag", { fg = fg("String"), bold = true })
     vim.api.nvim_set_hl(0, "GitLogHead", { fg = fg("Function"), bold = true })
@@ -266,10 +254,8 @@ local function define_log_hl()
     vim.api.nvim_set_hl(0, "GitLogBranch", { fg = fg("Type"), bold = true })
     vim.api.nvim_set_hl(0, "GitLogMeta", { fg = fg("Comment") })
 end
-
 define_log_hl()
 vim.api.nvim_create_autocmd("ColorScheme", { callback = define_log_hl })
-
 local function ref_hl(ref)
     if ref:match("^HEAD") then
         return "GitLogHead"
@@ -278,54 +264,41 @@ local function ref_hl(ref)
     elseif ref:match("^origin/") then
         return "GitLogRemote"
     end
-
     return "GitLogBranch"
 end
-
 local function log_display(entry)
     local chunks, highlights, col = {}, {}, 0
-
     local function add(text, group)
         if text == "" then
             return
         end
-
         table.insert(chunks, text)
-
         if group then
             table.insert(highlights, { { col, col + #text }, group })
         end
-
         col = col + #text
     end
-
     add(entry.hash, "GitLogHash")
     add(" ")
-
     for i, ref in ipairs(entry.refs) do
         local group = ref_hl(ref)
         local label = ref:gsub("^tag:%s*", "")
         add(label, group)
         add(i < #entry.refs and ", " or " ", "GitLogMeta")
     end
-
     add(entry.msg)
     add(" (" .. entry.when .. ") <" .. entry.author .. ">", "GitLogMeta")
-
     return table.concat(chunks), highlights
 end
-
 local function log_entry(line)
     local parts = vim.split(line, SEP, { plain = true })
     local deco = (parts[2] or ""):gsub("^%s*%(", ""):gsub("%)%s*$", "")
     local refs = {}
-
     if deco ~= "" then
         for _, ref in ipairs(vim.split(deco, ", ", { plain = true })) do
             table.insert(refs, vim.trim(ref))
         end
     end
-
     return {
         value = parts[1],
         hash = parts[1],
@@ -337,7 +310,6 @@ local function log_entry(line)
         display = log_display,
     }
 end
-
 local function get_tags(entry)
     local tags = {}
     for _, ref in ipairs(entry.refs) do
@@ -347,7 +319,6 @@ local function get_tags(entry)
     end
     return tags
 end
-
 local function pick_tag(entry, cb)
     local tags = get_tags(entry)
     if #tags == 0 then
@@ -362,7 +333,6 @@ local function pick_tag(entry, cb)
         if choice then cb(choice) end
     end)
 end
-
 local function log_picker(root, ref)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -370,15 +340,12 @@ local function log_picker(root, ref)
     local actions = require("telescope.actions")
     local state = require("telescope.actions.state")
     local previewers = require("telescope.previewers")
-
     local git_command = { "git", "log", LOG_PRETTY, "--decorate=short", "--abbrev-commit", "--max-count=" .. LOG_LIMIT }
     if ref then
         table.insert(git_command, ref)
     end
     vim.list_extend(git_command, { "--", "." })
-
     local display_ref = ref and ref:gsub("^refs/heads/", ""):gsub("^refs/remotes/", "")
-
     pickers.new({
         initial_mode = "normal",
         prompt_title = "Git Log" .. (display_ref and (" (" .. display_ref .. ")") or ""),
@@ -395,14 +362,12 @@ local function log_picker(root, ref)
                 if not entry then return end
                 run({ "checkout", entry.value }, root)
             end)
-
-            map("n", "f", function(bufnr)
+            map("n", "c", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
                 actions.close(bufnr)
                 checkout_file_picker(root, entry.value)
             end, { desc = "Checkout File from Commit" })
-
             map("n", "b", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
@@ -412,7 +377,6 @@ local function log_picker(root, ref)
                     run({ "checkout", "-b", name, hash }, root)
                 end)
             end, { desc = "New Branch from Commit" })
-
             map("n", "t", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
@@ -422,34 +386,36 @@ local function log_picker(root, ref)
                     run({ "tag", "-a", tag, "-m", tag, hash }, root)
                 end)
             end, { desc = "New Tag on Commit" })
-
+            map("n", "p", function(bufnr)
+                local entry = state.get_selected_entry()
+                if not entry then return end
+                actions.close(bufnr)
+                pick_tag(entry, function(tag_name)
+                    run_auth({ "push", "origin", "refs/tags/" .. tag_name }, root, "Push Tag")
+                end)
+            end, { desc = "Push Tag to Origin" })
             map("n", "d", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
                 actions.close(bufnr)
                 pick_tag(entry, function(tag_name)
-                    ask("Delete tag '" .. tag_name .. "'?", function()
+                    ask("Delete tag '" .. tag_name .. "' locally?", function()
                         run({ "tag", "-d", tag_name }, root)
                     end, true)
                 end)
-            end, { desc = "Delete Tag" })
-
+            end, { desc = "Delete Tag (local)" })
             map("n", "o", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
                 actions.close(bufnr)
                 pick_tag(entry, function(tag_name)
-                    ask("Delete tag '" .. tag_name .. "' on origin?", function()
-                        run_auth({ "push", "origin", "--delete", "refs/tags/" .. tag_name }, root, "Delete Tag")
-                    end, true)
+                    delete_tag_everywhere(root, tag_name)
                 end)
-            end, { desc = "Delete Tag on Origin" })
-
+            end, { desc = "Delete Tag (origin + local)" })
             return true
         end,
     }):find()
 end
-
 -- ---------------------------------------------------------------
 -- Branch browser
 --
@@ -461,11 +427,10 @@ end
 -- x     force delete (local branches only; -D instead of -d).
 --       Remote deletion has no force/non-force distinction, so on
 --       a remote entry this does the same thing as `d`.
--- f     checkout a specific file from the selected branch
+-- c     checkout a specific file from the selected branch
 -- l     view this branch's commit log (drill down further to a
 --       specific commit, then `f` there for a specific file)
 -- ---------------------------------------------------------------
-
 local function branch_picker(root)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -473,7 +438,6 @@ local function branch_picker(root)
     local actions = require("telescope.actions")
     local state = require("telescope.actions.state")
     local previewers = require("telescope.previewers")
-
     -- Refs come from %(refname) (full form, e.g. refs/heads/x or
     -- refs/remotes/origin/x) rather than %(refname:short), so every
     -- git command built from them targets an unambiguous ref even
@@ -485,21 +449,16 @@ local function branch_picker(root)
     local function is_remote(entry)
         return entry[1]:match("^refs/remotes/") ~= nil
     end
-
     local function short_name(entry)
         return (entry[1]:gsub("^refs/heads/", ""):gsub("^refs/remotes/origin/", ""))
     end
-
     local function checkout_ref(entry)
         if is_remote(entry) then
             return "origin/" .. short_name(entry)
         end
         return short_name(entry)
     end
-
     local function branch_delete(entry, force)
-        local ref = entry[1]
-
         if is_remote(entry) then
             local name = short_name(entry)
             ask("Delete '" .. name .. "' on origin?", function()
@@ -514,9 +473,7 @@ local function branch_picker(root)
             end, true)
         end
     end
-
     local branches = vim.fn.systemlist({ "git", "-C", root, "branch", "-a", "--format=%(refname)" })
-
     pickers.new({
         initial_mode = "normal",
         prompt_title = "Git Branches",
@@ -531,7 +488,6 @@ local function branch_picker(root)
                 if not entry then return end
                 run({ "checkout", checkout_ref(entry) }, root)
             end)
-
             map("n", "m", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
@@ -539,29 +495,25 @@ local function branch_picker(root)
                 actions.close(bufnr)
                 run({ "merge", ref }, root)
             end, { desc = "Merge" })
-
             map("n", "d", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
                 actions.close(bufnr)
                 branch_delete(entry, false)
             end, { desc = "Delete" })
-
             map("n", "x", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
                 actions.close(bufnr)
                 branch_delete(entry, true)
             end, { desc = "Force Delete" })
-
-            map("n", "f", function(bufnr)
+            map("n", "c", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
                 local ref = entry[1]
                 actions.close(bufnr)
                 checkout_file_picker(root, ref)
             end, { desc = "Checkout File from Branch" })
-
             map("n", "l", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
@@ -569,12 +521,10 @@ local function branch_picker(root)
                 actions.close(bufnr)
                 log_picker(root, ref)
             end, { desc = "View Commit Log" })
-
             return true
         end,
     }):find()
 end
-
 -- ---------------------------------------------------------------
 -- Stash browser
 --
@@ -584,7 +534,6 @@ end
 -- b     branch from this stash
 -- n     new stash from current changes
 -- ---------------------------------------------------------------
-
 local function stash_picker(root)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -592,9 +541,7 @@ local function stash_picker(root)
     local actions = require("telescope.actions")
     local state = require("telescope.actions.state")
     local previewers = require("telescope.previewers")
-
     local lines = vim.fn.systemlist({ "git", "-C", root, "--no-pager", "stash", "list" })
-
     pickers.new({
         initial_mode = "normal",
         prompt_title = "Git Stashes",
@@ -618,7 +565,6 @@ local function stash_picker(root)
                 if not entry then return end
                 run({ "stash", "apply", entry.value }, root)
             end)
-
             map("n", "p", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
@@ -626,7 +572,6 @@ local function stash_picker(root)
                 actions.close(bufnr)
                 run({ "stash", "pop", stash }, root)
             end, { desc = "Pop" })
-
             map("n", "d", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
@@ -636,7 +581,6 @@ local function stash_picker(root)
                     run({ "stash", "drop", stash }, root)
                 end, true)
             end, { desc = "Drop" })
-
             map("n", "b", function(bufnr)
                 local entry = state.get_selected_entry()
                 if not entry then return end
@@ -646,32 +590,33 @@ local function stash_picker(root)
                     run({ "stash", "branch", name, stash }, root)
                 end)
             end, { desc = "Branch from Stash" })
-
             map("n", "n", function(bufnr)
                 actions.close(bufnr)
                 ask("Stash message: ", function(msg)
                     run({ "stash", "push", "-m", msg }, root)
                 end)
             end, { desc = "New Stash" })
-
             return true
         end,
     }):find()
 end
-
 -- ---------------------------------------------------------------
 -- Tag browser
 --
--- Pure browsing - add/delete tags live in the log picker (b/t/d/o
--- there), tied to a specific commit. This is just for scanning
--- release history with a diff preview per tag.
+-- Pure browsing plus tag sync - creation lives in the log picker
+-- (key `t`, tied to a specific commit). This scans release history
+-- with a diff preview per tag.
 --
 -- <CR>   checkout the selected tag (detached)
--- d      delete the selected tag(s) (local) - <Tab> to multi-select
---        several first; with nothing marked, acts on the tag
---        under the cursor
+-- p      push the selected tag to origin
+-- d      delete the selected tag(s) locally - <Tab> to multi-select
+--        several first; with nothing marked, acts on the tag under
+--        the cursor. Local only, so fetch (--tags) restores it - a
+--        "reset to origin" for that tag.
+-- o      delete the selected tag(s) on origin AND locally - real,
+--        permanent delete; nothing can resurrect it. Multi-select
+--        aware, one push / one auth prompt.
 -- ---------------------------------------------------------------
-
 local function tag_picker(root)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -679,10 +624,25 @@ local function tag_picker(root)
     local actions = require("telescope.actions")
     local state = require("telescope.actions.state")
     local previewers = require("telescope.previewers")
-
     local lines = vim.fn.systemlist({ "git", "-C", root, "tag", "--sort=-creatordate",
         "--format=%(refname:short)  %(creatordate:short)  %(subject)" })
-
+    -- Collect either the multi-selection or the single entry under
+    -- the cursor, mapped through fn(entry). Shared by d and o.
+    local function collect(bufnr, fn)
+        local picker = state.get_current_picker(bufnr)
+        local selections = picker:get_multi_selection()
+        local out = {}
+        if #selections > 0 then
+            for _, e in ipairs(selections) do
+                table.insert(out, fn(e))
+            end
+        else
+            local entry = state.get_selected_entry()
+            if not entry then return nil end
+            table.insert(out, fn(entry))
+        end
+        return out
+    end
     pickers.new({
         initial_mode = "normal",
         prompt_title = "Tags",
@@ -706,55 +666,59 @@ local function tag_picker(root)
                 if not entry then return end
                 run({ "checkout", entry.value }, root)
             end)
-
-            map("n", "d", function(bufnr)
-                local picker = state.get_current_picker(bufnr)
-                local selections = picker:get_multi_selection()
-                local names = {}
-
-                if #selections > 0 then
-                    for _, e in ipairs(selections) do
-                        table.insert(names, e.value)
-                    end
-                else
-                    local entry = state.get_selected_entry()
-                    if not entry then return end
-                    table.insert(names, entry.value)
-                end
-
+            map("n", "p", function(bufnr)
+                local entry = state.get_selected_entry()
+                if not entry then return end
+                local tag = entry.value
                 actions.close(bufnr)
-
+                run_auth({ "push", "origin", "refs/tags/" .. tag }, root, "Push Tag")
+            end, { desc = "Push Tag to Origin" })
+            map("n", "d", function(bufnr)
+                local names = collect(bufnr, function(e) return e.value end)
+                if not names then return end
+                actions.close(bufnr)
                 local label = #names == 1 and ("'" .. names[1] .. "'") or (#names .. " tags")
-                ask("Delete " .. label .. "?", function()
+                ask("Delete " .. label .. " locally?", function()
                     local args = { "tag", "-d" }
                     vim.list_extend(args, names)
                     run(args, root)
                 end, true)
-            end, { desc = "Delete Tag(s)" })
-
+            end, { desc = "Delete Tag(s) local" })
+            map("n", "o", function(bufnr)
+                local names = collect(bufnr, function(e) return e.value end)
+                if not names then return end
+                actions.close(bufnr)
+                local label = #names == 1 and ("'" .. names[1] .. "'") or (#names .. " tags")
+                ask("Delete " .. label .. " on origin and locally?", function()
+                    local push = { "push", "origin", "--delete" }
+                    for _, n in ipairs(names) do
+                        table.insert(push, "refs/tags/" .. n)
+                    end
+                    run_auth(push, root, "Delete Tags", function()
+                        local del = { "tag", "-d" }
+                        vim.list_extend(del, names)
+                        capture(del, root)
+                    end)
+                end, true)
+            end, { desc = "Delete Tag(s) origin + local" })
             return true
         end,
     }):find()
 end
-
 -- ---------------------------------------------------------------
 -- Status highlights
 -- ---------------------------------------------------------------
-
 local function define_status_hl()
     local function fg(name)
         local hl = vim.api.nvim_get_hl(0, { name = name, link = false })
         return hl and hl.fg or nil
     end
-
     vim.api.nvim_set_hl(0, "GitStatusStaged", { fg = fg("String"), bold = true })
     vim.api.nvim_set_hl(0, "GitStatusUnstaged", { fg = fg("WarningMsg"), bold = true })
     vim.api.nvim_set_hl(0, "GitStatusNone", { fg = fg("Comment") })
 end
-
 define_status_hl()
 vim.api.nvim_create_autocmd("ColorScheme", { callback = define_status_hl })
-
 -- ---------------------------------------------------------------
 -- Status entries
 --
@@ -764,27 +728,21 @@ vim.api.nvim_create_autocmd("ColorScheme", { callback = define_status_hl })
 -- repo root so git commands and the previewer resolve correctly
 -- regardless of nvim's cwd.
 -- ---------------------------------------------------------------
-
 local function status_display(entry)
     local staged = entry.x ~= " " and entry.x or "·"
     local unstaged = entry.y ~= " " and entry.y or "·"
-
     local text = staged .. " " .. unstaged .. "  " .. entry.rel
-
     return text, {
         { { 0, 1 }, entry.x ~= " " and "GitStatusStaged" or "GitStatusNone" },
         { { 2, 3 }, entry.y ~= " " and "GitStatusUnstaged" or "GitStatusNone" },
     }
 end
-
 local function status_entry(root)
     return function(line)
         local x, y = line:sub(1, 1), line:sub(2, 2)
         local rel = line:sub(4)
-
         rel = rel:match("%->%s*(.+)$") or rel
         rel = rel:gsub('^"(.*)"$', "%1")
-
         return {
             value = rel,
             rel = rel,
@@ -797,22 +755,17 @@ local function status_entry(root)
         }
     end
 end
-
 local function status_finder(root)
     local finders = require("telescope.finders")
-
     local res = vim.system({ "git", "status", "--porcelain=v1" },
         { text = true, cwd = root }):wait()
-
     local out = (res.stdout or ""):gsub("\n$", "")
     local lines = out ~= "" and vim.split(out, "\n", { plain = true }) or {}
-
     return finders.new_table({
         results = lines,
         entry_maker = status_entry(root),
     })
 end
-
 -- ---------------------------------------------------------------
 -- Diff previewer
 --
@@ -820,15 +773,12 @@ end
 -- diff, untracked show raw contents. all run at the repo root so
 -- git resolves the paths. filetype=diff gives red/green coloring.
 -- ---------------------------------------------------------------
-
 local function status_diff_previewer()
     local previewers = require("telescope.previewers")
-
     return previewers.new_buffer_previewer({
         title = "Git Diff",
         define_preview = function(self, entry)
             local buf = self.state.bufnr
-
             local cmd
             if entry.x ~= " " and entry.x ~= "?" then
                 cmd = { "git", "diff", "--cached", "--", entry.rel }
@@ -837,10 +787,8 @@ local function status_diff_previewer()
             else
                 cmd = { "git", "diff", "--", entry.rel }
             end
-
             vim.system(cmd, { text = true, cwd = entry.root }, function(res)
                 local lines = vim.split(res.stdout or "", "\n", { plain = true })
-
                 vim.schedule(function()
                     if vim.api.nvim_buf_is_valid(buf) then
                         vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
@@ -851,7 +799,6 @@ local function status_diff_previewer()
         end,
     })
 end
-
 -- ---------------------------------------------------------------
 -- Status browser
 --
@@ -869,12 +816,10 @@ end
 --        staged or unstaged files, matching `git stash push --`.
 -- S      stash everything (no pathspec - matches plain `git stash`)
 -- ---------------------------------------------------------------
-
 local function status_picker(root)
     local pickers = require("telescope.pickers")
     local state = require("telescope.actions.state")
     local conf = require("telescope.config").values
-
     local head = capture({ "symbolic-ref", "--short", "HEAD" }, root)
     local title
     if head == "" then
@@ -891,11 +836,9 @@ local function status_picker(root)
         end
         title = string.format("Git Status: %s%s", head, tracking)
     end
-
     local function refresh(bufnr)
         state.get_current_picker(bufnr):refresh(status_finder(root), { reset_prompt = false })
     end
-
     pickers.new({
         initial_mode = "normal",
         prompt_title = title,
@@ -918,22 +861,18 @@ local function status_picker(root)
                 end
                 picker:refresh(status_finder(root), { reset_prompt = false })
             end, { desc = "Stage/Unstage" })
-
             map({ "i", "n" }, "<C-a>", function(bufnr)
                 capture({ "add", "-A" }, root)
                 refresh(bufnr)
             end, { desc = "Stage All" })
-
             map({ "i", "n" }, "<C-u>", function(bufnr)
                 capture({ "reset" }, root)
                 refresh(bufnr)
             end, { desc = "Unstage All (Reset)" })
-
             map("n", "s", function(bufnr)
                 local picker = state.get_current_picker(bufnr)
                 local selections = picker:get_multi_selection()
                 local paths = {}
-
                 if #selections > 0 then
                     for _, e in ipairs(selections) do
                         table.insert(paths, e.path)
@@ -943,7 +882,6 @@ local function status_picker(root)
                     if not entry then return end
                     table.insert(paths, entry.path)
                 end
-
                 ask("Stash message: ", function(msg)
                     local args = { "stash", "push", "-m", msg, "--" }
                     vim.list_extend(args, paths)
@@ -955,10 +893,8 @@ local function status_picker(root)
                     end)
                 end)
             end, { desc = "Stash Selected" })
-
             map("n", "S", function(bufnr)
                 local picker = state.get_current_picker(bufnr)
-
                 ask("Stash message: ", function(msg)
                     run({ "stash", "push", "-m", msg }, root)
                     vim.schedule(function()
@@ -968,67 +904,50 @@ local function status_picker(root)
                     end)
                 end)
             end, { desc = "Stash All" })
-
             return true
         end,
     }):find()
 end
-
 local function default_branch(root)
     local out = capture({ "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD" }, root)
-
     if out ~= "" then
         return (out:gsub("^origin/", ""))
     end
-
     for _, name in ipairs({ "main", "master" }) do
         local _, code = capture({ "show-ref", "--verify", "--quiet", "refs/heads/" .. name }, root)
-
         if code == 0 then
             return name
         end
     end
-
     return nil
 end
-
 local function checkout_head(root)
     local current = capture({ "branch", "--show-current" }, root)
-
     if current ~= "" then
         run({ "merge", "--ff-only", "@{u}" }, root)
         return
     end
-
     local target = default_branch(root)
-
     if not target then
         notify("no default branch found", vim.log.levels.ERROR)
         return
     end
-
     run({ "checkout", target }, root)
 end
-
 local function discard_file(root)
     local file = vim.fn.expand("%:p")
-
     if file == "" then
         notify("no file in this buffer", vim.log.levels.ERROR)
         return
     end
-
     local rel = vim.fn.fnamemodify(file, ":.")
-
     ask("Restore '" .. rel .. "' from HEAD?", function()
         run({ "restore", "--staged", "--worktree", "--", file }, root)
-
         vim.schedule(function()
             vim.cmd("edit!")
         end)
     end, true)
 end
-
 local function discard_all(root)
     vim.ui.select(
         { "Discard all tracked changes", "Discard tracked changes + remove untracked files", "Cancel" },
@@ -1044,12 +963,10 @@ local function discard_all(root)
                     vim.schedule(function() vim.cmd("checktime") end)
                     return
                 end
-
                 local files = {}
                 for _, line in ipairs(preview) do
                     table.insert(files, (line:gsub("^Would remove ", "")))
                 end
-
                 confirm_file_list("Will also permanently delete", files, function()
                     run({ "restore", "--staged", "--worktree", "--", "." }, root)
                     run({ "clean", "-fd" }, root)
@@ -1059,7 +976,6 @@ local function discard_all(root)
         end
     )
 end
-
 return {
     {
         'nvim-telescope/telescope.nvim',
@@ -1089,10 +1005,9 @@ return {
                         "-u",
                         "origin",
                         "HEAD",
-                        "--follow-tags",
                     }, root, "Git Push")
                 end),
-                desc = "Push + Tags"
+                desc = "Push"
             },
             {
                 "<leader>gf",
