@@ -225,39 +225,25 @@ return {
                 })
             end, { noremap = true, silent = true, desc = "Find Word (Ripgrep)" })
 
-            -- Quickfix list viewer: list on the left, preview on the right.
-            -- Enter jumps to the item and closes; Esc dismisses.
             vim.keymap.set("n", "<leader>fq", function()
-                builtin.quickfix({ initial_mode = "normal" })
+                local nr = vim.fn.getqflist({ nr = 0 }).nr
+                require("telescope.builtin").quickfix({
+                    initial_mode = "normal",
+                    nr = nr,
+                    cache_picker = false,
+                })
             end, { noremap = true, silent = true, desc = "View Quickfix List" })
 
             vim.keymap.set("n", "<leader>fh", function()
                 local action_state = require("telescope.actions.state")
-
                 require("telescope.builtin").quickfixhistory({
                     initial_mode = "normal",
-                    attach_mappings = function(_, bufnr)
-                        actions.select_default:replace(function(prompt_bufnr)
-                            local entry = action_state.get_selected_entry()
+                    attach_mappings = function(_, map)
+                        action_set.select:replace(function(prompt_bufnr)
+                            local nr = action_state.get_selected_entry().nr
                             actions.close(prompt_bufnr)
-                            if not entry then return end
-
-                            -- The history entry carries the stack number; field name varies
-                            -- by version, so check the common spots.
-                            local target = entry.nr or (entry.value and entry.value.nr)
-                            if not target then
-                                vim.notify("Couldn't determine quickfix list number", vim.log.levels.WARN)
-                                return
-                            end
-
-                            -- Move the stack pointer to `target` via :colder / :cnewer
-                            local current = vim.fn.getqflist({ nr = 0 }).nr
-                            local delta = target - current
-                            if delta < 0 then
-                                vim.cmd(math.abs(delta) .. "colder")
-                            elseif delta > 0 then
-                                vim.cmd(delta .. "cnewer")
-                            end
+                            if not nr then return end
+                            vim.cmd(nr .. "chistory")
                         end)
                         return true
                     end,
@@ -277,7 +263,6 @@ return {
                 local config_path = vim.fn.expand('~/.config/nvim')
                 vim.cmd.ex(config_path)
             end, { noremap = true, silent = true, desc = 'Open Nvim Config Folder' })
-
         end
     },
     {

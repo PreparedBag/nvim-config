@@ -38,8 +38,8 @@ return {
                 gdb_port  = 2331,
             },
             -- Add more to enable the picker, e.g.:
-            -- ['STM32F411CE'] = {
-            --     device = 'STM32F411CE',
+            -- ['NAME'] = {
+            --     device = 'DEVICE',
             --     interface = 'SWD',
             --     speed = '4000',
             --     gdb_port = 2331,
