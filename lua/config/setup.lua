@@ -43,6 +43,8 @@ vim.o.cursorline = true
 vim.o.splitbelow = true
 vim.o.splitright = true
 vim.o.modeline = false
+vim.o.timeout = true
+vim.o.timeoutlen = 250
 -- vim.o.winbar = ""
 
 vim.opt.isfname:append("@-@")
@@ -64,6 +66,4 @@ vim.opt.fillchars:append({
     foldsep = " ",
 })
 
--- vim.o.timeout = true
--- vim.o.timeoutlen = 300
 -- vim.o.mouse = "a"
