@@ -1,17 +1,20 @@
-local ui = require("config.utils")
+local utils = require("config.utils")
 local ASK_PASSWORD = true
 local LOG_LIMIT = 300
 local SEP = "\31"
 local LOG_PRETTY = "--pretty=%h" .. SEP .. "%d" .. SEP .. "%s" .. SEP .. "%cr" .. SEP .. "%an"
+
 local function notify(msg, level)
     if not msg or msg == "" then
         return
     end
     vim.notify(vim.trim(msg), level or vim.log.levels.INFO, { title = "git" })
 end
+
 local function buf_root()
     return vim.fs.root(0, ".git")
 end
+
 local function git_guard(fn)
     return function()
         local root = buf_root()
@@ -22,6 +25,7 @@ local function git_guard(fn)
         fn(root)
     end
 end
+
 local function capture(args, cwd)
     local res = vim.system(vim.list_extend({ "git" }, args), {
         text = true,
@@ -29,6 +33,7 @@ local function capture(args, cwd)
     }):wait()
     return vim.trim(res.stdout or ""), res.code
 end
+
 local function make_askpass(password)
     local dir = vim.fn.tempname()
     vim.fn.mkdir(dir, "p", "0700")
@@ -42,32 +47,7 @@ local function make_askpass(password)
         vim.fn.delete(dir, "rf")
     end
 end
-local function confirm_file_list(title, files, on_confirm)
-    local pickers = require("telescope.pickers")
-    local finders = require("telescope.finders")
-    local conf = require("telescope.config").values
-    local actions = require("telescope.actions")
-    pickers.new({
-        initial_mode = "normal",
-        prompt_title = title .. " (y to confirm)",
-    }, {
-        finder = finders.new_table({ results = files }),
-        sorter = conf.generic_sorter({}),
-        attach_mappings = function(_, map)
-            actions.select_default:replace(function(bufnr)
-                actions.close(bufnr)
-            end)
-            map({ "i", "n" }, "y", function(bufnr)
-                actions.close(bufnr)
-                on_confirm()
-            end, { desc = "Confirm" })
-            return true
-        end,
-    }):find()
-end
--- run: async git command. on_success (optional) fires only after a
--- zero exit code, so callers can chain a follow-up step that must
--- not run if the first command failed or was cancelled.
+
 local function run(args, cwd, password, on_success)
     local env = { GIT_TERMINAL_PROMPT = "0" }
     local cleanup = function() end
@@ -114,13 +94,10 @@ local function run_auth(args, root, title, on_success)
     end
     run(args, root, pw, on_success)
 end
--- Confirms go through ui.confirm (config.utils): a locked-down
--- Telescope picker matching the browsers, answering only to
--- j/k/<CR>. Free-text prompts use vim.ui.input, which stays on the
--- command line unless a vim.ui.input provider is added (dressing).
+
 local function ask(text, fn, is_confirm)
     if is_confirm then
-        ui.confirm(text, fn)
+        utils.confirm(text, fn)
     else
         vim.ui.input({ prompt = text }, function(answer)
             if answer and answer ~= "" then
@@ -129,11 +106,7 @@ local function ask(text, fn, is_confirm)
         end)
     end
 end
--- Delete a tag on origin first, then drop the local copy only once
--- the origin delete succeeds. Ordering matters: with the local tag
--- still present until origin confirms, a cancelled/failed push can't
--- leave a one-sided state, and neither fetch (--tags) nor push can
--- resurrect a tag that is gone from both sides.
+
 local function delete_tag_everywhere(root, tag)
     ask("Delete tag '" .. tag .. "' on origin and locally?", function()
         run_auth(
@@ -143,17 +116,7 @@ local function delete_tag_everywhere(root, tag)
         )
     end, true)
 end
--- ---------------------------------------------------------------
--- Checkout file from ref
---
--- Lists files that differ between the current working copy and
--- `ref` (branch or commit), each with a live reversed diff showing
--- what checking it out would apply. Invoked from both the log and
--- branch pickers below (key `f`), not a standalone keymap.
---
--- <Tab> to multi-select several files before confirming; with
--- nothing marked, acts on just the file under the cursor.
--- ---------------------------------------------------------------
+
 local function checkout_file_picker(root, ref)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -205,7 +168,7 @@ local function checkout_file_picker(root, ref)
                 actions.close(bufnr)
                 local n = #paths
                 local title = ("Checkout %d file%s from %s"):format(n, n == 1 and "" or "s", display_ref)
-                ui.confirm_list(title, paths, function()
+                utils.confirm_dialog(title, paths, function()
                     local args = { "restore", "--source=" .. ref, "--staged", "--worktree", "--" }
                     vim.list_extend(args, paths)
                     run(args, root)
@@ -216,22 +179,7 @@ local function checkout_file_picker(root, ref)
         end,
     }):find()
 end
--- ---------------------------------------------------------------
--- Log browser
---
--- decorations arrive from %d and are split into individual refs
--- so each can be colored by kind. `ref` optionally scopes history
--- to one branch (called with no ref for the top-level keymap, and
--- with a branch name from branch_picker's drill-down, key `l`).
---
--- <CR>  checkout the selected commit (detached)
--- c     checkout a specific file from the selected commit
--- b     new branch from the selected commit
--- t     new tag on the selected commit
--- p     push the tag on the selected commit to origin
--- d     delete the tag on the selected commit (local only)
--- o     delete the tag on the selected commit (origin + local)
--- ---------------------------------------------------------------
+
 -- ---------------------------------------------------------------
 -- Log highlights
 -- ---------------------------------------------------------------
@@ -248,7 +196,9 @@ local function define_log_hl()
     vim.api.nvim_set_hl(0, "GitLogMeta", { fg = fg("Comment") })
 end
 define_log_hl()
+
 vim.api.nvim_create_autocmd("ColorScheme", { callback = define_log_hl })
+
 local function ref_hl(ref)
     if ref:match("^HEAD") then
         return "GitLogHead"
@@ -259,6 +209,7 @@ local function ref_hl(ref)
     end
     return "GitLogBranch"
 end
+
 local function log_display(entry)
     local chunks, highlights, col = {}, {}, 0
     local function add(text, group)
@@ -283,6 +234,7 @@ local function log_display(entry)
     add(" (" .. entry.when .. ") <" .. entry.author .. ">", "GitLogMeta")
     return table.concat(chunks), highlights
 end
+
 local function log_entry(line)
     local parts = vim.split(line, SEP, { plain = true })
     local deco = (parts[2] or ""):gsub("^%s*%(", ""):gsub("%)%s*$", "")
@@ -303,6 +255,7 @@ local function log_entry(line)
         display = log_display,
     }
 end
+
 local function get_tags(entry)
     local tags = {}
     for _, ref in ipairs(entry.refs) do
@@ -312,6 +265,7 @@ local function get_tags(entry)
     end
     return tags
 end
+
 local function pick_tag(entry, cb)
     local tags = get_tags(entry)
     if #tags == 0 then
@@ -322,10 +276,11 @@ local function pick_tag(entry, cb)
         cb(tags[1])
         return
     end
-    ui.select(tags, { prompt = "Which tag?" }, function(choice)
+    utils.select("Which tag?", tags, function(choice)
         if choice then cb(choice) end
     end)
 end
+
 local function log_picker(root, ref)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -409,21 +364,7 @@ local function log_picker(root, ref)
         end,
     }):find()
 end
--- ---------------------------------------------------------------
--- Branch browser
---
--- <CR>  checkout, explicitly replacing Telescope's default action
--- m     merge into current branch
--- d     delete - local branch: safe delete (-d); remote-tracking
---       entry: delete on origin. Detected from the ref itself
---       (refs/heads/... vs refs/remotes/...), no separate keys.
--- x     force delete (local branches only; -D instead of -d).
---       Remote deletion has no force/non-force distinction, so on
---       a remote entry this does the same thing as `d`.
--- f     checkout a specific file from the selected branch
--- l     view this branch's commit log (drill down further to a
---       specific commit, then `f` there for a specific file)
--- ---------------------------------------------------------------
+
 local function branch_picker(root)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -431,14 +372,7 @@ local function branch_picker(root)
     local actions = require("telescope.actions")
     local state = require("telescope.actions.state")
     local previewers = require("telescope.previewers")
-    -- Refs come from %(refname) (full form, e.g. refs/heads/x or
-    -- refs/remotes/origin/x) rather than %(refname:short), so every
-    -- git command built from them targets an unambiguous ref even
-    -- when a branch and tag happen to share the same short name -
-    -- except checkout, which needs the short form specifically:
-    -- a full ref always detaches HEAD instead of attaching to the
-    -- branch, and only the short remote form (origin/x) triggers
-    -- git's auto-create-local-tracking-branch behavior.
+
     local function is_remote(entry)
         return entry[1]:match("^refs/remotes/") ~= nil
     end
@@ -518,15 +452,7 @@ local function branch_picker(root)
         end,
     }):find()
 end
--- ---------------------------------------------------------------
--- Stash browser
---
--- <CR>  apply, explicitly replacing Telescope's default action
--- p     pop (apply, then drop if clean)
--- d     drop
--- b     branch from this stash
--- n     new stash from current changes
--- ---------------------------------------------------------------
+
 local function stash_picker(root)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -593,23 +519,7 @@ local function stash_picker(root)
         end,
     }):find()
 end
--- ---------------------------------------------------------------
--- Tag browser
---
--- Pure browsing plus tag sync - creation lives in the log picker
--- (key `t`, tied to a specific commit). This scans release history
--- with a diff preview per tag.
---
--- <CR>   checkout the selected tag (detached)
--- p      push the selected tag to origin
--- d      delete the selected tag(s) locally - <Tab> to multi-select
---        several first; with nothing marked, acts on the tag under
---        the cursor. Local only, so fetch (--tags) restores it - a
---        "reset to origin" for that tag.
--- o      delete the selected tag(s) on origin AND locally - real,
---        permanent delete; nothing can resurrect it. Multi-select
---        aware, one push / one auth prompt.
--- ---------------------------------------------------------------
+
 local function tag_picker(root)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -671,7 +581,7 @@ local function tag_picker(root)
                 if not names then return end
                 actions.close(bufnr)
                 local label = #names == 1 and ("'" .. names[1] .. "'") or (#names .. " tags")
-                ask("Delete " .. label .. " locally?", function()
+                utils.confirm_dialog("Delete " .. label .. " locally?", names, function()
                     local args = { "tag", "-d" }
                     vim.list_extend(args, names)
                     run(args, root)
@@ -682,7 +592,7 @@ local function tag_picker(root)
                 if not names then return end
                 actions.close(bufnr)
                 local label = #names == 1 and ("'" .. names[1] .. "'") or (#names .. " tags")
-                ask("Delete " .. label .. " on origin and locally?", function()
+                utils.confirm_dialog("Delete " .. label .. " on origin and locally?", names, function()
                     local push = { "push", "origin", "--delete" }
                     for _, n in ipairs(names) do
                         table.insert(push, "refs/tags/" .. n)
@@ -698,6 +608,7 @@ local function tag_picker(root)
         end,
     }):find()
 end
+
 -- ---------------------------------------------------------------
 -- Status highlights
 -- ---------------------------------------------------------------
@@ -712,15 +623,7 @@ local function define_status_hl()
 end
 define_status_hl()
 vim.api.nvim_create_autocmd("ColorScheme", { callback = define_status_hl })
--- ---------------------------------------------------------------
--- Status entries
---
--- porcelain gives two columns per file: index (staged) then
--- worktree (unstaged). leading whitespace is significant, so raw
--- lines are read without trimming. each entry carries the pinned
--- repo root so git commands and the previewer resolve correctly
--- regardless of nvim's cwd.
--- ---------------------------------------------------------------
+
 local function status_display(entry)
     local staged = entry.x ~= " " and entry.x or "·"
     local unstaged = entry.y ~= " " and entry.y or "·"
@@ -730,6 +633,7 @@ local function status_display(entry)
         { { 2, 3 }, entry.y ~= " " and "GitStatusUnstaged" or "GitStatusNone" },
     }
 end
+
 local function status_entry(root)
     return function(line)
         local x, y = line:sub(1, 1), line:sub(2, 2)
@@ -748,6 +652,7 @@ local function status_entry(root)
         }
     end
 end
+
 local function status_finder(root)
     local finders = require("telescope.finders")
     local res = vim.system({ "git", "status", "--porcelain=v1" },
@@ -759,13 +664,7 @@ local function status_finder(root)
         entry_maker = status_entry(root),
     })
 end
--- ---------------------------------------------------------------
--- Diff previewer
---
--- staged files show the cached diff, unstaged show the worktree
--- diff, untracked show raw contents. all run at the repo root so
--- git resolves the paths. filetype=diff gives red/green coloring.
--- ---------------------------------------------------------------
+
 local function status_diff_previewer()
     local previewers = require("telescope.previewers")
     return previewers.new_buffer_previewer({
@@ -792,23 +691,7 @@ local function status_diff_previewer()
         end,
     })
 end
--- ---------------------------------------------------------------
--- Status browser
---
--- Unlike the branch/stash/log pickers (verb chosen by key, one
--- action per keypress), staging is iterative: you stay in the
--- list, toggle several files against the live diff preview, then
--- leave to commit. Actions live inside the picker itself.
---
--- t      stage / unstage the file under the cursor
--- <C-a>  stage everything (git add -A)
--- <C-u>  unstage everything (git reset)
--- s      stash the selected file(s) - uses Telescope's own
---        multi-select (<Tab> to mark several) when present,
---        otherwise just the file under the cursor. Works on
---        staged or unstaged files, matching `git stash push --`.
--- S      stash everything (no pathspec - matches plain `git stash`)
--- ---------------------------------------------------------------
+
 local function status_picker(root)
     local pickers = require("telescope.pickers")
     local state = require("telescope.actions.state")
@@ -901,6 +784,7 @@ local function status_picker(root)
         end,
     }):find()
 end
+
 local function default_branch(root)
     local out = capture({ "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD" }, root)
     if out ~= "" then
@@ -914,6 +798,7 @@ local function default_branch(root)
     end
     return nil
 end
+
 local function checkout_head(root)
     local current = capture({ "branch", "--show-current" }, root)
     if current ~= "" then
@@ -927,6 +812,7 @@ local function checkout_head(root)
     end
     run({ "checkout", target }, root)
 end
+
 local function discard_file(root)
     local file = vim.fn.expand("%:p")
     if file == "" then
@@ -941,10 +827,11 @@ local function discard_file(root)
         end)
     end, true)
 end
+
 local function discard_all(root)
-    ui.select(
+    utils.select(
+        "Restore repo from HEAD:",
         { "Discard all tracked changes", "Discard tracked changes + remove untracked files", "Cancel" },
-        { prompt = "Restore repo from HEAD:" },
         function(choice)
             if choice == "Discard all tracked changes" then
                 run({ "restore", "--staged", "--worktree", "--", "." }, root)
@@ -960,7 +847,7 @@ local function discard_all(root)
                 for _, line in ipairs(preview) do
                     table.insert(files, (line:gsub("^Would remove ", "")))
                 end
-                confirm_file_list("Will also permanently delete", files, function()
+                utils.confirm_dialog("Will also permanently delete", files, function()
                     run({ "restore", "--staged", "--worktree", "--", "." }, root)
                     run({ "clean", "-fd" }, root)
                     vim.schedule(function() vim.cmd("checktime") end)
@@ -969,6 +856,7 @@ local function discard_all(root)
         end
     )
 end
+
 return {
     {
         'nvim-telescope/telescope.nvim',

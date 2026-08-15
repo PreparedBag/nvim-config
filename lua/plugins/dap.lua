@@ -69,7 +69,9 @@ return {
                 return
             end
 
-            vim.ui.select(names, { prompt = 'Debug target:' }, function(choice)
+            local utils = require('config.utils')
+
+            utils.select("Debug Target: ", names, function(choice)
                 if not choice then return end
                 active = available[choice]
                 notify('DAP config: ' .. choice)

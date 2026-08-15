@@ -1,9 +1,145 @@
 local M = {}
 
-local DEAD_KEYS = {
-    "i", "I", "a", "A", "o", "O", "c", "C", "s", "S", "R",
-    "r", "x", "p", "P", "d", "u", "v", "V", ".", "/", ":",
-}
+function M.dialog(title, choices, items, on_choice)
+    local has_preview = items ~= nil and #items > 0
+    local ch = #choices
+    local ph = 0
+    if has_preview then
+        ph = math.min(#items, math.floor(vim.o.lines * 0.6))
+    end
+    local width = 80
+    local function fit(s)
+        if s and #s + 4 > width then
+            width = #s + 4
+        end
+    end
+    fit(title)
+    if has_preview then
+        fit("Selection")
+    end
+    for _, c in ipairs(choices) do
+        fit("  " .. c)
+    end
+    if has_preview then
+        for _, it in ipairs(items) do
+            fit("  " .. it)
+        end
+    end
+    width = math.min(width, math.floor(vim.o.columns * 0.8))
+    local block = (ch + 2) + (has_preview and (ph + 2) or 0)
+    local top = math.max(math.floor((vim.o.lines - block) / 2), 1)
+    local col = math.floor((vim.o.columns - width) / 2)
+    local choice_lines = {}
+    for _, c in ipairs(choices) do
+        table.insert(choice_lines, "  " .. c)
+    end
+    local cbuf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_lines(cbuf, 0, -1, false, choice_lines)
+    vim.bo[cbuf].modifiable = false
+    vim.bo[cbuf].bufhidden = "wipe"
+    local pwin
+    if has_preview then
+        local plines = {}
+        for _, it in ipairs(items) do
+            table.insert(plines, "  " .. it)
+        end
+        local pbuf = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_lines(pbuf, 0, -1, false, plines)
+        vim.bo[pbuf].modifiable = false
+        vim.bo[pbuf].bufhidden = "wipe"
+        pwin = vim.api.nvim_open_win(pbuf, false, {
+            relative = "editor",
+            width = width,
+            height = ph,
+            row = top + ch + 3,
+            col = col,
+            style = "minimal",
+            border = "rounded",
+            title = " Selection ",
+            title_pos = "center",
+            focusable = false,
+        })
+    end
+    local cwin = vim.api.nvim_open_win(cbuf, true, {
+        relative = "editor",
+        width = width,
+        height = ch,
+        row = top + 1,
+        col = col,
+        style = "minimal",
+        border = "rounded",
+        title = title and (" " .. title .. " ") or nil,
+        title_pos = "center",
+    })
+    vim.wo[cwin].cursorline = true
+    local sel = 1
+    local function set(n)
+        if n < 1 then n = 1 end
+        if n > #choices then n = #choices end
+        sel = n
+        if vim.api.nvim_win_is_valid(cwin) then
+            vim.api.nvim_win_set_cursor(cwin, { sel, 0 })
+        end
+    end
+    set(1)
+    local function close()
+        if pwin and vim.api.nvim_win_is_valid(pwin) then
+            vim.api.nvim_win_close(pwin, true)
+        end
+        if vim.api.nvim_win_is_valid(cwin) then
+            vim.api.nvim_win_close(cwin, true)
+        end
+    end
+    local function choose()
+        local picked = choices[sel]
+        close()
+        if on_choice then
+            on_choice(picked)
+        end
+    end
+    vim.api.nvim_create_autocmd("BufLeave", {
+        buffer = cbuf,
+        once = true,
+        callback = close,
+    })
+    local opts = { buffer = cbuf, nowait = true, silent = true }
+    local blocked = {
+        "i", "I", "a", "A", "o", "O", "c", "C", "s", "S", "R",
+        "r", "x", "p", "P", "d", "u", "v", "V", ".", "/", ":",
+        "h", "l", "w", "b", "e", "g", "G", "H", "M", "L", "0", "$",
+        "y", "n",
+    }
+    for _, key in ipairs(blocked) do
+        vim.keymap.set("n", key, function() end, opts)
+    end
+    vim.keymap.set("n", "j", function() set(sel + 1) end, opts)
+    vim.keymap.set("n", "k", function() set(sel - 1) end, opts)
+    vim.keymap.set("n", "<Down>", function() set(sel + 1) end, opts)
+    vim.keymap.set("n", "<Up>", function() set(sel - 1) end, opts)
+    vim.keymap.set("n", "<CR>", choose, opts)
+    vim.keymap.set("n", "q", close, opts)
+    vim.keymap.set("n", "<Esc>", close, opts)
+    for i, c in ipairs(choices) do
+        if c == "Yes" then
+            vim.keymap.set("n", "y", function() set(i); choose() end, opts)
+        elseif c == "No" then
+            vim.keymap.set("n", "n", function() set(i); choose() end, opts)
+        end
+    end
+end
+function M.select(title, items, on_choice)
+    M.dialog(title, items, nil, on_choice)
+end
+function M.confirm(msg, on_yes)
+    M.dialog(msg, { "Yes", "No" }, nil, function(choice)
+        if choice == "Yes" then on_yes() end
+    end)
+end
+function M.confirm_dialog(title, items, on_yes)
+    M.dialog(title, { "Yes", "No" }, items, function(choice)
+        if choice == "Yes" then on_yes() end
+    end)
+end
 
 function M.get()
     local path = vim.fn.getcwd() .. "/.nvim-project-settings.lua"
@@ -18,98 +154,6 @@ function M.get()
     end
 
     return cfg
-end
-
-local function lock(map)
-    for _, key in ipairs(DEAD_KEYS) do
-        map("n", key, function() end)
-    end
-    map("n", "q", require("telescope.actions").close)
-end
-
-local function theme(title, want_preview, selections)
-    local opts = {
-        initial_mode = "normal",
-        prompt_title = title or "",
-        layout_config = { width = 80, height = 4 + selections },
-    }
-
-    if not want_preview then
-        opts.previewer = false
-    end
-
-    return require("telescope.themes").get_dropdown(opts)
-end
-
-function M.select(items, opts, on_choice)
-    opts = opts or {}
-    local pickers = require("telescope.pickers")
-    local finders = require("telescope.finders")
-    local conf = require("telescope.config").values
-    local actions = require("telescope.actions")
-    local state = require("telescope.actions.state")
-
-    pickers.new(theme(opts.prompt, false, #items), {
-
-        finder = finders.new_table({ results = items }),
-        sorter = conf.generic_sorter({}),
-        attach_mappings = function(_, map)
-            actions.select_default:replace(function(bufnr)
-                local entry = state.get_selected_entry()
-                actions.close(bufnr)
-                if entry and on_choice then
-                    on_choice(entry[1])
-                end
-
-            end)
-            lock(map)
-            return true
-        end,
-    }):find()
-end
-
-function M.confirm(msg, on_yes)
-    M.select({ "Yes", "No" }, { prompt = msg }, function(choice)
-        if choice == "Yes" then
-            on_yes()
-        end
-    end)
-end
-
-function M.confirm_list(msg, items, on_yes)
-    local pickers = require("telescope.pickers")
-    local finders = require("telescope.finders")
-    local conf = require("telescope.config").values
-    local actions = require("telescope.actions")
-    local state = require("telescope.actions.state")
-    local previewers = require("telescope.previewers")
-
-    local list_previewer = previewers.new_buffer_previewer({
-        title = "Files",
-        define_preview = function(self)
-            local buf = self.state.bufnr
-            if vim.api.nvim_buf_is_valid(buf) then
-                vim.api.nvim_buf_set_lines(buf, 0, -1, false, items)
-            end
-        end,
-    })
-
-    pickers.new(theme(msg, true, 2), {
-        finder = finders.new_table({ results = { "Yes", "No" } }),
-        sorter = conf.generic_sorter({}),
-        previewer = list_previewer,
-        attach_mappings = function(_, map)
-            actions.select_default:replace(function(bufnr)
-                local entry = state.get_selected_entry()
-                actions.close(bufnr)
-                if entry and entry[1] == "Yes" then
-                    on_yes()
-                end
-            end)
-            lock(map)
-            return true
-        end,
-    }):find()
 end
 
 function M.section(name)

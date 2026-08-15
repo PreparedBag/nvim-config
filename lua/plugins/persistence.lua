@@ -31,8 +31,8 @@ local function wipe_all_buffers(on_done)
     end
 
     ui.select(
+        #modified .. " buffer(s) have unsaved changes. Save before switching sessions?",
         { "Save all", "Discard", "Cancel" },
-        { prompt = #modified .. " buffer(s) have unsaved changes. Save before switching sessions?" },
         function(choice)
             if choice == "Save all" then
                 vim.cmd("wall")
@@ -105,8 +105,8 @@ local function save_and_quit_confirmed()
         return
     end
     ui.select(
+        #modified .. " buffer(s) have unsaved changes:",
         { "Save all and quit", "Quit without saving", "Cancel" },
-        { prompt = #modified .. " buffer(s) have unsaved changes:" },
         function(choice)
             if choice == "Save all and quit" then
                 vim.cmd("wqa")
@@ -120,8 +120,8 @@ end
 local function save_and_quit()
     if dap_session_active() then
         ui.select(
+            "Debug session still active — stop it with <Leader>dq first?",
             { "Quit anyway", "Cancel" },
-            { prompt = "Debug session still active — stop it with <Leader>dq first?" },
             function(choice)
                 if choice == "Quit anyway" then save_and_quit_confirmed() end
             end
