@@ -1,0 +1,167 @@
+*nvim-project-config.txt*                 Per-project local config for Neovim
+
+==============================================================================
+CONTENTS                                         *nvim-project-config-contents*
+
+    1. Introduction ........................... |nvim-project-config-intro|
+    2. File location .......................... |nvim-project-config-location|
+    3. Session directory ...................... |nvim-project-config-session|
+    4. Sections ............................... |nvim-project-config-sections|
+        dap ................................... |nvim-project-config-dap|
+        telescope ............................. |nvim-project-config-telescope|
+        commands .............................. |nvim-project-config-commands|
+    5. Editing the settings file .............. |nvim-project-config-edit|
+    6. Adding a new section ................... |nvim-project-config-adding|
+
+==============================================================================
+1. Introduction                                     *nvim-project-config-intro*
+
+`.nvim-project-settings.lua` is an optional, per-project settings file. It
+lives in a project's root directory and is read by this Neovim config to
+override per-project behavior.
+
+If the file is absent, everything falls back to this config's built-in
+defaults - nothing breaks or warns for a project that does not have one.
+
+It is read by `lua/config/project.lua`, which every consuming plugin config
+(`dap.lua`, `telescope.lua`, ...) calls into rather than reading the file
+itself. See |nvim-project-config-adding| before adding a new direct
+`dofile()` call anywhere else.
+
+The file is executed as Lua (`dofile`), so it may contain data only. Do not
+place live functions or side effects in it; commands are declared as data
+(see |nvim-project-config-commands|) and run by this config, not by the
+project file.
+
+==============================================================================
+2. File location                                 *nvim-project-config-location*
+
+    <session-root>/.nvim-project-settings.lua
+
+The file must `return` a single Lua table. Each top-level key is a *section*,
+consumed independently by one part of the config. Unknown sections are
+ignored; a section whose value is not a table produces a warning and is
+skipped.
+
+==============================================================================
+3. Session directory                              *nvim-project-config-session*
+
+The settings file is always resolved against the *session directory*
+(`_G.session_directory`), not the current working directory.
+
+This matters because the cwd can be changed independently - for example by a
+Telescope search scoped to another folder - without changing which project
+you are in. Project settings, and any |nvim-project-config-commands|, always
+resolve against the session root, never the transient cwd.
+
+Project command keymaps are (re)loaded when the session changes, not when the
+cwd changes. Call `require('config.project').load_commands()` at the point a
+session is set (this config wires it into the session-switch flow). Before any
+session is active, resolution falls back to `vim.fn.getcwd()`.
+
+==============================================================================
+4. Sections                                       *nvim-project-config-sections*
+
+------------------------------------------------------------------------------
+dap                                                   *nvim-project-config-dap*
+
+Per-project debug adapter settings. Consumed by `dap.lua`.
+
+    dap = {
+        ['STM32L433CC'] = {
+            device    = 'stm32l433cc',
+            interface = 'swd',
+            speed     = '4000',
+            gdb_port  = 2331,
+        },
+    },
+
+------------------------------------------------------------------------------
+telescope                                       *nvim-project-config-telescope*
+
+Extra directories to include in fuzzy-find/grep, and paths to exclude.
+Consumed by `telescope.lua`.
+
+    telescope = {
+        extra_dirs = { '../shared' },
+        exclude    = {},
+    },
+
+`extra_dirs` are added to the search roots. `exclude` is a list of globs
+removed from results.
+
+------------------------------------------------------------------------------
+commands                                         *nvim-project-config-commands*
+
+Project-local command keymaps. Each entry declares a key that runs a shell
+command in a temporary floating terminal. Consumed by `lua/config/project.lua`.
+
+    commands = {
+        {
+            key       = '<leader>ci',
+            cmd       = 'make -f app.mk debug',
+            desc      = 'Compile Project',
+            cwd       = 'root',
+            mode      = 'n',
+            keep_open = false,
+        },
+    },
+
+Per-entry fields:
+
+    key        (string, required)  The keymap, e.g. '<leader>ce'. Keymaps
+                                   should start with c to not conflict with 
+                                   other keymaps.
+    cmd        (string, required)  Shell command to run.
+    desc       (string, optional)  Which-key/description text.
+                                   Defaults to 'Run: ' .. cmd.
+    cwd        (string, optional)  'root' (default) resolves to the session
+                                   directory (|nvim-project-config-session|).
+                                   Any other string is used as a literal path.
+    mode       (string, optional)  Keymap mode. Defaults to 'n'.
+    keep_open  (boolean, optional) false (default) closes the terminal when
+                                   the command finishes. true leaves it open
+                                   so you can read output/errors.
+
+Behavior:
+
+    - The command always runs relative to the session directory when
+      cwd is 'root' or omitted, never the transient cwd.
+    - The terminal is a fresh toggleterm float; with keep_open = false it
+      pops up, runs, and closes on exit.
+    - Keymaps are tracked and torn down/reloaded on session change, so a
+      command from one project never leaks into another.
+    - Malformed entries (missing string 'key' or 'cmd') are skipped with a
+      warning; the remaining entries still load.
+
+==============================================================================
+5. Editing the settings file                         *nvim-project-config-edit*
+
+A keymap opens the session directory's settings file, scaffolding a template
+if it does not yet exist:
+
+    <leader>pe        Edit (or create) .nvim-project-settings.lua
+
+This calls `require('config.project').edit_settings()`. After editing and
+saving, reload project commands with
+`require('config.project').load_commands()` (or a session switch) for changes
+to take effect.
+
+==============================================================================
+6. Adding a new section                             *nvim-project-config-adding*
+
+To add a new section, read it through `lua/config/project.lua` rather than
+calling `dofile()` elsewhere:
+
+    local project = require('config.project')
+    local mine = project.section('my_section')
+    if mine then
+        -- use mine.<field>
+    end
+
+`section(name)` returns the table for that key, or nil if the file or key is
+absent, or the key's value is not a table (with a warning in the last case).
+This keeps a single reader, one set of warnings, and consistent session-root
+resolution for every consumer.
+
+ vim:tw=78:ts=8:ft=help:norl:

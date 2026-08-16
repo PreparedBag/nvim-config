@@ -14,7 +14,7 @@ return {
     commands = {
         {
             key = "<leader>ce",
-            desc = "Example Custom Command",
+            desc = "Example Command",
             cmd = "ls -l",
             keep_open = true,
         }

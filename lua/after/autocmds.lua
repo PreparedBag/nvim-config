@@ -1,10 +1,10 @@
 -- Regenerate local :help tags on startup, so doc/nvim-config.txt (and any
 -- other custom help files added later) are always searchable via :h / <leader>fH.
--- vim.api.nvim_create_autocmd("VimEnter", {
---     callback = function()
---         vim.cmd("silent! helptags ~/.config/nvim/doc")
---     end,
--- })
+vim.api.nvim_create_autocmd("VimEnter", {
+    callback = function()
+        vim.cmd("silent! helptags ~/.config/nvim/doc")
+    end,
+})
 
 -- Fixes window resizing when popups are active
 vim.api.nvim_create_autocmd("VimResized", {
