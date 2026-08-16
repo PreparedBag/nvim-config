@@ -1,11 +1,50 @@
 local utils = require("config.utils")
 
+local tabout_on = true
+
+local function raw(keys)
+    return vim.api.nvim_replace_termcodes(keys, true, false, true)
+end
+
 return {
+    {
+        "abecodes/tabout.nvim",
+        enabled = require("config.flags").get("LSP_ENABLED"),
+        dependencies = { "nvim-treesitter/nvim-treesitter", "L3MON4D3/LuaSnip" },
+        opts = {
+            tabkey = "<Tab>",
+            backwards_tabkey = "<S-Tab>",
+            act_as_tab = true,
+            act_as_shift_tab = true,
+            enable_backwards = true,
+            completion = false,
+            tabouts = {
+                { open = "'", close = "'" },
+                { open = '"', close = '"' },
+                { open = "`", close = "`" },
+                { open = "(", close = ")" },
+                { open = "[", close = "]" },
+                { open = "{", close = "}" },
+            },
+            ignore_beginning = true,
+            exclude = {},
+        },
+    },
     {
         'saghen/blink.cmp',
         enabled = require("config.flags").get("LSP_ENABLED"),
         dependencies = { 'rafamadriz/friendly-snippets' },
         version = '1.*',
+        keys = {
+            {
+                "<leader>to",
+                function()
+                    tabout_on = not tabout_on
+                    vim.notify("Tabout " .. (tabout_on and "enabled" or "disabled"), vim.log.levels.INFO)
+                end,
+                desc = "Toggle Tabout",
+            },
+        },
         opts = {
             keymap = {
                 preset = 'none',
@@ -16,8 +55,28 @@ return {
                 ['<CR>'] = { 'accept', 'fallback' },
                 ['<C-e>'] = { 'hide', 'fallback' },
                 ['<C-y>'] = { 'accept', 'fallback' },
-                ['<Tab>'] = { 'snippet_forward', 'fallback' },
-                ['<S-Tab>'] = { 'snippet_backward', 'fallback' },
+                ['<Tab>'] = {
+                    'snippet_forward',
+                    function()
+                        if not tabout_on then
+                            vim.api.nvim_feedkeys(raw('<Tab>'), 'n', false)
+                            return true
+                        end
+                        return false
+                    end,
+                    'fallback',
+                },
+                ['<S-Tab>'] = {
+                    'snippet_backward',
+                    function()
+                        if not tabout_on then
+                            vim.api.nvim_feedkeys(raw('<S-Tab>'), 'n', false)
+                            return true
+                        end
+                        return false
+                    end,
+                    'fallback',
+                },
             },
             snippets = { preset = 'luasnip' },
             appearance = {
@@ -85,29 +144,6 @@ return {
                 paths = vim.fn.stdpath("config") .. "/snippets",
             })
         end,
-    },
-    {
-        "abecodes/tabout.nvim",
-        enabled = require("config.flags").get("LSP_ENABLED"),
-        dependencies = { "nvim-treesitter/nvim-treesitter", "L3MON4D3/LuaSnip" },
-        opts = {
-            tabkey = "<Tab>",
-            backwards_tabkey = "<S-Tab>",
-            act_as_tab = true,
-            act_as_shift_tab = true,
-            enable_backwards = true,
-            completion = false,
-            tabouts = {
-                { open = "'", close = "'" },
-                { open = '"', close = '"' },
-                { open = "`", close = "`" },
-                { open = "(", close = ")" },
-                { open = "[", close = "]" },
-                { open = "{", close = "}" },
-            },
-            ignore_beginning = true,
-            exclude = {},
-        },
     },
     {
         "williamboman/mason-lspconfig.nvim",

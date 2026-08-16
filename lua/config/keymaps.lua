@@ -21,7 +21,7 @@ vim.keymap.set("n", "<leader>j", function()
     local ok = pcall(vim.cmd.cnext)
     if not ok then
         -- OPTION: uncomment for wrapping
-        -- pcall(vim.cmd.cfirst) -- past the end -> wrap to first
+        pcall(vim.cmd.cfirst) -- past the end -> wrap to first
         vim.notify("End of quickfix list", vim.log.levels.INFO)
     end
 end, { noremap = true, silent = true, desc = "Next Quickfix Item" })
@@ -31,7 +31,7 @@ vim.keymap.set("n", "<leader>k", function()
     local ok = pcall(vim.cmd.cprev)
     if not ok then
         -- OPTION: uncomment for wrapping
-        -- pcall(vim.cmd.clast) -- before the start -> wrap to last
+        pcall(vim.cmd.clast) -- before the start -> wrap to last
         vim.notify("Start of quickfix list", vim.log.levels.INFO)
     end
 end, { noremap = true, silent = true, desc = "Previous Quickfix Item" })
