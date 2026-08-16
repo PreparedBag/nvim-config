@@ -30,9 +30,10 @@ local function wipe_all_buffers(on_done)
         return
     end
 
-    ui.select(
+    ui.dialog(
         #modified .. " buffer(s) have unsaved changes. Save before switching sessions?",
         { "Save all", "Discard", "Cancel" },
+        modified,
         function(choice)
             if choice == "Save all" then
                 vim.cmd("wall")
@@ -104,9 +105,10 @@ local function save_and_quit_confirmed()
         vim.cmd("qa")
         return
     end
-    ui.select(
+    ui.dialog(
         #modified .. " buffer(s) have unsaved changes",
         { "Save all and quit", "Quit without saving", "Cancel" },
+        modified,
         function(choice)
             if choice == "Save all and quit" then
                 vim.cmd("wqa")

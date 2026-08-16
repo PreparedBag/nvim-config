@@ -67,26 +67,47 @@ vim.keymap.set("n", "<leader>im", ":messages<CR>", { noremap = true, silent = tr
 
 -- quit current buffer without saving
 vim.keymap.set("n", "<leader>q", function()
-    if not vim.bo.modified then
-        vim.cmd("quit")
-        return
-    end
-
-    local utils = require('config.utils')
-
-    utils.select(
-        "Unsaved changes in this buffer",
-        { "Save and quit", "Quit without saving", "Cancel" },
-        function(choice)
-            if choice == "Save and quit" then
-                vim.cmd("write")
-                vim.cmd("quit")
-            elseif choice == "Quit without saving" then
-                vim.cmd("quit!")
+    local function next_unsaved()
+        local cur = vim.api.nvim_get_current_buf()
+        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+            if buf ~= cur
+                and vim.api.nvim_buf_is_valid(buf)
+                and vim.bo[buf].buflisted
+                and vim.bo[buf].modified then
+                return buf
             end
-            -- Cancel or dismiss (Esc): do nothing
         end
-    )
+        return nil
+    end
+    local function flow()
+        if vim.bo.modified then
+            require("config.utils").select(
+                "Unsaved changes in this buffer",
+                { "Save", "Discard changes", "Cancel" },
+                function(choice)
+                    if choice == "Save" then
+                        vim.cmd("write")
+                        flow()
+                    elseif choice == "Discard changes" then
+                        if vim.api.nvim_buf_get_name(0) ~= "" then
+                            vim.cmd("edit!")
+                        else
+                            vim.bo.modified = false
+                        end
+                        flow()
+                    end
+                end
+            )
+            return
+        end
+        local nxt = next_unsaved()
+        if nxt then
+            vim.api.nvim_set_current_buf(nxt)
+        else
+            vim.cmd("quit")
+        end
+    end
+    flow()
 end, { silent = true, desc = "Quit with Confirm" })
 
 -- buffers

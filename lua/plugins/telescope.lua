@@ -105,15 +105,15 @@ return {
                         override_file_sorter = true,
                         case_mode = "smart_case",
                     },
-                    ["ui-select"] = {
-                        require("telescope.themes").get_dropdown({
-                            initial_mode = "normal",
-                        }),
-                    },
+                    -- ["ui-select"] = {
+                    --     require("telescope.themes").get_dropdown({
+                    --         initial_mode = "normal",
+                    --     }),
+                    -- },
                 },
             })
 
-            telescope.load_extension("ui-select")
+            -- telescope.load_extension("ui-select")
             telescope.load_extension('fzf')
 
             local builtin = require('telescope.builtin')
@@ -265,7 +265,7 @@ return {
             end, { noremap = true, silent = true, desc = 'Open Nvim Config Folder' })
         end
     },
-    {
-        "nvim-telescope/telescope-ui-select.nvim",
-    }
+    -- {
+    --     "nvim-telescope/telescope-ui-select.nvim",
+    -- }
 }

@@ -15,7 +15,7 @@ function M.dialog(title, choices, items, on_choice)
     end
     fit(title)
     if has_preview then
-        fit("Selection")
+        fit("Selection(s)")
     end
     for _, c in ipairs(choices) do
         fit("  " .. c)
@@ -55,7 +55,7 @@ function M.dialog(title, choices, items, on_choice)
             col = col,
             style = "minimal",
             border = "rounded",
-            title = " Selection ",
+            title = " Selection(s) ",
             title_pos = "center",
             focusable = false,
         })

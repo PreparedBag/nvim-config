@@ -44,7 +44,7 @@ apply). Not covered further here.
 
 - **blink.cmp** - completion (LSP, snippets, path, buffer), enabled only in real code buffers with an LSP attached.
 - **LuaSnip** + **friendly-snippets** - snippet engine plus a prebuilt collection; custom snippets live in `snippets/`.
-- **telescope** (+ fzf, ui-select) - fuzzy finder for files, grep, buffers, and pickers.
+- **telescope** (+ fzf) - fuzzy finder for files, grep, and buffers.
 - **treesitter** - syntax highlighting, indentation, and folds.
 - **oil** - edit the filesystem like a normal buffer.
 - **harpoon** - pin and jump between a handful of key files.
