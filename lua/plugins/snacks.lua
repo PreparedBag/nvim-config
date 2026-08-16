@@ -61,7 +61,7 @@ return {
         image = { enabled = false },
         indent = { enabled = false },
         input = {
-            enabled = true,
+            enabled = false,
             win = {
                 keys = {
                     i_ctrl_k = { "<c-k>", { "hist_up" }, mode = { "i", "n" } },

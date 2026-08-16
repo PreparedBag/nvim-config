@@ -23,13 +23,14 @@ function M.on_colorscheme(fn)
     table.insert(callbacks, fn)
     pcall(fn)
 end
+
 vim.api.nvim_create_autocmd("ColorScheme", {
     group = vim.api.nvim_create_augroup("theme_utils", { clear = true }),
     callback = run_all,
 })
 M.on_colorscheme(function()
-    vim.api.nvim_set_hl(0, "NormalFloat", { link = "Normal", bg = "none" })
-    vim.api.nvim_set_hl(0, "FloatBorder", { link = "Normal", bg = "none" })
+    -- vim.api.nvim_set_hl(0, "NormalFloat", { link = "Normal", bg = "none" })
+    -- vim.api.nvim_set_hl(0, "FloatBorder", { link = "Normal", bg = "none" })
     vim.api.nvim_set_hl(0, "FloatTitle", {
         fg = M.theme_fg("Title"),
         bg = "none",

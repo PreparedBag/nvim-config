@@ -26,8 +26,7 @@ function M.dialog(title, choices, items, on_choice)
         end
     end
     width = math.min(width, math.floor(vim.o.columns * 0.8))
-    local block = (ch + 2) + (has_preview and (ph + 2) or 0)
-    local top = math.max(math.floor((vim.o.lines - block) / 2), 1)
+    local top = 1
     local col = math.floor((vim.o.columns - width) / 2)
     local choice_lines = {}
     for _, c in ipairs(choices) do
@@ -121,24 +120,44 @@ function M.dialog(title, choices, items, on_choice)
     vim.keymap.set("n", "<Esc>", close, opts)
     for i, c in ipairs(choices) do
         if c == "Yes" then
-            vim.keymap.set("n", "y", function() set(i); choose() end, opts)
+            vim.keymap.set("n", "y", function()
+                set(i); choose()
+            end, opts)
         elseif c == "No" then
-            vim.keymap.set("n", "n", function() set(i); choose() end, opts)
+            vim.keymap.set("n", "n", function()
+                set(i); choose()
+            end, opts)
         end
     end
 end
+
 function M.select(title, items, on_choice)
     M.dialog(title, items, nil, on_choice)
 end
+
 function M.confirm(msg, on_yes)
     M.dialog(msg, { "Yes", "No" }, nil, function(choice)
         if choice == "Yes" then on_yes() end
     end)
 end
+
 function M.confirm_dialog(title, items, on_yes)
     M.dialog(title, { "Yes", "No" }, items, function(choice)
         if choice == "Yes" then on_yes() end
     end)
+end
+
+function M.is_valid_lsp_buffer(bufnr)
+    bufnr = bufnr or vim.api.nvim_get_current_buf()
+    if vim.api.nvim_get_option_value("buftype", { buf = bufnr }) ~= "" then
+        return false
+    end
+    local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
+    local excluded = { "oil", "help", "qf", "netrw", "man", "lazy", "mason" }
+    for _, e in ipairs(excluded) do
+        if ft == e then return false end
+    end
+    return true
 end
 
 function M.get()

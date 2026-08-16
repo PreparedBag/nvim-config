@@ -1,3 +1,5 @@
+local utils = require("config.utils")
+
 return {
     {
         'saghen/blink.cmp',
@@ -114,32 +116,11 @@ return {
         dependencies = { "neovim/nvim-lspconfig" },
         config = function()
             -- ============================================================================
-            -- HELPER FUNCTIONS
-            -- ============================================================================
-
-            local function is_valid_lsp_buffer(bufnr)
-                local buftype = vim.api.nvim_get_option_value('buftype', { buf = bufnr })
-                local filetype = vim.api.nvim_get_option_value('filetype', { buf = bufnr })
-
-                if buftype ~= '' then return false end
-
-                local excluded_filetypes = {
-                    'oil', 'help', 'qf', 'netrw', 'man', 'lazy', 'mason',
-                }
-
-                for _, ft in ipairs(excluded_filetypes) do
-                    if filetype == ft then return false end
-                end
-
-                return true
-            end
-
-            -- ============================================================================
             -- LSP ON_ATTACH - BUFFER-LOCAL KEYMAPS
             -- ============================================================================
 
             local on_attach = function(client, bufnr)
-                if not is_valid_lsp_buffer(bufnr) then
+                if not utils.is_valid_lsp_buffer(bufnr) then
                     vim.lsp.buf_detach_client(bufnr, client.id)
                     return
                 end

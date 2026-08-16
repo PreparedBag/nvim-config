@@ -81,6 +81,7 @@ local function run(args, cwd, password, on_success)
         end)
     end)
 end
+
 local function run_auth(args, root, title, on_success)
     if not ASK_PASSWORD then
         run(args, root, nil, on_success)
@@ -585,7 +586,7 @@ local function tag_picker(root)
                     local args = { "tag", "-d" }
                     vim.list_extend(args, names)
                     run(args, root)
-                end, true)
+                end)
             end, { desc = "Delete Tag(s) local" })
             map("n", "o", function(bufnr)
                 local names = collect(bufnr, function(e) return e.value end)
@@ -602,7 +603,7 @@ local function tag_picker(root)
                         vim.list_extend(del, names)
                         capture(del, root)
                     end)
-                end, true)
+                end)
             end, { desc = "Delete Tag(s) origin + local" })
             return true
         end,
@@ -785,34 +786,6 @@ local function status_picker(root)
     }):find()
 end
 
-local function default_branch(root)
-    local out = capture({ "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD" }, root)
-    if out ~= "" then
-        return (out:gsub("^origin/", ""))
-    end
-    for _, name in ipairs({ "main", "master" }) do
-        local _, code = capture({ "show-ref", "--verify", "--quiet", "refs/heads/" .. name }, root)
-        if code == 0 then
-            return name
-        end
-    end
-    return nil
-end
-
-local function checkout_head(root)
-    local current = capture({ "branch", "--show-current" }, root)
-    if current ~= "" then
-        run({ "merge", "--ff-only", "@{u}" }, root)
-        return
-    end
-    local target = default_branch(root)
-    if not target then
-        notify("no default branch found", vim.log.levels.ERROR)
-        return
-    end
-    run({ "checkout", target }, root)
-end
-
 local function discard_file(root)
     local file = vim.fn.expand("%:p")
     if file == "" then
@@ -868,7 +841,6 @@ return {
             { "<leader>gt", git_guard(tag_picker),    desc = "Tags" },
             { "<leader>gr", git_guard(discard_file),  desc = "Restore Buffer from HEAD" },
             { "<leader>gx", git_guard(discard_all),   desc = "Restore All from HEAD" },
-            -- { "<leader>gi", git_guard(checkout_head), desc = "Checkout Tip" },
             {
                 "<leader>gp",
                 git_guard(function(root)
