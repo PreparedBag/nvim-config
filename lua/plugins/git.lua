@@ -868,7 +868,7 @@ return {
             { "<leader>gt", git_guard(tag_picker),    desc = "Tags" },
             { "<leader>gr", git_guard(discard_file),  desc = "Restore Buffer from HEAD" },
             { "<leader>gx", git_guard(discard_all),   desc = "Restore All from HEAD" },
-            { "<leader>gi", git_guard(checkout_head), desc = "Checkout Tip" },
+            -- { "<leader>gi", git_guard(checkout_head), desc = "Checkout Tip" },
             {
                 "<leader>gp",
                 git_guard(function(root)
