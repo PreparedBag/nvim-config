@@ -104,7 +104,7 @@ return {
                 end,
 
                 display = function(list_item)
-                    return require("config.utils").relative_path(_G.session_directory, list_item.value)
+                    return require("config.project").relative_path(_G.session_directory, list_item.value)
                 end,
 
                 BufLeave = function(arg, list)

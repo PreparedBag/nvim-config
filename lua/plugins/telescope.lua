@@ -29,7 +29,7 @@ return {
             -- search directories (e.g. a sibling ../shared library outside cwd).
             -- Returns nil (telescope's own default: just cwd) if the file isn't there.
             local function project_search_dirs()
-                local extra = require('config.utils').section('telescope')
+                local extra = require('config.project').section('telescope')
                 if not extra or type(extra.extra_dirs) ~= 'table' then
                     return nil
                 end
@@ -63,7 +63,7 @@ return {
             end
 
             local function relative_path_display(opts, path)
-                return require("config.utils").relative_path(opts.cwd or vim.uv.cwd(), path)
+                return require("config.project").relative_path(opts.cwd or vim.uv.cwd(), path)
             end
 
             local shared = {

@@ -81,6 +81,7 @@ local function switch_session(load_fn)
     wipe_all_buffers(function()
         load_fn()
         _G.session_directory = vim.fn.getcwd()
+        require("config.project").load_commands()
     end)
 end
 

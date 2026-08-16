@@ -58,7 +58,7 @@ return {
                 return
             end
 
-            local project_dap = require('config.utils').section('dap')
+            local project_dap = require('config.project').section('dap')
             local available = project_dap or presets
 
             local names = vim.tbl_keys(available)
@@ -69,7 +69,7 @@ return {
                 return
             end
 
-            local utils = require('config.utils')
+            local utils = require('config.project')
 
             utils.select("Debug Target: ", names, function(choice)
                 if not choice then return end

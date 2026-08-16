@@ -14,8 +14,8 @@ return {
                 if vim.bo[ev.buf].buftype ~= "" then
                     return
                 end
-                vim.keymap.set("n", "<leader>cp", "<cmd>CccPick<cr>", { noremap = true, silent = true, desc = "Picker" })
-                vim.keymap.set("n", "<leader>cc", "<cmd>CccConvert<cr>", { noremap = true, silent = true, desc = "Convert Format" })
+                vim.keymap.set("n", "<leader>ms", "<cmd>CccPick<cr>", { noremap = true, silent = true, desc = "Color Select" })
+                vim.keymap.set("n", "<leader>mc", "<cmd>CccConvert<cr>", { noremap = true, silent = true, desc = "Convert Color Format" })
             end,
         })
     end,

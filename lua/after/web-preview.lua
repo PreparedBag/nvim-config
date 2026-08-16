@@ -28,7 +28,7 @@ local function open_browser(url, delay)
 end
 
 vim.api.nvim_create_autocmd("FileType", {
-    pattern = { "html", "css", "javascript" },
+    pattern = { "html" },
     callback = function(ev)
         vim.keymap.set('n', '<leader>mh', function()
             local file = vim.fn.expand('%:p')
