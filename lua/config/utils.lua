@@ -7,10 +7,10 @@ function M.dialog(title, choices, items, on_choice)
     if has_preview then
         ph = math.min(#items, math.floor(vim.o.lines * 0.6))
     end
-    local width = 80
+    local width = 65
     local function fit(s)
-        if s and #s + 4 > width then
-            width = #s + 4
+        if s and #s + 8 > width then
+            width = #s + 8
         end
     end
     fit(title)
