@@ -144,8 +144,16 @@ return {
                     function() require("telescope.builtin").lsp_type_definitions({ initial_mode = "normal" }) end,
                     "Go to Type Definition")
 
-                map("n", "<leader>lq", function() vim.diagnostic.setqflist({ open = false }) end,
-                    "Buffer Diagnostics to Quickfix");
+                map("n", "<leader>lq", function()
+                    local items = vim.diagnostic.toqflist(vim.diagnostic.get(0))
+                    for _, it in ipairs(items) do
+                        it.text = (it.text or ""):gsub("%s*\n%s*", " ")
+                    end
+                    local name = vim.fn.expand("%:t")
+                    if name == "" then name = "[No Name]" end
+                    vim.fn.setqflist({}, " ", { title = "Diagnostics: " .. name, items = items })
+                end, "Buffer Diagnostics to Quickfix")
+
                 map("n", "<leader>ld",
                     function() require("telescope.builtin").diagnostics({ initial_mode = "normal" }) end,
                     "Project Diagnostics")

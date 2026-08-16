@@ -27,6 +27,18 @@ return {
         dependencies = { "nvim-treesitter/nvim-treesitter" },
         event = { "BufReadPost", "BufNewFile" },
         config = function()
+            local ts_move = require("nvim-treesitter.textobjects.move")
+
+            vim.keymap.set({ "n", "x", "o" }, "]f", function()
+                ts_move.goto_next_start("@function.outer", "textobjects")
+                vim.cmd("normal! zz")
+            end, { silent = true, desc = "Next method (centered)" })
+
+            vim.keymap.set({ "n", "x", "o" }, "[f", function()
+                ts_move.goto_previous_start("@function.outer", "textobjects")
+                vim.cmd("normal! zz")
+            end, { silent = true, desc = "Prev method (centered)" })
+
             require("nvim-treesitter.configs").setup({
                 textobjects = {
                     select = {
@@ -47,11 +59,11 @@ return {
                         enable = true,
                         set_jumps = true,
                         goto_next_start = {
-                            ["]f"] = "@function.outer",
+                            -- ["]f"] = "@function.outer",
                             ["]c"] = "@class.outer",
                         },
                         goto_previous_start = {
-                            ["[f"] = "@function.outer",
+                            -- ["[f"] = "@function.outer",
                             ["[c"] = "@class.outer",
                         },
                     },

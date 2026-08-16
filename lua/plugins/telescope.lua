@@ -67,18 +67,18 @@ return {
             end
 
             local shared = {
-                ["<C-y>"] = { actions.smart_send_to_qflist, type = "action", opts = { desc = "Send to quickfix" } },
+                ["<C-y>"] = { actions.smart_send_to_qflist, type = "action", opts = { desc = "send_to_quickfix" } },
                 ["<C-l>"] = false, -- Disable default C-l since we use it for move right
             }
 
             local insert_mappings = vim.tbl_extend("force", {}, shared, {
-                ["<C-j>"] = { actions.move_selection_next, type = "action", opts = { desc = "Next result" } },
-                ["<C-k>"] = { actions.move_selection_previous, type = "action", opts = { desc = "Previous result" } },
+                ["<C-j>"] = { actions.move_selection_next, type = "action", opts = { desc = "next_result" } },
+                ["<C-k>"] = { actions.move_selection_previous, type = "action", opts = { desc = "previous_result" } },
             })
 
             local normal_mappings = vim.tbl_extend("force", {}, shared, {
-                ["<C-j>"] = { page_results(1, 0.5), type = "action", opts = { desc = "Results: half-page down" } },
-                ["<C-k>"] = { page_results(-1, 0.5), type = "action", opts = { desc = "Results: half-page up" } },
+                ["<C-j>"] = { page_results(1, 0.5), type = "action", opts = { desc = "results_half_page_down" } },
+                ["<C-k>"] = { page_results(-1, 0.5), type = "action", opts = { desc = "results_half_page_up" } },
             })
 
             -- Telescope setup
@@ -239,6 +239,7 @@ return {
                 require("telescope.builtin").quickfixhistory({
                     initial_mode = "normal",
                     attach_mappings = function(_, map)
+                        map({ "i", "n" }, "<C-q>", function() end, { desc = "disabled" })
                         action_set.select:replace(function(prompt_bufnr)
                             local nr = action_state.get_selected_entry().nr
                             actions.close(prompt_bufnr)
