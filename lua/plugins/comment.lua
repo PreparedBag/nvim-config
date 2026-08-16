@@ -1,6 +1,7 @@
 return {
     {
         'numToStr/Comment.nvim',
+        enabled = require("config.flags").get("LSP_ENABLED"),
         keys = {
             { "gcc",        mode = "n", desc = "Comment Line" },
             { "gbc",        mode = "n", desc = "Block Comment Line" },
@@ -17,6 +18,7 @@ return {
     },
     {
         "folke/todo-comments.nvim",
+        enabled = require("config.flags").get("LSP_ENABLED"),
         dependencies = { "nvim-lua/plenary.nvim" },
         event = { "BufReadPost", "BufNewFile" },
         keys = {
@@ -52,6 +54,7 @@ return {
     },
     {
         "danymat/neogen",
+        enabled = require("config.flags").get("LSP_ENABLED"),
         dependencies = "nvim-treesitter/nvim-treesitter",
         keys = {
             {
