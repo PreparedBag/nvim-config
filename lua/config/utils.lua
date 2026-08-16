@@ -147,17 +147,4 @@ function M.confirm_dialog(title, items, on_yes)
     end)
 end
 
-function M.is_valid_lsp_buffer(bufnr)
-    bufnr = bufnr or vim.api.nvim_get_current_buf()
-    if vim.api.nvim_get_option_value("buftype", { buf = bufnr }) ~= "" then
-        return false
-    end
-    local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
-    local excluded = { "oil", "help", "qf", "netrw", "man", "lazy", "mason" }
-    for _, e in ipairs(excluded) do
-        if ft == e then return false end
-    end
-    return true
-end
-
 return M

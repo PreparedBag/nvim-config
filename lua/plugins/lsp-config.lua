@@ -1,5 +1,3 @@
-local utils = require("config.utils")
-
 local tabout_on = true
 
 local function raw(keys)
@@ -152,11 +150,28 @@ return {
         dependencies = { "neovim/nvim-lspconfig" },
         config = function()
             -- ============================================================================
+            -- LOCAL HELPERS
+            -- ============================================================================
+
+            local is_valid_lsp_buffer = function(bufnr)
+                bufnr = bufnr or vim.api.nvim_get_current_buf()
+                if vim.api.nvim_get_option_value("buftype", { buf = bufnr }) ~= "" then
+                    return false
+                end
+                local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
+                local excluded = { "oil", "help", "qf", "netrw", "man", "lazy", "mason" }
+                for _, e in ipairs(excluded) do
+                    if ft == e then return false end
+                end
+                return true
+            end
+
+            -- ============================================================================
             -- LSP ON_ATTACH - BUFFER-LOCAL KEYMAPS
             -- ============================================================================
 
             local on_attach = function(client, bufnr)
-                if not utils.is_valid_lsp_buffer(bufnr) then
+                if not is_valid_lsp_buffer(bufnr) then
                     vim.lsp.buf_detach_client(bufnr, client.id)
                     return
                 end
