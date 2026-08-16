@@ -75,7 +75,7 @@ vim.keymap.set("n", "<leader>q", function()
     local utils = require('config.utils')
 
     utils.select(
-        "Unsaved changes in this buffer:",
+        "Unsaved changes in this buffer",
         { "Save and quit", "Quit without saving", "Cancel" },
         function(choice)
             if choice == "Save and quit" then

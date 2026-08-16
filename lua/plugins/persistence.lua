@@ -105,7 +105,7 @@ local function save_and_quit_confirmed()
         return
     end
     ui.select(
-        #modified .. " buffer(s) have unsaved changes:",
+        #modified .. " buffer(s) have unsaved changes",
         { "Save all and quit", "Quit without saving", "Cancel" },
         function(choice)
             if choice == "Save all and quit" then

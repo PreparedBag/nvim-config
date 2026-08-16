@@ -166,7 +166,7 @@ function M.open()
     end
 
     local win = Snacks.win({
-        title = " Flags ",
+        title = " Feature Flags ",
         title_pos = "center",
         border = "rounded",
         width = 44,

@@ -830,7 +830,7 @@ end
 
 local function discard_all(root)
     utils.select(
-        "Restore repo from HEAD:",
+        " Restore repo from HEAD ",
         { "Discard all tracked changes", "Discard tracked changes + remove untracked files", "Cancel" },
         function(choice)
             if choice == "Discard all tracked changes" then
