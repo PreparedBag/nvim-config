@@ -57,7 +57,7 @@ vim.keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<cr>",
 vim.keymap.set("n", "<leader>we", "<C-w>=", { noremap = true, silent = true, desc = "Equalize All" })
 
 -- copy/paste
-vim.keymap.set("x", "<leader>p", [["_dP]], { noremap = true, silent = true, desc = "Paste Without Yank" }) 
+vim.keymap.set("x", "<leader>p", [["_dP]], { noremap = true, silent = true, desc = "Paste Without Yank" })
 vim.keymap.set("x", "<leader>y", [["+y]], { noremap = true, silent = true, desc = "Yank to Clipboard" })
 -- vim.keymap.set("n", "<leader>Y", [["+Y]], { noremap = true, silent = true, desc = "Yank Line to Clipboard" })
 vim.keymap.set("n", "<leader>is", ":NoiceSnacks<CR><ESC>", { noremap = true, silent = true, desc = "Open Noice Snacks" })
