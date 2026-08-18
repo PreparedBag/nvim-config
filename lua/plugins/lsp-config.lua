@@ -4,11 +4,6 @@ local function raw(keys)
     return vim.api.nvim_replace_termcodes(keys, true, false, true)
 end
 
-local function in_comment()
-    local ok, node = pcall(vim.treesitter.get_node)
-    return ok and node and vim.tbl_contains({ 'comment', 'line_comment', 'block_comment' }, node:type())
-end
-
 return {
     {
         "abecodes/tabout.nvim",
