@@ -52,30 +52,4 @@ return {
             })
         end,
     },
-    {
-        "danymat/neogen",
-        enabled = require("config.flags").get("LSP_ENABLED"),
-        dependencies = "nvim-treesitter/nvim-treesitter",
-        keys = {
-            {
-                "<leader>lg",
-                function() require("neogen").generate() end,
-                desc = "Generate Doc Comment",
-            },
-        },
-        opts = {
-            snippet_engine = "nvim",
-            languages = {
-                c          = { template = { annotation_convention = "doxygen" } },
-                cpp        = { template = { annotation_convention = "doxygen" } },
-                java       = { template = { annotation_convention = "javadoc" } },
-                python     = { template = { annotation_convention = "google_docstrings" } },
-                javascript = { template = { annotation_convention = "jsdoc" } },
-                typescript = { template = { annotation_convention = "tsdoc" } },
-                lua        = { template = { annotation_convention = "emmylua" } },
-                rust       = { template = { annotation_convention = "rustdoc" } },
-                go         = { template = { annotation_convention = "godoc" } },
-            },
-        },
-    },
 }

@@ -88,7 +88,7 @@ return {
             enabled = true,
         },
         picker = {
-            enabled = false,
+            enabled = true,
             ui_select = true,
             win = {
                 keys = {

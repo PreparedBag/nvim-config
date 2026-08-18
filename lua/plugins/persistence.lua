@@ -62,7 +62,8 @@ local function clean_for_session()
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         if vim.api.nvim_buf_is_valid(buf) then
             local drop
-            if is_dap_buf(buf) or vim.bo[buf].filetype == "oil" then
+            if is_dap_buf(buf) then
+            -- if is_dap_buf(buf) or vim.bo[buf].filetype == "oil" then
                 drop = true
             elseif not visible[buf] then
                 drop = not vim.bo[buf].modified -- wipe hidden, but never lose unsaved work

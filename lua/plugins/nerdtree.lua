@@ -3,7 +3,7 @@ return {
     -- OPTION: enable/disable nerdtree
     enabled = true,
     init = function()
-        vim.g.NERDTreeQuitOnOpen = false
+        vim.g.NERDTreeQuitOnOpen = true
         vim.g.NERDTreeMinimalUI = true
 
         vim.cmd([[
@@ -22,7 +22,7 @@ return {
     end,
     keys = {
         {
-            '<leader>e',
+            '<leader>tn',
             function()
                 if vim.bo.filetype == 'nerdtree' then
                     vim.cmd('wincmd p')
@@ -32,6 +32,6 @@ return {
             end,
             desc = 'Toggle NERDTree Focus',
         },
-        { '<leader>tn', ':NERDTreeToggle<CR>', desc = 'Toggle NERDTree' },
+        { '<leader>e', ':NERDTreeToggle<CR>', desc = 'Toggle NERDTree' },
     },
 }

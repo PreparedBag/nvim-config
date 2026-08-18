@@ -4,6 +4,11 @@ local function raw(keys)
     return vim.api.nvim_replace_termcodes(keys, true, false, true)
 end
 
+local function in_comment()
+    local ok, node = pcall(vim.treesitter.get_node)
+    return ok and node and vim.tbl_contains({ 'comment', 'line_comment', 'block_comment' }, node:type())
+end
+
 return {
     {
         "abecodes/tabout.nvim",
@@ -35,7 +40,8 @@ return {
         version = '1.*',
         keys = {
             {
-                "<leader>to",
+                "<leader>lo",
+
                 function()
                     tabout_on = not tabout_on
                     vim.notify("Tabout " .. (tabout_on and "enabled" or "disabled"), vim.log.levels.INFO)
@@ -54,6 +60,21 @@ return {
                 ['<C-e>'] = { 'hide', 'fallback' },
                 ['<C-y>'] = { 'accept', 'fallback' },
                 ['<Tab>'] = {
+                    function()
+                        local ok, neogen = pcall(require, "neogen")
+                        if ok and neogen.jumpable() then
+                            neogen.jump_next()
+                            return true
+                        end
+                        return false
+                    end,
+                    function()
+                        if vim.snippet.active({ direction = 1 }) then
+                            vim.snippet.jump(1)
+                            return true
+                        end
+                        return false
+                    end,
                     'snippet_forward',
                     function()
                         if not tabout_on then
@@ -65,6 +86,21 @@ return {
                     'fallback',
                 },
                 ['<S-Tab>'] = {
+                    function()
+                        local ok, neogen = pcall(require, "neogen")
+                        if ok and neogen.jumpable(true) then
+                            neogen.jump_prev()
+                            return true
+                        end
+                        return false
+                    end,
+                    function()
+                        if vim.snippet.active({ direction = -1 }) then
+                            vim.snippet.jump(-1)
+                            return true
+                        end
+                        return false
+                    end,
                     'snippet_backward',
                     function()
                         if not tabout_on then
@@ -85,11 +121,16 @@ return {
             },
             sources = {
                 default = function(ctx)
+                    local ok, node = pcall(vim.treesitter.get_node)
+                    if ok and node and vim.tbl_contains({ 'comment', 'line_comment', 'block_comment' }, node:type()) then
+                        return {}
+                    end
+
                     local bufnr = ctx and ctx.bufnr or vim.api.nvim_get_current_buf()
                     if #vim.lsp.get_clients({ bufnr = bufnr }) > 0 then
-                        return { 'lsp', 'path', 'snippets', 'buffer' }
+                        return { 'lsp', 'path', 'buffer' }
                     end
-                    return { 'path', 'snippets', 'buffer' }
+                    return { 'path', 'buffer' }
                 end,
             },
             fuzzy = {
@@ -97,6 +138,32 @@ return {
             }
         },
         opts_extend = { "sources.default" }
+    },
+    {
+        "danymat/neogen",
+        enabled = require("config.flags").get("LSP_ENABLED"),
+        dependencies = "nvim-treesitter/nvim-treesitter",
+        keys = {
+            {
+                "<leader>lg",
+                function() require("neogen").generate() end,
+                desc = "Generate Doc Comment",
+            },
+        },
+        opts = {
+            snippet_engine = "luasnip",
+            languages = {
+                c          = { template = { annotation_convention = "doxygen" } },
+                cpp        = { template = { annotation_convention = "doxygen" } },
+                java       = { template = { annotation_convention = "javadoc" } },
+                python     = { template = { annotation_convention = "google_docstrings" } },
+                javascript = { template = { annotation_convention = "jsdoc" } },
+                typescript = { template = { annotation_convention = "tsdoc" } },
+                lua        = { template = { annotation_convention = "emmylua" } },
+                rust       = { template = { annotation_convention = "rustdoc" } },
+                go         = { template = { annotation_convention = "godoc" } },
+            },
+        },
     },
     {
         "Wansmer/treesj",

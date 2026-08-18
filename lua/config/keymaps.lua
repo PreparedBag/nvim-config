@@ -173,8 +173,8 @@ vim.keymap.set('n', '<leader>br', function()
 end, { noremap = true, silent = true, desc = 'Reload Buffer from File' })
 
 vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { noremap = true, silent = true, desc = "Make File Executable" })
-vim.keymap.set('v', '<Tab>', '>gv', { noremap = true, silent = true, desc = "Indent Right" })
-vim.keymap.set('v', '<S-Tab>', '<gv', { noremap = true, silent = true, desc = "Indent Left" })
+vim.keymap.set('v', '>', '>gv', { noremap = true, silent = true, desc = "Indent Right" })
+vim.keymap.set('v', '<', '<gv', { noremap = true, silent = true, desc = "Indent Left" })
 vim.keymap.set('i', 'jk', '<Esc>', { noremap = true, silent = true, desc = "ESC" })
 
 -- folding
