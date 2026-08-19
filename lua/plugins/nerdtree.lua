@@ -22,7 +22,7 @@ return {
     end,
     keys = {
         {
-            '<leader>tn',
+            '<leader>tN',
             function()
                 if vim.bo.filetype == 'nerdtree' then
                     vim.cmd('wincmd p')
@@ -32,6 +32,6 @@ return {
             end,
             desc = 'Toggle NERDTree Focus',
         },
-        { '<leader>e', ':NERDTreeToggle<CR>', desc = 'Toggle NERDTree' },
+        { '<leader>tn', ':NERDTreeToggle<CR>', desc = 'Toggle NERDTree' },
     },
 }

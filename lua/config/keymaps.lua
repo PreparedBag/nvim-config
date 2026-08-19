@@ -177,27 +177,8 @@ vim.keymap.set('v', '>', '>gv', { noremap = true, silent = true, desc = "Indent 
 vim.keymap.set('v', '<', '<gv', { noremap = true, silent = true, desc = "Indent Left" })
 vim.keymap.set('i', 'jk', '<Esc>', { noremap = true, silent = true, desc = "ESC" })
 
--- folding
-vim.keymap.set("n", "zt", function()
-    vim.opt.foldenable = not vim.opt.foldenable:get()
-    vim.notify("Folding " .. (vim.opt.foldenable:get() and "enabled" or "disabled"))
-end, { noremap = true, silent = true, desc = "Toggle Enable" })
+vim.keymap.set("n", "<leader>e", "zA", { silent = true, desc = "Toggle Fold Under Cursor" })
 
-vim.keymap.set("n", "ze", function()
-    vim.opt.foldenable = true
-    vim.cmd("normal! zR")
-end, { noremap = true, silent = true, desc = "Expand All" })
-
-vim.keymap.set("n", "zc", function()
-    vim.opt.foldenable = true
-    vim.cmd("normal! zM")
-end, { noremap = true, silent = true, desc = "Collapse All" })
-
-vim.keymap.set("n", "zj", function()
-    vim.opt.foldenable = true
-    if vim.wo.foldlevel > 0 then
-        vim.cmd("normal! zM")
-    else
-        vim.cmd("normal! zR")
-    end
-end, { noremap = true, silent = true, desc = "Toggle All" })
+vim.keymap.set("n", "<leader>?", function()
+    require("which-key").show({ global = true })
+end, { desc = "Show all keymaps" })

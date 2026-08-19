@@ -15,9 +15,11 @@ return {
             triggers = {
                 { "<leader>", mode = { "n", "v" } },
                 { "g",        mode = "n" },
-                -- { "y", mode = "n" },
-                -- { "d", mode = "n" },
-                -- { c", mode = "n" },"
+                { "z",        mode = "n" },
+                { "m",        mode = "n" },
+                -- { "y",        mode = "n" },
+                -- { "d",        mode = "n" },
+                -- { "c",        mode = "n" },
             },
         })
 
