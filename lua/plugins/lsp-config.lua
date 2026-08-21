@@ -413,137 +413,131 @@ return {
             -- LSP SERVER SETUP
             -- ============================================================================
 
-            local capabilities = vim.lsp.protocol.make_client_capabilities()
+            local flags = require("config.flags")
 
-            -- Integrate blink.cmp capabilities if available
+            local capabilities = vim.lsp.protocol.make_client_capabilities()
             pcall(function()
-                capabilities = require('blink.cmp').get_lsp_capabilities(capabilities)
+                capabilities = require("blink.cmp").get_lsp_capabilities(capabilities)
             end)
 
-            -- vim.lsp.config.jdtls = {
-            --     cmd = { 'jdtls' },
-            --     filetypes = { 'java' },
-            --     root_markers = {
-            --         '.git', 'pom.xml', 'build.gradle',
-            --         'build.gradle.kts', 'settings.gradle',
-            --     },
-            --     on_attach = on_attach,
-            --     capabilities = capabilities,
-            -- }
-
-            vim.lsp.config.clangd = {
-                -- OPTION: dropped --clang-tidy to reduce CPU load. add back in if needed.
-                cmd = { 'clangd', '--background-index', '-j=4', "--query-driver=/usr/bin/arm-none-eabi-*" },
-                filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda' },
-                root_markers = { '.git', 'compile_commands.json' },
-                on_attach = on_attach,
-                capabilities = capabilities,
-            }
-
-            vim.lsp.config.pyright = {
-                cmd = { 'pyright-langserver', '--stdio' },
-                filetypes = { 'python' },
-                -- HACK: webui.py and setup.py used for project specific markers.
-                root_markers = { '.git', 'pyproject.toml', 'setup.py', 'webui.py', 'main.py', 'index.py' },
-                on_attach = on_attach,
-                capabilities = capabilities,
-            }
-
-            vim.lsp.config.lua_ls = {
-                cmd = { vim.fn.stdpath('data') .. '/mason/bin/lua-language-server' },
-                filetypes = { 'lua' },
-                root_markers = { '.luarc.json', '.git' },
-                on_attach = on_attach,
-                capabilities = capabilities,
-                settings = {
-                    Lua = {
-                        runtime = { version = 'LuaJIT' },
-                        diagnostics = { globals = { 'vim' } },
-                        workspace = {
-                            library = {
-                                vim.env.VIMRUNTIME .. '/lua',
+            -- Each key is a flag suffix under LSP_ENABLED_ and, lowercased, is
+            -- also the lsp.config key and mason-lspconfig package name
+            -- (CLANGD -> clangd, LUA_LS -> lua_ls, ...). Toggle these in the
+            -- <leader>M "LSP_ENABLED" submenu. on_attach + capabilities are
+            -- shared, injected in the loop below.
+            local servers = {
+                CLANGD = {
+                    -- OPTION: dropped --clang-tidy to reduce CPU load. add back in if needed.
+                    cmd = { "clangd", "--background-index", "-j=4", "--query-driver=/usr/bin/arm-none-eabi-*" },
+                    filetypes = { "c", "cpp", "objc", "objcpp", "cuda" },
+                    root_markers = { ".git", "compile_commands.json" },
+                },
+                PYRIGHT = {
+                    cmd = { "pyright-langserver", "--stdio" },
+                    filetypes = { "python" },
+                    -- HACK: webui.py and setup.py used for project specific markers.
+                    root_markers = { ".git", "pyproject.toml", "setup.py", "webui.py", "main.py", "index.py" },
+                },
+                LUA_LS = {
+                    cmd = { vim.fn.stdpath("data") .. "/mason/bin/lua-language-server" },
+                    filetypes = { "lua" },
+                    root_markers = { ".luarc.json", ".git" },
+                    settings = {
+                        Lua = {
+                            runtime = { version = "LuaJIT" },
+                            diagnostics = { globals = { "vim" } },
+                            workspace = {
+                                library = { vim.env.VIMRUNTIME .. "/lua" },
+                                checkThirdParty = false,
                             },
-                            checkThirdParty = false,
-                        },
-                        telemetry = { enable = false },
-                    },
-                },
-            }
-
-            vim.lsp.config.ts_ls = {
-                cmd = { 'typescript-language-server', '--stdio' },
-                filetypes = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
-                root_markers = { '.git', 'package.json' },
-                on_attach = on_attach,
-                capabilities = capabilities,
-            }
-
-            vim.lsp.config.html = {
-                cmd = { "vscode-html-language-server", "--stdio" },
-                filetypes = { "html" },
-                root_markers = { ".git" },
-                on_attach = on_attach,
-                capabilities = capabilities,
-                settings = {
-                    css  = { validate = false },
-                    less = { validate = false },
-                    scss = { validate = false },
-                    html = {
-                        format = {
-                            wrapLineLength = 0, -- disable wrapping/reflow
-                            unformatted = "",
-                            contentUnformatted = "",
+                            telemetry = { enable = false },
                         },
                     },
                 },
-            }
-
-            vim.lsp.config.cssls = {
-                cmd = { 'vscode-css-language-server', '--stdio' },
-                filetypes = { 'css', 'scss', 'less' },
-                root_markers = { '.git' },
-                on_attach = on_attach,
-                capabilities = capabilities,
-            }
-
-            vim.lsp.config.gopls = {
-                cmd = { 'gopls' },
-                filetypes = { 'go', 'gomod', 'gowork', 'gotmpl' },
-                root_markers = { 'go.mod', '.git', 'go.work' },
-                on_attach = on_attach,
-                capabilities = capabilities,
-                settings = {
-                    gopls = {
-                        analyses = {
-                            unusedparams = true,
-                            shadow = true,
+                TS_LS = {
+                    cmd = { "typescript-language-server", "--stdio" },
+                    filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
+                    root_markers = { ".git", "package.json" },
+                },
+                HTML = {
+                    cmd = { "vscode-html-language-server", "--stdio" },
+                    filetypes = { "html" },
+                    root_markers = { ".git" },
+                    settings = {
+                        css  = { validate = false },
+                        less = { validate = false },
+                        scss = { validate = false },
+                        html = {
+                            format = {
+                                wrapLineLength = 0, -- disable wrapping/reflow
+                                unformatted = "",
+                                contentUnformatted = "",
+                            },
                         },
-                        staticcheck = true,
+                    },
+                },
+                CSSLS = {
+                    cmd = { "vscode-css-language-server", "--stdio" },
+                    filetypes = { "css", "scss", "less" },
+                    root_markers = { ".git" },
+                },
+                JDTLS = {
+                    cmd = { "jdtls" },
+                    filetypes = { "java" },
+                    root_markers = {
+                        ".git", "pom.xml", "build.gradle",
+                        "build.gradle.kts", "settings.gradle",
+                    },
+                },
+                GOPLS = {
+                    cmd = { "gopls" },
+                    filetypes = { "go", "gomod", "gowork", "gotmpl" },
+                    root_markers = { "go.mod", ".git", "go.work" },
+                    settings = {
+                        gopls = {
+                            analyses = { unusedparams = true, shadow = true },
+                            staticcheck = true,
+                        },
+                    },
+                },
+                RUST = {
+                    cmd = { "rust-analyzer" },
+                    filetypes = { "rust" },
+                    root_markers = { ".git", "Cargo.toml", "Cargo.lock" },
+                    settings = {
+                        ["rust-analyzer"] = {
+                            cargo = { allFeatures = true },
+                            checkOnSave = { command = "clippy" },
+                        },
                     },
                 },
             }
-            vim.lsp.config.rust_analyzer = {
-                cmd = { 'rust-analyzer' },
-                filetypes = { 'rust' },
-                root_markers = { '.git', 'Cargo.toml', 'Cargo.lock' },
-                on_attach = on_attach,
-                capabilities = capabilities,
-                settings = {
-                    ['rust-analyzer'] = {
-                        cargo = { allFeatures = true },
-                        checkOnSave = { command = 'clippy' },
-                    },
-                },
-            }
+
+            -- Register + collect every server whose submenu flag is on.
+            local install_list = {}
+            local enabled = {}
+            for suffix, config in pairs(servers) do
+                if flags.get("LSP_ENABLED_" .. suffix) then
+                    local name = suffix:lower()
+                    config.on_attach = on_attach
+                    config.capabilities = capabilities
+                    vim.lsp.config[name] = config
+                    table.insert(install_list, name)
+                    enabled[name] = true
+                end
+            end
 
             require("mason-lspconfig").setup({
-                -- OPTION: gopls, rust_analyzer installed manually via :MasonInstall when needed
-                ensure_installed = { "clangd", "pyright", "lua_ls", "ts_ls", "html", "cssls" },
+                ensure_installed = install_list,
                 handlers = {
                     function(server_name)
-                        vim.lsp.enable(server_name)
+                        -- only enable servers whose flag is on, even if an old
+                        -- one is still installed on disk from a previous toggle
+                        if enabled[server_name] then
+                            vim.lsp.enable(server_name)
+                        end
                     end,
-                }
+                },
             })
         end
     }
