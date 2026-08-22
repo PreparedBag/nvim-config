@@ -366,6 +366,66 @@ local function log_picker(root, ref)
     }):find()
 end
 
+local function file_history_picker(root, path)
+    local pickers = require("telescope.pickers")
+    local finders = require("telescope.finders")
+    local conf = require("telescope.config").values
+    local actions = require("telescope.actions")
+    local state = require("telescope.actions.state")
+    local previewers = require("telescope.previewers")
+
+    local display_path = vim.fn.fnamemodify(path, ":.")
+
+    local git_command = { "git", "log", "--all", LOG_PRETTY, "--decorate=short", "--abbrev-commit",
+    "--max-count=" .. LOG_LIMIT, "--", path }
+
+    local file_diff_previewer = previewers.new_buffer_previewer({
+        title = "Diff: " .. display_path,
+        define_preview = function(self, entry)
+            local buf = self.state.bufnr
+            vim.system({ "git", "show", entry.value, "--", path }, { text = true, cwd = root }, function(res)
+                local lines = vim.split(res.stdout or "", "\n", { plain = true })
+                vim.schedule(function()
+                    if vim.api.nvim_buf_is_valid(buf) then
+                        vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+                        vim.bo[buf].filetype = "diff"
+                    end
+                end)
+            end)
+        end,
+    })
+
+    pickers.new({
+        initial_mode = "normal",
+        prompt_title = "History: " .. display_path,
+    }, {
+        finder = finders.new_oneshot_job(git_command, { cwd = root, entry_maker = log_entry }),
+        sorter = conf.generic_sorter({}),
+        previewer = file_diff_previewer,
+        attach_mappings = function(_, map)
+            actions.select_default:replace(function(bufnr)
+                local entry = state.get_selected_entry()
+                actions.close(bufnr)
+                if not entry then return end
+                ask("Checkout this version of '" .. path .. "' from " .. entry.value .. "?", function()
+                    run({ "restore", "--source=" .. entry.value, "--staged", "--worktree", "--", path }, root)
+                    vim.schedule(function() vim.cmd("checktime") end)
+                end, true)
+            end)
+            return true
+        end,
+    }):find()
+end
+
+local function file_history(root)
+    local file = vim.fn.expand("%:p")
+    if file == "" then
+        notify("no file in this buffer", vim.log.levels.ERROR)
+        return
+    end
+    file_history_picker(root, file)
+end
+
 local function branch_picker(root)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -786,6 +846,58 @@ local function status_picker(root)
     }):find()
 end
 
+local function rebase_push(root)
+    local branch = capture({ "branch", "--show-current" }, root)
+    if branch == "" then
+        notify("not on a branch (detached HEAD)", vim.log.levels.ERROR)
+        return
+    end
+
+    local rebase_res = vim.system({ "git", "rebase", "origin/" .. branch }, { text = true, cwd = root }):wait()
+
+    if rebase_res.code ~= 0 then
+        notify(
+            "Rebase failed - resolve conflicts manually, then run this again.\n"
+            .. (rebase_res.stderr ~= "" and rebase_res.stderr or rebase_res.stdout),
+            vim.log.levels.ERROR
+        )
+        vim.cmd("checktime")
+        return
+    end
+
+    vim.cmd("checktime")
+    run_auth({ "push", "--force-with-lease", "-u", "origin", "HEAD" }, root, "Push (rebased)")
+end
+
+local function rebase_push_with_fetch(root)
+    local branch = capture({ "branch", "--show-current" }, root)
+    if branch == "" then
+        notify("not on a branch (detached HEAD)", vim.log.levels.ERROR)
+        return
+    end
+
+    run_auth({ "fetch", "origin", branch }, root, "Fetch", function()
+        local rebase_res = vim.system({ "git", "rebase", "origin/" .. branch }, { text = true, cwd = root }):wait()
+
+        if rebase_res.code ~= 0 then
+            vim.schedule(function()
+                notify(
+                    "Rebase failed - resolve conflicts manually, then run this again.\n"
+                    .. (rebase_res.stderr ~= "" and rebase_res.stderr or rebase_res.stdout),
+                    vim.log.levels.ERROR
+                )
+                vim.cmd("checktime")
+            end)
+            return
+        end
+
+        vim.schedule(function()
+            vim.cmd("checktime")
+            run_auth({ "push", "--force-with-lease", "-u", "origin", "HEAD" }, root, "Push (rebased)")
+        end)
+    end)
+end
+
 local function discard_file(root)
     local file = vim.fn.expand("%:p")
     if file == "" then
@@ -834,6 +946,7 @@ return {
     {
         'nvim-telescope/telescope.nvim',
         keys = {
+            { "<leader>gH", git_guard(file_history),  desc = "File History" },
             { "<leader>gs", git_guard(status_picker), desc = "Git Status" },
             { "<leader>gl", git_guard(log_picker),    desc = "Git Log" },
             { "<leader>gb", git_guard(branch_picker), desc = "Branches" },
@@ -850,6 +963,7 @@ return {
                 end),
                 desc = "Git Pull"
             },
+            { "<leader>gU", git_guard(rebase_push), desc = "Push (Rebase)" },
             {
                 "<leader>gu",
                 git_guard(function(root)
