@@ -7,7 +7,7 @@ return {
                     filter = {
                         event = "lsp",
                         kind = "progress",
-                        find = "lua_ls",
+                        -- find = { "lua_ls", "jdtls" },
                     },
                     opts = { skip = true },
                 },

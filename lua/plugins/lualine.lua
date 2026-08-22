@@ -65,7 +65,7 @@ return {
                 lualine_a = { 'mode' },
                 lualine_b = { 'branch', 'diff', 'diagnostics' },
                 lualine_c = { session_relative_filename },
-                lualine_x = { 'filetype' },
+                lualine_x = { 'filetype', 'lsp_status' },
                 lualine_y = { 'progress' },
                 lualine_z = { session_component }
             },
