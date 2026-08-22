@@ -898,6 +898,37 @@ local function rebase_push_with_fetch(root)
     end)
 end
 
+local function smart_push(root)
+    local branch = capture({ "branch", "--show-current" }, root)
+    if branch == "" then
+        notify("not on a branch (detached HEAD)", vim.log.levels.ERROR)
+        return
+    end
+
+    local _, code = capture({ "rev-parse", "--verify", "-q", "origin/" .. branch }, root)
+
+    if code ~= 0 then
+        -- No remote branch yet - first push, nothing to rebase against.
+        run_auth({ "push", "-u", "origin", "HEAD" }, root, "Push")
+        return
+    end
+
+    local rebase_res = vim.system({ "git", "rebase", "origin/" .. branch }, { text = true, cwd = root }):wait()
+
+    if rebase_res.code ~= 0 then
+        notify(
+            "Rebase failed - resolve conflicts manually, then run push again.\n"
+            .. (rebase_res.stderr ~= "" and rebase_res.stderr or rebase_res.stdout),
+            vim.log.levels.ERROR
+        )
+        vim.cmd("checktime")
+        return
+    end
+
+    vim.cmd("checktime")
+    run_auth({ "push", "--force-with-lease", "-u", "origin", "HEAD" }, root, "Push")
+end
+
 local function discard_file(root)
     local file = vim.fn.expand("%:p")
     if file == "" then
@@ -963,19 +994,7 @@ return {
                 end),
                 desc = "Git Pull"
             },
-            { "<leader>gU", git_guard(rebase_push), desc = "Push (Rebase)" },
-            {
-                "<leader>gu",
-                git_guard(function(root)
-                    run_auth({
-                        "push",
-                        "-u",
-                        "origin",
-                        "HEAD",
-                    }, root, "Git Push")
-                end),
-                desc = "Push"
-            },
+            { "<leader>gu", git_guard(smart_push), desc = "Smart Push (Rebase)" },
             {
                 "<leader>gf",
                 git_guard(function(root)
