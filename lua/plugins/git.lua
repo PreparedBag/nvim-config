@@ -728,9 +728,16 @@ end
 
 local function status_diff_previewer()
     local previewers = require("telescope.previewers")
+    local job = nil
+
     return previewers.new_buffer_previewer({
         title = "Git Diff",
         define_preview = function(self, entry)
+            if job then
+                job:kill(9)
+                job = nil
+            end
+
             local buf = self.state.bufnr
             local cmd
             if entry.x ~= " " and entry.x ~= "?" then
@@ -740,7 +747,9 @@ local function status_diff_previewer()
             else
                 cmd = { "git", "diff", "--", entry.rel }
             end
-            vim.system(cmd, { text = true, cwd = entry.root }, function(res)
+
+            job = vim.system(cmd, { text = true, cwd = entry.root }, function(res)
+                job = nil
                 local lines = vim.split(res.stdout or "", "\n", { plain = true })
                 vim.schedule(function()
                     if vim.api.nvim_buf_is_valid(buf) then
