@@ -440,12 +440,6 @@ local function branch_picker(root)
     local function short_name(entry)
         return (entry[1]:gsub("^refs/heads/", ""):gsub("^refs/remotes/origin/", ""))
     end
-    local function checkout_ref(entry)
-        if is_remote(entry) then
-            return "origin/" .. short_name(entry)
-        end
-        return short_name(entry)
-    end
     local function branch_delete(entry, force)
         if is_remote(entry) then
             local name = short_name(entry)
@@ -474,7 +468,7 @@ local function branch_picker(root)
                 local entry = state.get_selected_entry()
                 actions.close(bufnr)
                 if not entry then return end
-                run({ "checkout", checkout_ref(entry) }, root)
+                run({ "checkout", short_name(entry) }, root)
             end)
             map("n", "m", function(bufnr)
                 local entry = state.get_selected_entry()
