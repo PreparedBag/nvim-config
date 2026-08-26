@@ -432,11 +432,11 @@ return {
                     filetypes = { "c", "cpp", "objc", "objcpp", "cuda" },
                     root_markers = { ".git", "compile_commands.json" },
                 },
-                PYRIGHT = {
-                    cmd = { "pyright-langserver", "--stdio" },
+                PYLSP = {
+                    cmd = { "pylsp" },
                     filetypes = { "python" },
                     -- HACK: webui.py and setup.py used for project specific markers.
-                    root_markers = { ".git", "pyproject.toml", "setup.py", "webui.py", "main.py", "index.py" },
+                    root_markers = { ".git", "pyproject.toml", "setup.py", "webui.py", "main.py", "index.py", "setup.cfg", "requirements.txt", "Pipfile" },
                 },
                 LUA_LS = {
                     cmd = { vim.fn.stdpath("data") .. "/mason/bin/lua-language-server" },
@@ -510,6 +510,12 @@ return {
                             checkOnSave = { command = "clippy" },
                         },
                     },
+                },
+                BASHLS = {
+                    cmd = { "bash-language-server", "start" },
+                    filetypes = { "sh" },
+                    root_markers = { ".git" },
+                    cmd_env = { GLOB_PATTERN = "*@(.sh|.inc|.bash|.command)" },
                 },
             }
 

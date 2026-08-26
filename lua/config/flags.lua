@@ -11,7 +11,7 @@ M.defaults = {
     DAP_ENABLED = false,
     LSP_ENABLED = false,
     LSP_ENABLED_CLANGD = true,
-    LSP_ENABLED_PYRIGHT = true,
+    LSP_ENABLED_PYLSP = true,
     LSP_ENABLED_LUA_LS = true,
     LSP_ENABLED_TS_LS = false,
     LSP_ENABLED_HTML = true,
@@ -19,6 +19,7 @@ M.defaults = {
     LSP_ENABLED_JDTLS = false,
     LSP_ENABLED_GOPLS = false,
     LSP_ENABLED_RUST = false,
+    LSP_ENABLED_BASHLS = false,
     HTML_VIEWER = true,
     FULL_MARKDOWN = false,
 }
