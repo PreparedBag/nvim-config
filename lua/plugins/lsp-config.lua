@@ -283,7 +283,12 @@ return {
                 end, "Format")
 
                 -- Diagnostics
-                map("n", "<leader>ll", vim.diagnostic.open_float, "Line Diagnostics")
+                map("n", "<leader>ll", function()
+                    local cfg = vim.diagnostic.config() or {}
+                    vim.diagnostic.config({
+                        virtual_lines = not cfg.virtual_lines and { current_line = true } or false,
+                    })
+                end, "Toggle Line Diagnostics")
                 map("n", "<leader>lk", function() vim.diagnostic.jump({ count = -1 }) end, "Prev Diagnostic")
                 map("n", "<leader>lj", function() vim.diagnostic.jump({ count = 1 }) end, "Next Diagnostic")
                 map("n", "<leader>le", function()
