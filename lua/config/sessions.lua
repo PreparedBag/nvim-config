@@ -309,7 +309,7 @@ local function session_picker()
 end
 
 _G.Session_Picker = session_picker
-_G.session_directory = _G.session_directory or vim.fn.getcwd()
+_G.session_directory = vim.fn.getcwd()
 update_session_name()
 
 vim.keymap.set("n", "<leader>ps", save_session, { desc = "Save Session" })

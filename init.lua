@@ -1,5 +1,5 @@
 require("config.setup")
+require("config.sessions")
 require("config.keymaps")
 require("config.flags")
-require("config.sessions")
 require("config.lazy")
