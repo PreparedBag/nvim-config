@@ -289,6 +289,7 @@ local function log_picker(root, ref)
     local actions = require("telescope.actions")
     local state = require("telescope.actions.state")
     local previewers = require("telescope.previewers")
+    local head = capture({ "symbolic-ref", "--short", "HEAD" }, root)
     local git_command = { "git", "log", LOG_PRETTY, "--decorate=short", "--abbrev-commit", "--max-count=" .. LOG_LIMIT }
     if ref then
         table.insert(git_command, ref)
@@ -297,7 +298,7 @@ local function log_picker(root, ref)
     local display_ref = ref and ref:gsub("^refs/heads/", ""):gsub("^refs/remotes/", "")
     pickers.new({
         initial_mode = "normal",
-        prompt_title = "Git Log" .. (display_ref and (" (" .. display_ref .. ")") or ""),
+        prompt_title = "Git Log: " .. head .. (display_ref and (" (" .. display_ref .. ")") or ""),
     }, {
         finder = finders.new_oneshot_job(git_command, { cwd = root, entry_maker = log_entry }),
         sorter = conf.generic_sorter({}),

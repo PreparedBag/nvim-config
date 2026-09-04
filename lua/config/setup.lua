@@ -1,6 +1,3 @@
--- Store the session directory when Neovim starts
-_G.session_directory = vim.fn.getcwd()
-
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
 

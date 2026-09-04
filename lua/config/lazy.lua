@@ -34,7 +34,6 @@ require("lazy").setup({
         { import = "plugins.noice" },
         { import = "plugins.nvim-colorizer" },
         { import = "plugins.oil" },
-        { import = "plugins.persistence" },
         { import = "plugins.snacks" },
         { import = "plugins.surround" },
         { import = "plugins.telescope" },

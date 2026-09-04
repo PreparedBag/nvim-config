@@ -5,11 +5,8 @@ return {
     config = function()
         local lualine = require('lualine')
 
-        local function session_component()
-            if not _G.session_directory then
-                return ""
-            end
-            return " " .. vim.fn.fnamemodify(_G.session_directory, ":t") .. " "
+        local function session_name()
+            return _G.session_name or ""
         end
 
         local function session_relative_filename()
@@ -67,7 +64,7 @@ return {
                 lualine_c = { session_relative_filename },
                 lualine_x = { 'filetype', 'lsp_status' },
                 lualine_y = { 'progress' },
-                lualine_z = { session_component }
+                lualine_z = { session_name }
             },
             inactive_sections = {
                 lualine_a = { 'mode' },
@@ -75,7 +72,7 @@ return {
                 lualine_c = { session_relative_filename },
                 lualine_x = { 'filetype' },
                 lualine_y = { 'progress' },
-                lualine_z = { session_component }
+                lualine_z = { session_name }
             },
         })
     end
